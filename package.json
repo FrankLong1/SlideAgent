@@ -1,0 +1,11 @@
+{
+  "name": "bmps",
+  "version": "1.0.0",
+  "description": "BitterMax Presentation Services - Ultra-minimal design for professional presentations",
+  "dependencies": {
+    "puppeteer": "^24.15.0"
+  },
+  "scripts": {
+    "generate-pdf": "node src/slides/pdf_generator.js"
+  }
+}

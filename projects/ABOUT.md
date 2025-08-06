@@ -1,0 +1,1 @@
+These are private projects, folder is gitignored by default

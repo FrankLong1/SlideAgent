@@ -1,0 +1,60 @@
+# ACME Corp matplotlib style
+# Matches the CSS theme colors for consistent branding
+
+# Figure and axis styling
+figure.figsize: 12, 8
+figure.facecolor: white
+figure.edgecolor: none
+axes.facecolor: white
+axes.edgecolor: 1B365D
+axes.linewidth: 1.5
+axes.spines.top: False
+axes.spines.right: False
+
+# Color palette matching CSS theme
+axes.prop_cycle: cycler('color', ['1B365D', '4A9EFF', '2C5F7A', '7B68EE', '32CD32', 'FF6B6B', 'FFB347', '87CEEB'])
+
+# Grid styling
+axes.grid: True
+axes.grid.axis: y
+grid.color: E5E7EB
+grid.linestyle: -
+grid.linewidth: 0.5
+grid.alpha: 0.7
+
+# Text styling to match CSS fonts
+font.family: sans-serif
+font.sans-serif: Segoe UI, Arial, DejaVu Sans, sans-serif
+font.size: 12
+axes.titlesize: 16
+axes.labelsize: 12
+xtick.labelsize: 10
+ytick.labelsize: 10
+legend.fontsize: 11
+
+# Text colors matching theme
+text.color: 2C2C2C
+axes.labelcolor: 1B365D
+axes.titlecolor: 1B365D
+xtick.color: 666666
+ytick.color: 666666
+
+# Legend styling
+legend.frameon: True
+legend.facecolor: white
+legend.edgecolor: E5E7EB
+legend.framealpha: 0.9
+legend.shadow: False
+
+# Line and marker styling
+lines.linewidth: 2.5
+lines.markersize: 8
+patch.linewidth: 0.5
+patch.facecolor: 4A9EFF
+
+# Saving options for clean chart export
+savefig.facecolor: white
+savefig.edgecolor: none
+savefig.dpi: 300
+savefig.bbox: tight
+savefig.pad_inches: 0.1

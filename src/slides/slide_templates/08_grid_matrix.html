@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACME Corp Comparison Grid Template</title>
+    <!-- 
+    COMPARISON GRID TEMPLATE - General Purpose
+    
+    This template can be used for ANY type of comparison, not just financial data:
+    - Companies vs financial metrics
+    - Products vs features (e.g., lawnmowers vs horsepower, cutting width, price)
+    - Services vs capabilities 
+    - Technologies vs specifications
+    - Vendors vs offerings
+    - Any side-by-side comparison of items and their attributes
+    
+    Simply update:
+    - Row labels (left column) with items being compared
+    - Column headers with attributes/features being compared
+    - Data cells with relevant values, text, or metrics
+    - Slide title and subtitle to match your comparison topic
+    -->
+    <link rel="stylesheet" href="../css/base.css">
+    <link rel="stylesheet" href="../css/print.css">
+    <link rel="stylesheet" href="../../../themes/examples/acme_corp/acme_corp_theme.css">
+    <style>
+        .comparison-grid {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        
+        .comparison-grid thead th {
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 600;
+            color: white;
+            border: 2px solid white;
+        }
+        
+        .comparison-grid thead th:first-child {
+            background-color: #1e3a5f;
+            color: white;
+            text-align: left;
+            padding-left: 16px;
+        }
+        
+        .revenue-col { background-color: #1e3a5f; }
+        .profit-col { background-color: #87ceeb; }
+        .operating-col { background-color: #d4af37; }
+        .employee-col { background-color: #666666; }
+        .rd-col { background-color: #1e3a5f; }
+        
+        .comparison-grid tbody td {
+            padding: 12px 8px;
+            border: 2px solid white;
+            text-align: center;
+            font-weight: 500;
+            background-color: #f8f9fa;
+        }
+        
+        .comparison-grid tbody td:first-child {
+            background-color: #1e3a5f;
+            color: white;
+            text-align: left;
+            padding-left: 16px;
+            font-weight: 600;
+        }
+        
+        
+        .year-badge {
+            background-color: #1e3a5f;
+            color: white;
+            padding: 8px 16px;
+            display: inline-block;
+            font-weight: 600;
+            margin-bottom: 20px;
+            clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 50%, calc(100% - 15px) 100%, 0 100%);
+        }
+    </style>
+</head>
+<body>
+
+<section class="slide bg-grey" style="display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; text-align: left;">
+    <!-- Header with new structure -->
+    <div class="header">
+        <div class="header-left">
+            <div class="slide-title">Comparison Grid</div>
+            <div class="slide-subtitle">Side-by-side comparison of key attributes and features</div>
+        </div>
+        <div class="header-right">
+            <div class="section-label">COMPARATIVE ANALYSIS</div>
+            <div class="logo" alt="ACME Corp"></div>
+        </div>
+    </div>
+    
+    <!-- Main content area -->
+    <div class="content" style="flex: 1; display: flex; flex-direction: column; justify-content: flex-start;">
+        
+        <div class="year-badge">As of FY2022</div>
+        
+        <table class="comparison-grid">
+            <thead>
+                <tr>
+                    <th style="background-color: #1e3a5f;">Items</th>
+                    <th class="revenue-col">Feature A</th>
+                    <th class="profit-col">Feature B</th>
+                    <th class="operating-col">Feature C</th>
+                    <th class="employee-col">Feature D</th>
+                    <th class="rd-col">Feature E</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Item 1</td>
+                    <td>Value 1</td>
+                    <td>Value 2</td>
+                    <td>Value 3</td>
+                    <td>Value 4</td>
+                    <td>Value 5</td>
+                </tr>
+                <tr>
+                    <td>Item 2</td>
+                    <td>Data 1</td>
+                    <td>Data 2</td>
+                    <td>Data 3</td>
+                    <td>Data 4</td>
+                    <td>Data 5</td>
+                </tr>
+                <tr>
+                    <td>Item 3</td>
+                    <td>Data 1</td>
+                    <td>Data 2</td>
+                    <td>Data 3</td>
+                    <td>Data 4</td>
+                    <td>Data 5</td>
+                </tr>
+                <tr>
+                    <td>Item 4</td>
+                    <td>Data 1</td>
+                    <td>Data 2</td>
+                    <td>Data 3</td>
+                    <td>Data 4</td>
+                    <td>Data 5</td>
+                </tr>
+                <tr>
+                    <td>Item 5</td>
+                    <td>TBD</td>
+                    <td>TBD</td>
+                    <td>TBD</td>
+                    <td>TBD</td>
+                    <td>TBD</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Bottom Content Box -->
+    <div style="display: flex; justify-content: center; margin: 0 0 20px 0;">
+        <div style="background: #fffacd; padding: 12px 20px; border: 1px solid #e6d872; display: inline-block;">
+            <p style="font-size: 16px; color: #333; margin: 0; text-align: center;">
+                <strong>Analysis:</strong> Comparison shows clear differentiation across key attributes. 
+                Update this analysis based on your specific comparison data.
+            </p>
+        </div>
+    </div>
+    
+    <!-- Footer with page number and confidentiality notice -->
+    <div class="footer">
+        <div class="footer-text">
+            ACME Corporation | Strictly Confidential
+        </div>
+        <div class="page-number">
+            Page 08
+        </div>
+    </div>
+</section>
+
+</body>
+</html>

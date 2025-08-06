@@ -1,0 +1,133 @@
+/* ACME Corp Corporate Theme */
+/* Professional color palette with corporate branding */
+
+:root {
+    --primary-color: #1B365D;      /* Corporate navy blue */
+    --navy-dark: #0F1B2E;          /* Deep navy for emphasis */
+    --secondary-color: #2C5F7A;    /* Medium blue */
+    --accent-color: #DC2626;       /* Corporate red accent */
+    --text-primary: #1B365D;       /* Navy for headers */
+    --text-secondary: #4A5568;     /* Charcoal gray for body text */
+    --text-light: #718096;         /* Slate gray for subtitles */
+    --background-white: #FFFFFF;   /* Pure white */
+    --background-light: #F7FAFC;   /* Very light blue-gray background */
+    --border-color: #E2E8F0;       /* Light blue-gray border */
+}
+
+/* Primary heading colors */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--primary-color);
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+}
+
+/* Body text */
+body {
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    color: var(--text-secondary);
+}
+
+/* Header styling */
+.header .slide-title {
+    color: var(--primary-color);
+}
+
+.header .slide-subtitle {
+    color: var(--text-light);
+}
+
+.header .section-label {
+    color: var(--text-light);
+    font-weight: 600;
+}
+
+/* Footer styling */
+.footer {
+    border-top: 2px solid var(--accent-color);
+    background: var(--navy-dark);
+    color: var(--background-white);
+}
+
+.footer .footer-text {
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.footer .page-number {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+/* Link colors */
+a {
+    color: var(--accent-color);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--secondary-color);
+    text-decoration: underline;
+}
+
+/* Quote slide styling */
+.quote-slide blockquote {
+    border-left: 4px solid var(--accent-color);
+    padding-left: 24px;
+    color: var(--primary-color);
+    font-style: italic;
+}
+
+/* Table styling */
+table {
+    border-collapse: collapse;
+    width: 100%;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 8px rgba(27, 54, 93, 0.1);
+}
+
+th {
+    background-color: var(--navy-dark);
+    color: white;
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+}
+
+td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* List styling */
+ul li::marker {
+    color: var(--accent-color);
+}
+
+/* Grid matrix styling */
+.grid-item {
+    border: 2px solid var(--border-color);
+    background-color: var(--background-light);
+}
+
+.grid-item.highlight {
+    border-color: var(--accent-color);
+    background-color: rgba(74, 158, 255, 0.1);
+}
+
+/* Timeline styling */
+.timeline-item {
+    border-left: 3px solid var(--accent-color);
+    padding-left: 20px;
+}
+
+.timeline-date {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* ACME Corp logo styling */
+.header .logo {
+    background-image: url('acme_corp_text_logo.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: right center;
+}
