@@ -1,10 +1,10 @@
-# BMPS - BitterMax Presentation Services
+# SlideAgent
 
-You are an expert presentation generator using the BMPS (BitterMax Presentation Services) framework. This unified system combines professional slide generation with integrated chart creation for high-quality business presentations.
+You are an expert presentation generator using SlideAgent. This unified system combines professional slide generation with integrated chart creation for high-quality business presentations.
 
 ## Core Architecture
 
-BMPS integrates two main components:
+SlideAgent integrates two main components:
 - **Slide Generation**: HTML/CSS templates with professional corporate themes
 - **Chart Generation**: Python matplotlib charts with consistent branding via PlotBuddy
 
@@ -13,7 +13,7 @@ BMPS integrates two main components:
 ## Directory Structure
 
 ```
-BMPS/
+SlideAgent/
 ├── src/
 │   ├── charts/
 │   │   ├── chart_templates/     # Chart template examples
@@ -219,7 +219,7 @@ title: Your Presentation Title
 
 ## DirectoryClient CLI Commands
 
-The DirectoryClient provides comprehensive project management for BMPS:
+The DirectoryClient provides comprehensive project management for SlideAgent:
 
 ### Core Commands
 
@@ -265,9 +265,9 @@ python3 DirectoryClient.py generate-pdf <project-name>
 
 The DirectoryClient can also be used programmatically:
 ```python
-from DirectoryClient import BMPSClient
+from DirectoryClient import SlideAgentClient
 
-client = BMPSClient()
+client = SlideAgentClient()
 projects_data = client.get_all_projects_data()
 # Returns structured data for all projects including paths, configs, file status
 ```

@@ -1,4 +1,4 @@
-# BMPS - BitterMax Presentation Services
+# SlideAgent - Powered by BitterMax
 
 *A minimal, AI-first presentation framework inspired by Richard Sutton's Bitter Lesson*
 
@@ -7,17 +7,17 @@
 
 ## Philosophy
 
-BMPS embodies the core principle of Sutton's bitter lesson: **computation trumps human-crafted specialization**. Rather than building complex presentation frameworks optimized for human authoring, BMPS provides a minimal, template-driven system designed specifically for AI agents to leverage their scaling computational abilities.
+SlideAgent embodies the core principle of Sutton's bitter lesson: **computation trumps human-crafted specialization**. Rather than building complex presentation frameworks optimized for human authoring, SlideAgent provides a minimal, template-driven system designed specifically for AI agents to leverage their scaling computational abilities.
 
 > "We have to learn the bitter lesson that building in how we think we think does not work in the long run."
 
 ### The Framework's Bitter Truth
 
-Traditional presentation tools are built around human cognitive limitations—complex UIs, WYSIWYG editors, and intricate feature sets that feel satisfying to human users but add abstractions between the model and raw context. BMPS takes the opposite approach: a deliberately minimal HTML/CSS micro-library as a foundation that is almost useless for humans, but becomes powerful only when paired with increasingly capable AI models The system is intentionally more verbose than any human would want to write directly with very few shared components. 
+Traditional presentation tools are built around human cognitive limitations—complex UIs, WYSIWYG editors, and intricate feature sets that feel satisfying to human users but add abstractions between the model and raw context. SlideAgent takes the opposite approach: a deliberately minimal HTML/CSS micro-library as a foundation that is almost useless for humans, but becomes powerful only when paired with increasingly capable AI models The system is intentionally more verbose than any human would want to write directly with very few shared components. 
 
 ## Core Architecture
 
-BMPS consists of just the essential components needed for professional slide generation:
+SlideAgent consists of just the essential components needed for professional slide generation:
 
 - **Slide Templates**: Minimal HTML structures covering all presentation needs
 - **Theme System**: CSS-based branding (colors, fonts, logos)  
@@ -74,7 +74,7 @@ projects/my-presentation/
 
 ## Template System
 
-BMPS provides 12 fundamental slide templates. Each template is deliberately minimal—just enough structure for consistent styling while remaining flexible for AI content generation. This is probably one of the key areas of development where contributions from others would be awesome!
+SlideAgent provides 12 fundamental slide templates. Each template is deliberately minimal—just enough structure for consistent styling while remaining flexible for AI content generation. This is probably one of the key areas of development where contributions from others would be awesome!
 
 ## Chart Integration
 

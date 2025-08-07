@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-BMPS DirectoryClient - Project Management for BitterMax Presentation Services
+SlideAgent DirectoryClient - Project Management for SlideAgent
 
-A simple CLI tool for managing BMPS presentation projects.
+A simple CLI tool for managing SlideAgent presentation projects.
 Handles project creation, configuration, and workflow coordination.
 
 Usage:
@@ -19,11 +19,11 @@ import argparse
 import shutil
 from pathlib import Path
 
-class BMPSClient:
-    """Main client for BMPS project management."""
+class SlideAgentClient:
+    """Main client for SlideAgent project management."""
     
     def __init__(self, base_dir=None):
-        """Initialize BMPS client with base directory."""
+        """Initialize SlideAgent client with base directory."""
         self.base_dir = Path(base_dir) if base_dir else Path(__file__).parent
         self.projects_dir = self.base_dir / "projects"
         self.themes_dir = self.base_dir / "themes"
@@ -34,7 +34,7 @@ class BMPSClient:
         self.themes_dir.mkdir(exist_ok=True)
     
     def create_project(self, project_name, theme="acme_corp"):
-        """Create a new BMPS project with proper structure."""
+        """Create a new SlideAgent project with proper structure."""
         project_path = self.projects_dir / project_name
         
         if project_path.exists():
@@ -78,7 +78,7 @@ class BMPSClient:
             'theme': theme,
             'theme_path': theme_config_path,
             'title': f'Presentation - {project_name.replace("-", " ").title()}',
-            'author': 'BMPS User',
+            'author': 'SlideAgent User',
             'created': str(Path().absolute())
         }
         
@@ -134,7 +134,7 @@ class BMPSClient:
             print("📂 No projects found. Create one with: python DirectoryClient.py new-project <name>")
             return
         
-        print("📂 BMPS Projects:")
+        print("📂 SlideAgent Projects:")
         for project in sorted(projects):
             config_path = project / "config.yaml"
             if config_path.exists():
@@ -343,7 +343,7 @@ class BMPSClient:
 def main():
     """Main CLI interface."""
     parser = argparse.ArgumentParser(
-        description="BMPS DirectoryClient - Project Management for BitterMax Presentation Services",
+        description="SlideAgent DirectoryClient - Project Management for SlideAgent",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -382,7 +382,7 @@ Examples:
         parser.print_help()
         return
     
-    client = BMPSClient()
+    client = SlideAgentClient()
     
     if args.command == 'new-project':
         client.create_project(args.name, args.theme)

@@ -1,7 +1,7 @@
 {
-  "name": "bmps",
+  "name": "slideagent",
   "version": "1.0.0",
-  "description": "BitterMax Presentation Services - Ultra-minimal design for professional presentations",
+  "description": "SlideAgent - AI-powered presentation generation framework",
   "dependencies": {
     "puppeteer": "^24.15.0"
   },
