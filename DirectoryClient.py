@@ -9,7 +9,6 @@ Usage:
     python DirectoryClient.py new-project <project-name> [--theme <theme>]
     python DirectoryClient.py list-projects
     python DirectoryClient.py list-themes
-    python DirectoryClient.py generate-pdf <project-name>
 """
 
 import os
@@ -210,37 +209,6 @@ class SlideAgentClient:
             theme_name, theme_dir, relative_path = theme_info
             print(f"  • {theme_name}")
     
-    def generate_pdf(self, project_name):
-        """Generate PDF for a project."""
-        project_path = self.projects_dir / project_name
-        
-        if not project_path.exists():
-            print(f"❌ Project '{project_name}' not found!")
-            return False
-        
-        html_file = project_path / "presentation.html"
-        if not html_file.exists():
-            print(f"❌ No presentation.html found")
-            return False
-        
-        # Run PDF generation
-        pdf_script = self.src_dir / "slides" / "pdf_generator.js"
-        output_pdf = project_path / f"{project_name}.pdf"
-        
-        import subprocess
-        try:
-            cmd = ["node", str(pdf_script), str(html_file), str(output_pdf)]
-            result = subprocess.run(cmd, capture_output=True, text=True)
-            
-            if result.returncode == 0:
-                print(f"✅ PDF generated: {output_pdf}")
-                return True
-            else:
-                print(f"❌ PDF generation failed: {result.stderr}")
-                return False
-        except FileNotFoundError:
-            print("❌ Node.js not found")
-            return False
     
     def show_project(self, project_name):
         """Show detailed information about a project."""
@@ -265,7 +233,8 @@ class SlideAgentClient:
         print(f"📊 {project_name}")
         print(f"  Theme: {config.get('theme', 'N/A')}")
         print(f"  Files: {input_count} inputs, {plots_count} charts")
-        print(f"  HTML: {'✅' if (project_path / 'presentation.html').exists() else '❌'}")
+        slides_count = len(list((project_path / "slides").glob('slide_*.html'))) if (project_path / "slides").exists() else 0
+        print(f"  Slides: {slides_count} HTML files")
         print(f"  PDF: {'✅' if (project_path / f'{project_name}.pdf').exists() else '❌'}")
 
 def main():
@@ -278,7 +247,6 @@ Examples:
   python DirectoryClient.py new-project quarterly-review --theme acme_corp
   python DirectoryClient.py list-projects
   python DirectoryClient.py list-themes
-  python DirectoryClient.py generate-pdf quarterly-review
         """
     )
     
@@ -294,10 +262,6 @@ Examples:
     
     # List themes command
     subparsers.add_parser('list-themes', help='List available themes')
-    
-    # Generate PDF command
-    pdf_parser = subparsers.add_parser('generate-pdf', help='Generate PDF for a project')
-    pdf_parser.add_argument('name', help='Project name')
     
     # Project info command
     info_parser = subparsers.add_parser('info', help='Show project information')
@@ -317,8 +281,6 @@ Examples:
         client.list_projects()
     elif args.command == 'list-themes':
         client.list_themes()
-    elif args.command == 'generate-pdf':
-        client.generate_pdf(args.name)
     elif args.command == 'info':
         client.show_project(args.name)
 

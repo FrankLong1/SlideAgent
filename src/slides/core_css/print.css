@@ -34,7 +34,7 @@
     }
     
     /* Ensure each slide prints perfectly on its own page */
-    .slide {
+    .slide, section.slide {
         width: 16in !important;       /* Exact slide width */
         height: 9in !important;       /* Exact slide height */
         margin: 0 !important;         /* No spacing between slides in PDF */
@@ -46,7 +46,7 @@
     }
     
     /* Don't add a page break after the last slide */
-    .slide:last-child {
+    .slide:last-child, section.slide:last-child {
         page-break-after: avoid !important;
         break-after: avoid !important;
     }

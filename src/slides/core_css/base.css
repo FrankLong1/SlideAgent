@@ -30,7 +30,7 @@ body {
 }
 
 /* Slide container - Fixed 16:9 dimensions for PDF compatibility */
-.slide {
+.slide, section.slide {
     /* Fixed dimensions for consistent PDF rendering */
     width: 1920px;
     height: 1080px;

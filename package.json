@@ -7,6 +7,6 @@
     "puppeteer": "^24.15.0"
   },
   "scripts": {
-    "generate-pdf": "node src/slides/pdf_generator.js"
+    "generate-pdf": "node src/utils/pdf_generator.js"
   }
 }

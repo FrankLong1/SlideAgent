@@ -53,12 +53,13 @@ What they struggle with are the human-centric complexities that traditional fram
 # Setup
 source venv/bin/activate
 pip install -r requirements.txt
+npm install
 
 # Create new presentation
 python3 DirectoryClient.py new-project my-presentation --theme acme_corp
 
 # Generate PDF
-python3 DirectoryClient.py generate-pdf my-presentation
+node src/utils/pdf_generator.js projects/my-presentation/slides/
 ```
 
 ### Project Structure
@@ -68,7 +69,7 @@ projects/my-presentation/
 ├── input/              # Source materials (dump everything here)
 ├── plots/              # Generated charts  
 ├── outline.md          # AI-generated content outline
-├── presentation.html   # Final slides
+├── slides/             # Individual HTML slide files
 └── my-presentation.pdf # Export output
 ```
 

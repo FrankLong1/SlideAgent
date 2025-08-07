@@ -76,27 +76,28 @@ async function generatePDFFromSlides(slidesDir, outputPath = null) {
             // Load the HTML file
             const fileUrl = `file://${path.resolve(slidePath)}`;
             await page.goto(fileUrl, {
-                waitUntil: 'networkidle0',
-                timeout: 30000
+                waitUntil: 'networkidle2',
+                timeout: 60000
             });
 
             // Wait for content to render
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            // Inject CSS to optimize for PDF printing
+            // Inject minimal CSS to optimize for PDF printing
+            // The slides already have proper CSS, we just need to clean up for PDF
             await page.addStyleTag({
                 content: `
+                    /* Remove browser viewport styling */
                     body {
                         background: white !important;
                         padding: 0 !important;
                         margin: 0 !important;
                     }
-                    .slide {
-                        width: 1920px !important;
-                        height: 1080px !important;
-                        margin: 0 !important;
+                    
+                    /* Ensure slides render at exact dimensions */
+                    .slide, section.slide {
                         box-shadow: none !important;
-                        overflow: hidden !important;
+                        border: none !important;
                     }
                 `
             });
@@ -204,12 +205,15 @@ async function generatePDFFromSingleFile(htmlFilePath, outputPath = null) {
                     background: white !important;
                     padding: 0 !important;
                     margin: 0 !important;
+                    display: block !important;
+                    min-height: auto !important;
                 }
-                .slide {
-                    width: 100vw !important;
-                    height: 100vh !important;
+                .slide, section.slide, div.slide {
+                    width: 1920px !important;
+                    height: 1080px !important;
                     margin: 0 !important;
                     box-shadow: none !important;
+                    border: none !important;
                     overflow: hidden !important;
                 }
             `
