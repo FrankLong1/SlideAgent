@@ -17,34 +17,39 @@
 /* Primary heading colors */
 h1, h2, h3, h4, h5, h6 {
     color: var(--primary-color);
-    font-family: 'Segoe UI', 'Arial', sans-serif;
+    font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
 }
 
 /* Body text */
 body {
-    font-family: 'Segoe UI', 'Arial', sans-serif;
+    font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
     color: var(--text-secondary);
 }
 
 /* Header styling */
 .header .slide-title {
     color: var(--primary-color);
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1.1;
 }
 
 .header .slide-subtitle {
     color: var(--text-light);
+    font-size: 16px;
+    font-weight: 400;
 }
 
 .header .section-label {
     color: var(--text-light);
     font-weight: 600;
+    font-size: 11px;
 }
 
 /* Footer styling */
 .footer {
     border-top: 2px solid var(--accent-color);
-    background: var(--navy-dark);
-    color: var(--background-white);
+    color: var(--text-secondary);
 }
 
 .footer .footer-text {
@@ -55,6 +60,7 @@ body {
 .footer .page-number {
     color: var(--accent-color);
     font-weight: 600;
+    text-align: right;
 }
 
 /* Link colors */
@@ -100,6 +106,35 @@ td {
 /* List styling */
 ul li::marker {
     color: var(--accent-color);
+}
+
+ul li {
+    font-size: 24px;
+    line-height: 1.9;
+    margin-bottom: 20px;
+}
+
+/* Enhanced content padding */
+.slide .content {
+    padding: 20px 40px;
+}
+
+/* Theme-specific styling for content primitives */
+
+/* Highlight box colors and background */
+.highlight-box {
+    background: linear-gradient(135deg, #fffacd 0%, #fff8dc 100%);
+    border: 2px solid #e6d872;
+}
+
+/* Metric card colors and background */
+.metric-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1px solid #dee2e6;
+}
+
+.metric-value {
+    color: var(--primary-color);
 }
 
 /* Grid matrix styling */

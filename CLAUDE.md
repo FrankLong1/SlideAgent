@@ -206,15 +206,19 @@ Core CSS
 ## AI-Assisted Workflow Process
 
 ### 1. Project Setup
+**IMPORTANT**: Always use the DirectoryClient to create new projects. Never manually create project folders.
 ```bash
-python3 DirectoryClient.py new-project [project-name] --theme acme_corp
+python3 DirectoryClient.py new-project [project-name] --theme [theme-name]
 ```
-Configure `config.yaml` with theme path:
-```yaml
-author: Your Name
-theme: acme_corp
-theme_path: ../../themes/examples/acme_corp
-title: Your Presentation Title
+This automatically:
+- Creates the proper directory structure
+- Sets up config.yaml with correct theme paths
+- Generates initial outline.md
+- Creates input/ and plots/ folders
+
+Example:
+```bash
+python3 DirectoryClient.py new-project liquid-cooling --theme acme_corp
 ```
 
 ## DirectoryClient CLI Commands
@@ -363,14 +367,15 @@ python main_analysis.py plant_165_GRDA/ --no-display
 ## Usage Instructions for Claude
 
 ### AI-Assisted Workflow Principles
-1. **Always activate venv first** for any chart generation work
-2. **Analyze input/ folder comprehensively** before generating outlines, use the read file tool over at least once on everything in there before proceeding.
-3. **Generate data-driven outlines** based on available materials and insights
-4. **Use PlotBuddy.from_project_config()** for automatic theme loading
-5. **Match templates to content** - select appropriate slide templates for each section
-6. **Create iterative refinements** based on user feedback
-7. **Maintain consistency** across charts, slides, and narrative flow
-8. **Use authentic logos only** - download PNG logos from official sources, never create custom SVG logos
+1. **ALWAYS use DirectoryClient for project creation** - Never manually create project folders or structure
+2. **Always activate venv first** for any chart generation work
+3. **Analyze input/ folder comprehensively** before generating outlines, use the read file tool over at least once on everything in there before proceeding.
+4. **Generate data-driven outlines** based on available materials and insights
+5. **Use PlotBuddy.from_project_config()** for automatic theme loading
+6. **Match templates to content** - select appropriate slide templates for each section
+7. **Create iterative refinements** based on user feedback
+8. **Maintain consistency** across charts, slides, and narrative flow
+9. **Use authentic logos only** - download PNG logos from official sources, never create custom SVG logos
 
 
 ### File Paths

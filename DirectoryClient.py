@@ -33,6 +33,14 @@ class SlideAgentClient:
         self.projects_dir.mkdir(exist_ok=True)
         self.themes_dir.mkdir(exist_ok=True)
     
+    def _find_theme(self, theme_name):
+        """Find a theme by name in any subdirectory."""
+        for root, dirs, files in os.walk(self.themes_dir):
+            root_path = Path(root)
+            if root_path.name == theme_name and (root_path / f"{theme_name}_theme.css").exists():
+                return root_path, root_path.relative_to(self.themes_dir)
+        return None, None
+    
     def create_project(self, project_name, theme="acme_corp"):
         """Create a new SlideAgent project with proper structure."""
         project_path = self.projects_dir / project_name
@@ -41,19 +49,11 @@ class SlideAgentClient:
             print(f"❌ Project '{project_name}' already exists!")
             return False
         
-        # Validate theme exists (check both regular and private themes)
-        theme_path = self.themes_dir / theme
-        private_theme_file = self.themes_dir / "private" / f"{theme}_theme.css"
-        private_theme_dir = self.themes_dir / "private" / theme
+        # Find theme
+        theme_dir, theme_relative_path = self._find_theme(theme)
         
-        theme_exists = (
-            (theme_path.exists() and (theme_path / f"{theme}_theme.css").exists()) or  # Regular theme
-            private_theme_file.exists() or  # Private theme as file
-            (private_theme_dir.exists() and (private_theme_dir / f"{theme}_theme.css").exists())  # Private theme as directory
-        )
-        
-        if not theme_exists:
-            print(f"❌ Theme '{theme}' not found! Available themes:")
+        if not theme_dir:
+            print(f"❌ Theme '{theme}' not found!")
             self.list_themes()
             return False
         
@@ -63,23 +63,14 @@ class SlideAgentClient:
         (project_path / "plots").mkdir()
         
         # Determine theme path for config
-        if theme_path.exists() and (theme_path / f"{theme}_theme.css").exists():
-            # Regular theme
-            theme_config_path = f"../../themes/{theme}"
-        elif private_theme_dir.exists() and (private_theme_dir / f"{theme}_theme.css").exists():
-            # Private theme as directory
-            theme_config_path = f"../../themes/private/{theme}"
-        else:
-            # Private theme as file (fallback)
-            theme_config_path = f"../../themes/private"
+        theme_config_path = f"../../themes/{theme_relative_path}"
         
         # Create config.yaml
         config = {
             'theme': theme,
             'theme_path': theme_config_path,
-            'title': f'Presentation - {project_name.replace("-", " ").title()}',
-            'author': 'SlideAgent User',
-            'created': str(Path().absolute())
+            'title': f'{project_name.replace("-", " ").title()}',
+            'author': 'SlideAgent User'
         }
         
         config_path = project_path / "config.yaml"
@@ -92,27 +83,14 @@ class SlideAgentClient:
 ## Slide Outline
 
 1. **Title Slide**
-   - Title: {config['title']}
-   - Author: {config['author']}
-   - Date: Today
-
 2. **Overview**
-   - Key points to cover
-   - Agenda or roadmap
-
 3. **Main Content**
-   - Add your content here
-   - Use bullet points for clarity
-
 4. **Conclusion**
-   - Summary of key takeaways
-   - Next steps
 
 ## Notes
-
-- Place source materials in the `input/` folder
-- Charts will be generated in the `plots/` folder
-- Use `{theme}` theme for consistent branding
+- Place source materials in `input/`
+- Charts in `plots/`
+- Theme: {theme}
 """
         
         outline_path = project_path / "outline.md"
@@ -120,21 +98,19 @@ class SlideAgentClient:
             f.write(outline_content)
         
         print(f"✅ Created project '{project_name}' with theme '{theme}'")
-        print(f"📁 Project directory: {project_path}")
-        print(f"📝 Edit outline: {outline_path}")
-        print(f"⚙️  Configuration: {config_path}")
+        print(f"📁 {project_path}")
         
         return True
     
-    def list_projects(self, detailed=False):
-        """List all existing projects with optional detailed view."""
+    def list_projects(self):
+        """List all existing projects."""
         projects = [d for d in self.projects_dir.iterdir() if d.is_dir()]
         
         if not projects:
-            print("📂 No projects found. Create one with: python DirectoryClient.py new-project <name>")
+            print("📂 No projects found")
             return
         
-        print("📂 SlideAgent Projects:")
+        print("📂 Projects:")
         for project in sorted(projects):
             config_path = project / "config.yaml"
             if config_path.exists():
@@ -143,130 +119,34 @@ class SlideAgentClient:
                         config = yaml.safe_load(f)
                     theme = config.get('theme', 'unknown')
                     title = config.get('title', project.name)
-                    author = config.get('author', 'Unknown')
-                    theme_path = config.get('theme_path', 'not specified')
-                    
-                    if detailed:
-                        # Check file status
-                        files_status = {
-                            'outline.md': (project / "outline.md").exists(),
-                            'presentation.html': (project / "presentation.html").exists(),
-                            'PDF': (project / f"{project.name}.pdf").exists(),
-                        }
-                        
-                        # Count files in subdirectories
-                        input_count = len([f for f in (project / "input").iterdir() if f.is_file()]) if (project / "input").exists() else 0
-                        plots_count = len([f for f in (project / "plots").iterdir() if f.is_file()]) if (project / "plots").exists() else 0
-                        
-                        print(f"\n  📊 {project.name}")
-                        print(f"      Path: {project}")
-                        print(f"      Title: {title}")
-                        print(f"      Author: {author}")
-                        print(f"      Theme: {theme} ({theme_path})")
-                        print(f"      Files:")
-                        for filename, exists in files_status.items():
-                            status = "✅" if exists else "❌"
-                            print(f"        {status} {filename}")
-                        print(f"      Content: {input_count} input files, {plots_count} charts")
-                    else:
-                        print(f"  • {project.name} ({theme}) - {title}")
-                        
+                    print(f"  • {project.name} ({theme}) - {title}")
                 except Exception as e:
-                    print(f"  • {project.name} (config error: {e})")
+                    print(f"  • {project.name} (error)")
             else:
                 print(f"  • {project.name} (no config)")
-    
-    def get_all_projects_data(self):
-        """Return structured data for all projects (useful for programmatic access)."""
-        projects = [d for d in self.projects_dir.iterdir() if d.is_dir()]
-        projects_data = []
-        
-        for project in sorted(projects):
-            config_path = project / "config.yaml"
-            if config_path.exists():
-                try:
-                    with open(config_path) as f:
-                        config = yaml.safe_load(f)
-                    
-                    # File status
-                    files_status = {
-                        'outline.md': (project / "outline.md").exists(),
-                        'presentation.html': (project / "presentation.html").exists(),
-                        'pdf': (project / f"{project.name}.pdf").exists(),
-                    }
-                    
-                    # Count files
-                    input_count = len([f for f in (project / "input").iterdir() if f.is_file()]) if (project / "input").exists() else 0
-                    plots_count = len([f for f in (project / "plots").iterdir() if f.is_file()]) if (project / "plots").exists() else 0
-                    
-                    project_data = {
-                        'name': project.name,
-                        'path': str(project),
-                        'config': config,
-                        'files': files_status,
-                        'content_counts': {
-                            'input_files': input_count,
-                            'plots': plots_count
-                        }
-                    }
-                    projects_data.append(project_data)
-                    
-                except Exception as e:
-                    projects_data.append({
-                        'name': project.name,
-                        'path': str(project),
-                        'error': str(e)
-                    })
-            else:
-                projects_data.append({
-                    'name': project.name,
-                    'path': str(project),
-                    'error': 'No config.yaml found'
-                })
-        
-        return projects_data
     
     def list_themes(self):
         """List all available themes."""
         themes = []
         
-        # Check regular theme directories
-        for d in self.themes_dir.iterdir():
-            if d.is_dir() and d.name != 'private' and (d / f"{d.name}_theme.css").exists():
-                themes.append((d.name, d))
-        
-        # Check private themes (both files and subdirectories in themes/private/)
-        private_dir = self.themes_dir / "private"
-        if private_dir.exists():
-            # Look for theme files directly in private directory
-            theme_files = [f for f in private_dir.iterdir() if f.name.endswith('_theme.css')]
-            for css_file in theme_files:
-                theme_name = css_file.name.replace('_theme.css', '')
-                themes.append((theme_name, private_dir, True))  # True indicates private theme
+        # Recursively check all subdirectories in themes folder
+        for root, dirs, files in os.walk(self.themes_dir):
+            root_path = Path(root)
+            dir_name = root_path.name
+            theme_css = root_path / f"{dir_name}_theme.css"
             
-            # Look for theme subdirectories in private directory
-            for d in private_dir.iterdir():
-                if d.is_dir() and (d / f"{d.name}_theme.css").exists():
-                    themes.append((d.name, d, True))  # True indicates private theme
+            if theme_css.exists():
+                relative_path = root_path.relative_to(self.themes_dir)
+                themes.append((dir_name, root_path, str(relative_path)))
         
         if not themes:
             print("🎨 No themes found!")
             return
         
-        print("🎨 Available Themes:")
+        print("🎨 Themes:")
         for theme_info in sorted(themes):
-            if len(theme_info) == 3:  # Private theme
-                theme_name, theme_dir, is_private = theme_info
-                css_file = theme_dir / f"{theme_name}_theme.css"
-                mpl_file = theme_dir / f"{theme_name}_style.mplstyle"
-                status = "✅🔒" if mpl_file.exists() else "⚠️🔒"
-                print(f"  • {theme_name} {status} (private)")
-            else:  # Regular theme
-                theme_name, theme_dir = theme_info
-                css_file = theme_dir / f"{theme_name}_theme.css"
-                mpl_file = theme_dir / f"{theme_name}_style.mplstyle"
-                status = "✅" if mpl_file.exists() else "⚠️ "
-                print(f"  • {theme_name} {status}")
+            theme_name, theme_dir, relative_path = theme_info
+            print(f"  • {theme_name}")
     
     def generate_pdf(self, project_name):
         """Generate PDF for a project."""
@@ -278,8 +158,7 @@ class SlideAgentClient:
         
         html_file = project_path / "presentation.html"
         if not html_file.exists():
-            print(f"❌ No presentation.html found in project '{project_name}'")
-            print("💡 Generate the HTML file first with your LLM workflow")
+            print(f"❌ No presentation.html found")
             return False
         
         # Run PDF generation
@@ -298,47 +177,34 @@ class SlideAgentClient:
                 print(f"❌ PDF generation failed: {result.stderr}")
                 return False
         except FileNotFoundError:
-            print("❌ Node.js not found. Install Node.js to generate PDFs.")
+            print("❌ Node.js not found")
             return False
     
-    def get_project_info(self, project_name):
-        """Get detailed information about a project."""
+    def show_project(self, project_name):
+        """Show detailed information about a project."""
         project_path = self.projects_dir / project_name
         
         if not project_path.exists():
             print(f"❌ Project '{project_name}' not found!")
-            return None
+            return
         
         config_path = project_path / "config.yaml"
         if not config_path.exists():
-            print(f"❌ No config.yaml found in project '{project_name}'")
-            return None
+            print(f"❌ No config.yaml found")
+            return
         
         with open(config_path) as f:
             config = yaml.safe_load(f)
         
-        # Check for files
-        files_status = {
-            'outline.md': (project_path / "outline.md").exists(),
-            'presentation.html': (project_path / "presentation.html").exists(),
-            'PDF': (project_path / f"{project_name}.pdf").exists(),
-        }
+        # Count files
+        plots_count = len(list((project_path / "plots").glob('*'))) if (project_path / "plots").exists() else 0
+        input_count = len(list((project_path / "input").glob('*'))) if (project_path / "input").exists() else 0
         
-        # Count plots
-        plots_dir = project_path / "plots"
-        plot_count = len([f for f in plots_dir.iterdir() if f.is_file()]) if plots_dir.exists() else 0
-        
-        print(f"📊 Project: {project_name}")
-        print(f"  Title: {config.get('title', 'N/A')}")
+        print(f"📊 {project_name}")
         print(f"  Theme: {config.get('theme', 'N/A')}")
-        print(f"  Author: {config.get('author', 'N/A')}")
-        print(f"  Files:")
-        for filename, exists in files_status.items():
-            status = "✅" if exists else "❌"
-            print(f"    {status} {filename}")
-        print(f"  Plots: {plot_count} files")
-        
-        return config
+        print(f"  Files: {input_count} inputs, {plots_count} charts")
+        print(f"  HTML: {'✅' if (project_path / 'presentation.html').exists() else '❌'}")
+        print(f"  PDF: {'✅' if (project_path / f'{project_name}.pdf').exists() else '❌'}")
 
 def main():
     """Main CLI interface."""
@@ -362,8 +228,7 @@ Examples:
     new_parser.add_argument('--theme', default='acme_corp', help='Theme to use (default: acme_corp)')
     
     # List projects command
-    list_parser = subparsers.add_parser('list-projects', help='List all projects')
-    list_parser.add_argument('--detailed', action='store_true', help='Show detailed project information')
+    subparsers.add_parser('list-projects', help='List all projects')
     
     # List themes command
     subparsers.add_parser('list-themes', help='List available themes')
@@ -387,13 +252,13 @@ Examples:
     if args.command == 'new-project':
         client.create_project(args.name, args.theme)
     elif args.command == 'list-projects':
-        client.list_projects(detailed=args.detailed)
+        client.list_projects()
     elif args.command == 'list-themes':
         client.list_themes()
     elif args.command == 'generate-pdf':
         client.generate_pdf(args.name)
     elif args.command == 'info':
-        client.get_project_info(args.name)
+        client.show_project(args.name)
 
 if __name__ == "__main__":
     main()
