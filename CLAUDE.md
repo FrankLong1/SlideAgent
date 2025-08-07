@@ -2,13 +2,7 @@
 
 You are an expert presentation generator using SlideAgent. This unified system combines professional slide generation with integrated chart creation for high-quality business presentations.
 
-## Core Architecture
-
-SlideAgent integrates two main components:
-- **Slide Generation**: HTML/CSS templates with professional corporate themes
-- **Chart Generation**: Python matplotlib charts with consistent branding via PlotBuddy
-
-
+MAKE SURE TO ALWAYS ACTIVATE THE VENV BEFORE DOING ANYTHING.
 
 ## Directory Structure
 
@@ -19,23 +13,31 @@ SlideAgent/
 │   │   ├── chart_templates/     # Chart template examples
 │   │   └── utils/
 │   │       └── plot_buddy.py    # Main chart generation class
-│   └── slides/
-│       ├── core_css/
-│       │   ├── base.css         # Core slide styling
-│       │   └── print.css        # PDF optimization
-│       ├── slide_templates/     # 12 slide templates (00-11)
-│       └── pdf_generator.js     # PDF generation script
+│   ├── slides/
+│   │   ├── core_css/
+│   │   │   ├── base.css         # Core slide styling
+│   │   │   └── print.css        # PDF optimization
+│   │   └── slide_templates/     # 12 slide templates (00-11)
+│   └── utils/
+│       ├── pdf_generator.js     # PDF generation script
+│       └── screenshotter.js     # Screenshot utility for validation
 ├── themes/
 │   ├── examples/                  # Example themes for reference
 │   │   └── acme_corp/            # Default professional theme
 │   └── private/                   # Custom/client-specific themes
 ├── projects/
 │   └── [project-name]/
-│       ├── config.yaml         # Project configuration
+│       ├── slides/             # Individual standalone HTML slide files
+│       │   ├── slide_01.html   # Self-contained HTML slide "websites"
+│       │   ├── slide_02.html
+│       │   └── ...
+│       ├── validation/         # Quality control
+│       │   ├── screenshots/    # Puppeteer screenshots (1920x1080)
+│       │   └── ai_visual_analysis.txt
+│       ├── plots/              # Chart files (_clean.png for slides)
 │       ├── input/              # Source materials
-│       ├── plots/              # Generated charts
-│       ├── outline.md          # Content outline
-│       ├── presentation.html   # Final presentation
+│       ├── config.yaml         # Project configuration
+│       ├── outline.md          # Section-based outline
 │       └── [project-name].pdf  # Generated PDF
 └── DirectoryClient.py          # Project management CLI
 ```
@@ -162,16 +164,18 @@ Each theme contains 4 files:
 
 **Process**: Create in `themes/private/[client-name]/`, customize CSS/matplotlib styling, test consistency.
 
-### Logo File Requirements
+### Logo Requirements & Theme Management
 **IMPORTANT**: Always use authentic logos in PNG format:
 - **DO NOT create custom SVG logos** - this can result in trademark/brand violations
 - **USE PNG format** for logos to maintain quality and authenticity
 - **RESPECT brand guidelines** - use official colors, fonts, and design elements
 - For private/corporate themes, store in `themes/private/`
 
-### Use the DirectoryClient to check for available themes:
+**Theme Management Commands:**
 ```bash
-python3 DirectoryClient.py list-themes
+python3 DirectoryClient.py list-themes        # View available themes
+python3 DirectoryClient.py list-projects      # View projects with themes
+python3 DirectoryClient.py info <project>     # Detailed project theme info
 ```
 
 ### Project Configuration (config.yaml)
@@ -179,11 +183,40 @@ Each project must specify its theme location in `config.yaml`:
 ```yaml
 author: Your Name
 theme: acme_corp                    # Theme name
-theme_path: ../../themes/examples/acme_corp  # Relative path from config.yaml location
+theme_path: ../../themes/examples/acme_corp  # Relative path from config.yaml location (used by PlotBuddy)
 title: Your Presentation Title
 ```
 
 **Note:** PlotBuddy automatically uses `theme_path` for consistent styling across slides and charts.
+
+### CSS Path Management
+
+**CRITICAL**: CSS paths in slides are context-dependent. Each slide file must reference CSS files using the correct relative path from its location:
+
+#### Standard Project Structure:
+```
+SlideAgent/
+├── src/slides/core_css/
+│   ├── base.css
+│   └── print.css
+├── themes/[theme-location]/
+│   └── [theme]_theme.css
+└── projects/[project]/slides/
+    └── slide_XX.html
+```
+
+#### Required CSS Links in Each Slide:
+```html
+<link rel="stylesheet" href="../../../src/slides/core_css/base.css">
+<link rel="stylesheet" href="../../../src/slides/core_css/print.css">
+<link rel="stylesheet" href="../../../themes/[theme-location]/[theme]_theme.css">
+```
+
+#### Path Calculation:
+- From `projects/[project]/slides/` to `src/slides/core_css/` = `../../../src/slides/core_css/`
+- From `projects/[project]/slides/` to `themes/` = `../../../themes/`
+
+**AI Guidance**: Always verify CSS paths are correct for the specific slide location. Test that files exist at the specified paths before generating slides.
 
 
 ## Critical Header Structure Requirements
@@ -218,196 +251,210 @@ Core CSS
 
 ### Static Slide Design Philosophy
 - **No animations or CSS transitions** - Designed for static presentation and PDF export
-- **Fixed 16:9 presentation dimensions** - Optimized for projector display
+- **Fixed 16:9 presentation dimensions** - Optimized for projector display (1920x1080px)
 - **Print-focused styling** - No visual effects just static stuff for printed/PDF format
+- **PDF-safe CSS only** - No box-shadows, gradients, transparency, or filters that render poorly in PDFs
 - **No emojis** - Professional and institutional appearance
 
-## AI-Assisted Workflow Process
+## Complete Workflow & AI Guidelines
 
-### 1. Project Setup
-**IMPORTANT**: Always use the DirectoryClient to create new projects. Never manually create project folders.
-```bash
-python3 DirectoryClient.py new-project [project-name] --theme [theme-name]
-```
-This automatically:
-- Creates the proper directory structure
-- Sets up config.yaml with correct theme paths
-- Generates initial outline.md
-- Creates input/ and plots/ folders
-
-Example:
-```bash
-python3 DirectoryClient.py new-project liquid-cooling --theme acme_corp
-```
-
-## DirectoryClient CLI Commands
-
-The DirectoryClient provides comprehensive project management for SlideAgent:
-
-### Core Commands
-
-**Create New Project:**
-```bash
-python3 DirectoryClient.py new-project <project-name> [--theme <theme>]
-```
-- Creates project directory structure
-- Generates initial config.yaml and outline.md
-- Sets up input/ and plots/ folders
-
-**List Projects:**
-```bash
-python3 DirectoryClient.py list-projects [--detailed]
-```
-- Basic: Shows project name, theme, and title
-- Detailed: Shows paths, file status, content counts, theme configuration
-
-**List Available Themes:**
-```bash
-python3 DirectoryClient.py list-themes
-```
-- Shows all available themes with status indicators
-- Checks for both CSS and matplotlib style files
-- Identifies private themes in themes/private/
-
-**Project Information:**
-```bash
-python3 DirectoryClient.py info <project-name>
-```
-- Detailed project status
-- File existence checks (outline, HTML, PDF)
-- Plot count and configuration details
-
-**Generate PDF:**
-```bash
-python3 DirectoryClient.py generate-pdf <project-name>
-```
-- Converts presentation.html to PDF
-- Requires Node.js and presentation.html to exist
-
-### Programmatic Access
-
-The DirectoryClient can also be used programmatically:
-```python
-from DirectoryClient import SlideAgentClient
-
-client = SlideAgentClient()
-projects_data = client.get_all_projects_data()
-# Returns structured data for all projects including paths, configs, file status
-```
-
-### 2. Content Gathering Phase
-**User Action**: Dump all source materials into `input/` folder:
-- Data files (CSV, Excel, JSON)
-- Research documents (PDF, Word, text)
-- Images, charts, diagrams
-- Reference materials
-- Any other relevant content
-
-### 3. AI Outline Generation
-**Model Action**: Analyze input materials and generate comprehensive `outline.md`:
-- Review all files in `input/` folder
-- Identify key themes, data insights, and narrative flow
-- Propose slide structure with specific templates
-- Suggest chart types and data visualizations needed
-- Create logical presentation flow
-
-### 4. User Outline Review
-**User Action**: Review and refine the generated outline:
-- Approve/modify slide sequence
-- Adjust narrative flow
-- Add/remove sections as needed
-- Specify any particular emphasis or messaging
-- Confirm chart and visualization requirements
-
-### 5. AI Chart Generation
-**Model Action**: Generate data visualizations based on approved outline:
-- Create data visualizations using PlotBuddy
-- Generate both branded and clean chart versions
-- Ensure theme consistency across all chart elements
-- Save charts in appropriate formats for slide integration
-
-### 6. AI Slide Generation
-**Model Action**: Build slide content using approved outline and generated charts:
-- Build slide content using appropriate templates
-- Make sure to build it slide by slide, so create an individual task for each slide.
-- Before making a slide ensure you have read the template it is based on. Every slide should be based on a template.
-- If you have a creative idea for what a slide should look like feel free to generate that as an alternative following the standard templated one.
-- Integrate generated charts into relevant slides
-- Ensure theme consistency across all slide elements
-- Produce complete `presentation.html`
-
-### 7. User Review & Iteration
-**User Action**: Review generated presentation:
-- Check slide content and flow
-- Verify chart accuracy and clarity
-- Assess overall messaging and impact
-- Request specific changes or refinements
-
-### 7. Iteration Cycles
-**Collaborative Process**: Refine until perfect:
-- Model makes requested adjustments
-- User reviews changes
-- Continue iterations as needed
-- Focus on specific slides, charts, or content sections
-
-### 8. Final PDF Generation
-```bash
-python3 DirectoryClient.py generate-pdf [project-name]
-```
-
-**Key Principle**: The model does the heavy lifting of content analysis, outline creation, and presentation generation, while the user provides direction, feedback, and refinement through iterative collaboration.
-
-## Power Plant Analysis Project
-
-### Overview
-Comprehensive analysis of power plant generation data for datacenter deployment scenarios. Analyzes 8 power plants across the US using slack capacity, solar generation, battery storage, and backup generators.
-
-### Key Files
-- `src/active_projects/power_plant_curtailment/main_analysis.py` - Main analysis orchestration
-- `utils.py` - Solar modeling, battery simulation, chart creation
-- `constants.yaml` - Configuration constants
-- `plant_*/outputs/` - Generated charts (7 charts per plant)
-
-### Chart Types Generated
-1. Daily Peaks - Annual generation patterns
-2. Daily Cycle - 24-hour generation profile
-3. Slack Capacity - Available unused generation capacity
-4. Solar Potential - Location-specific solar generation modeling
-5. Combined Capacity - Plant slack + solar generation
-6. Battery Storage - Integrated battery storage system analysis
-7. Backup Generators - Complete backup system with natural gas peakers
-
-### Running Analysis
-```bash
-source venv/bin/activate && cd src/active_projects/power_plant_curtailment
-python main_analysis.py plant_165_GRDA/ --no-display
-```
-
-## Usage Instructions for Claude
-
-### AI-Assisted Workflow Principles
+### Core Principles for AI Assistants
 1. **ALWAYS use DirectoryClient for project creation** - Never manually create project folders or structure
-2. **Always activate venv first** for any chart generation work
-3. **Analyze input/ folder comprehensively** before generating outlines, use the read file tool over at least once on everything in there before proceeding.
+2. **Always activate venv first** for any chart generation work: `source venv/bin/activate && pip install -r requirements.txt`
+3. **Analyze input/ folder comprehensively** before generating outlines - read every file in input/ before proceeding
 4. **Generate data-driven outlines** based on available materials and insights
 5. **Use PlotBuddy.from_project_config()** for automatic theme loading
 6. **Match templates to content** - select appropriate slide templates for each section
 7. **Create iterative refinements** based on user feedback
 8. **Maintain consistency** across charts, slides, and narrative flow
-9. **Use authentic logos only** - download PNG logos from official sources, never create custom SVG logos
+9. **Use authentic logos only** - see Theme System section for logo requirements
+
+### Step-by-Step Workflow
+
+#### 1. Project Setup
+**IMPORTANT**: Always use DirectoryClient to create new projects:
+```bash
+python3 DirectoryClient.py new-project [project-name] --theme [theme-name]
+```
+
+For other commands (list projects, themes, generate PDF, etc.), see the Theme System section above.
+
+#### 2. Content Analysis
+**User Action**: Add source materials to `input/` folder (data files, research, images, references)
+**AI Action**: Comprehensively analyze all input materials using file reading tools
+
+#### 3. Outline Generation & Review
+**AI Action**: Generate `outline.md` with specific templates, chart types, and logical flow
+**User Action**: Review and refine outline, adjust narrative flow and requirements
+
+#### 4. Chart Generation
+**AI Action**: Create visualizations using PlotBuddy:
+- Generate both branded and clean versions
+- Ensure theme consistency
+- Save in appropriate formats for slide integration
+
+#### 5. Slide Generation
+**AI Action**: Build slides using templates:
+- Create individual slides based on outline (one task per slide)
+- Read each template before using it
+- Integrate generated charts
+- Ensure consistent theming across all elements
+
+#### 6. Review & Iteration
+**Collaborative Process**: Iterate until perfect:
+- User reviews content, flow, and accuracy
+- AI makes requested adjustments
+- Continue refinement cycles as needed
+- Focus on specific slides or sections
+
+#### 7. Final PDF Generation
+```bash
+python3 DirectoryClient.py generate-pdf [project-name]
+```
+
+**Key Principle**: The AI does the heavy lifting of content analysis, outline creation, and presentation generation, while the user provides direction, feedback, and refinement through iterative collaboration.
+
+### Section-Based Parallel Generation Workflow
+
+SlideAgent supports parallel section-based slide generation for dramatically improved speed and quality control.
+
+#### Flexible Outline Format (Example)
+Organize your outline into logical sections. The format below is a suggestion - adapt sections and slide counts to match your presentation needs:
+
+```markdown
+# Section 1: Introduction (slides 1-2)
+## Slide 1: Title Slide
+- Template: 00_title_slide
+- Content: Project Title, Author, Date
+- Charts needed: None
+
+## Slide 2: Overview
+- Template: 01_base_slide  
+- Content: Agenda and objectives
+- Charts needed: None
+
+# Section 2: Main Analysis (slides 3-5)
+## Slide 3: Key Findings
+- Template: 02_text_left_image_right
+- Content: Primary insights and analysis
+- Charts needed: analysis_chart.png
+
+## Slide 4: Supporting Data
+- Template: 04_full_image_slide
+- Content: Comprehensive data visualization
+- Charts needed: supporting_data_chart.png
+
+## Slide 5: Financial Summary
+- Template: 07_financial_data_table
+- Content: Key financial metrics
+- Charts needed: quarterly_performance.png
+```
+
+**Key Principles:**
+- Use `# Section N: Title (slides X-Y)` to mark section boundaries
+- Choose appropriate templates for each slide's content type
+- Specify required charts that need to be generated
+- Organize sections logically for your presentation narrative
+
+#### Parallel Generation Process
+
+**CRITICAL**: Always spawn ALL section agents in parallel using a single message with multiple Task tool calls. This dramatically improves speed and efficiency.
+
+**Step 1:** Parse outline and identify section boundaries using pattern `# Section N:`
+
+**Step 2:** Spawn ALL section agents in parallel via single message with multiple Task tool calls:
+```
+Main Agent spawns ALL sections simultaneously:
+├── Task Agent 1: Section 1 (slides 1-3)
+├── Task Agent 2: Section 2 (slides 4-8)  
+├── Task Agent 3: Section 3 (slides 9-11)
+├── Task Agent 4: Section 4 (slides 12-16)
+└── Task Agent 5: Section 5 (slides 17-20)
+```
+
+**Example Usage**: Use multiple `<invoke name="Task">` calls in a single message:
+```xml
+<function_calls>
+<invoke name="Task">...</invoke>
+<invoke name="Task">...</invoke>  
+<invoke name="Task">...</invoke>
+<invoke name="Task">...</invoke>
+<invoke name="Task">...</invoke>
+</function_calls>
+```
+
+**Step 3:** Each section agent operates independently:
+- Receives complete system instructions (same as parent agent)
+- Gets section outline chunk + theme config + project context
+- Charts already generated (no need to regenerate)
+- Reads appropriate slide templates 
+- Creates individual **fully self-contained** HTML slide "websites": `slide_XX.html` in slides/ directory
+
+**CRITICAL - HTML Slide Requirements:**
+- Each slide should be a properly structured HTML document
+- Reference external CSS files using `<link rel="stylesheet">` tags for maintainability
+- Include references to: base.css, print.css, and theme CSS files
+- **IMPORTANT CSS PATHS**: From `projects/[project]/slides/slide_XX.html`:
+  - Base CSS: `../../../src/slides/core_css/base.css`
+  - Print CSS: `../../../src/slides/core_css/print.css`
+  - Theme CSS: `../../../themes/[theme-location]/[theme]_theme.css`
+- Charts referenced as `<img src="../plots/chart_name_clean.png">` 
+- Each slide must render perfectly when opened in any browser
+- Complete DOCTYPE html structure with proper 16:9 slide dimensions
+- Dependencies: external CSS files and chart images in plots/
+- Clean, maintainable code structure with external stylesheets
+- No aggregator HTML files needed - PDF is generated directly from individual slides
+
+**Step 4:** Visual validation and quality control:
+```bash
+node src/utils/screenshotter.js /path/to/project
+# Review screenshots and identify issues
+```
+
+### Visual Validation Checklist
+When reviewing screenshots, check EVERY slide for these issues:
+
+#### Layout & Spacing:
+- **Text overlap**: Headers/subtitles overlapping with content
+- **Aspect ratio**: Slides must maintain exact 16:9 (1920x1080px) dimensions
+- **Alignment**: Elements properly aligned to grid, no misaligned content
+- **White space**: No awkward empty spaces or overcrowding
+
+#### PDF Rendering Issues:
+- **Shadow artifacts**: Box-shadows create unwanted halos in PDFs
+- **Gradient problems**: CSS gradients render as solid blocks
+- **Transparency issues**: Semi-transparent elements appear broken
+- **Dimension distortion**: Viewport units causing incorrect sizing
+
+#### Content & Branding:
+- **Logo placement**: Consistent positioning and sizing
+- **Chart integration**: Proper sizing within allocated space
+- **Font readability**: Appropriate sizes and contrast
+- **Page numbering**: Correct sequential numbering
+
+### PDF-Safe CSS Guidelines
+**IMPORTANT**: Avoid these CSS features that cause PDF rendering issues:
+
+#### Never Use:
+- **`box-shadow`**: Creates unwanted halos and artifacts in PDFs
+- **CSS gradients**: `linear-gradient()` or `radial-gradient()` render poorly
+- **Opacity/transparency**: `opacity` less than 1 or `rgba()` with alpha
+- **CSS filters**: `blur()`, `drop-shadow()`, `brightness()`, etc.
+- **Blend modes**: `mix-blend-mode` or `background-blend-mode`
+- **Complex transforms**: 3D transforms or perspective effects
+
+#### Use Instead:
+- **Solid borders**: Replace `box-shadow` with `border: 1px solid #color`
+- **Solid colors**: Use hex or rgb colors without transparency
+- **Fixed dimensions**: Use `1920px x 1080px` instead of viewport units for slides
+- **Simple backgrounds**: Solid colors only, no gradients or patterns
+- **Clear spacing**: Ensure adequate margins between headers and content
 
 
-### File Paths
+
+**Key File Paths:**
 - Templates: `src/slides/slide_templates/[NN]_template_name.html`
 - Charts: `plots/[chart]_clean.png` (for slides) or `plots/[chart]_branded.png` (standalone)
 - Themes: `themes/[theme]/[theme]_theme.css`
 
-Remember: The system is designed for simplicity and professional output. Keep templates minimal, use consistent theming, and focus on content over complexity.
-
-
-### Virtual Environment Setup
-**CRITICAL**: Always activate the virtual environment first before doing anything, whenever the user starts a sessions:
-```bash
-source venv/bin/activate
-pip install -r requirements.txt
-```
+**Design Philosophy**: The system generates HTML slides that reference external stylesheets for maintainability and consistency. Slides can be viewed individually in browsers or collectively compiled into PDFs. Keep templates minimal, use consistent theming via external CSS references, and focus on content over complexity.

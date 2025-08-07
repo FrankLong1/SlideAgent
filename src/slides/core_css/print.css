@@ -2,6 +2,23 @@
 /* This file ONLY applies when printing (File > Print > Save as PDF) */
 /* It overrides browser styles to create perfect slide PDFs */
 
+/* ============================================
+   PDF-SAFE CSS RULES:
+   
+   ALWAYS REMOVE for PDF:
+   - box-shadow (creates halos/artifacts)
+   - CSS gradients (render poorly)
+   - opacity < 1 (causes transparency issues)
+   - CSS filters (blur, drop-shadow, etc.)
+   - transform: scale/rotate/3d (distorts layout)
+   
+   ALWAYS ENFORCE for PDF:
+   - Fixed dimensions (16in x 9in)
+   - Solid colors only
+   - page-break-after: always between slides
+   - Zero margins on all elements
+   ============================================ */
+
 @media print {
     /* Set exact page size for PDF - this is critical for slide dimensions */
     @page {

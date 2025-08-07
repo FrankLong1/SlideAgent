@@ -41,6 +41,37 @@ class SlideAgentClient:
                 return root_path, root_path.relative_to(self.themes_dir)
         return None, None
     
+    def _create_initial_index_html(self, project_path, config, theme_config_path):
+        """Create initial index.html with placeholder content."""
+        template_path = self.src_dir / "slides" / "slide_templates" / "index_aggregator.html"
+        
+        if not template_path.exists():
+            print("⚠️  Index template not found, skipping index.html creation")
+            return
+        
+        with open(template_path, 'r') as f:
+            template_content = f.read()
+        
+        # Create placeholder content for 5 slides
+        placeholder_content = []
+        for i in range(1, 6):
+            placeholder_content.append(f'''<div class="slide-container">
+    <div class="slide-number">Slide {i}</div>
+    <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #999; font-size: 24px;">
+        Slide {i} - Content will be generated here
+    </div>
+</div>''')
+        
+        # Replace template variables
+        index_content = template_content.replace('{{PRESENTATION_TITLE}}', config['title'])
+        index_content = index_content.replace('{{THEME_CSS_PATH}}', f"{theme_config_path}/{config['theme']}_theme.css")
+        index_content = index_content.replace('{{SLIDE_CONTENT}}', '\n'.join(placeholder_content))
+        
+        # Write index.html
+        index_path = project_path / "index.html"
+        with open(index_path, 'w') as f:
+            f.write(index_content)
+    
     def create_project(self, project_name, theme="acme_corp"):
         """Create a new SlideAgent project with proper structure."""
         project_path = self.projects_dir / project_name
@@ -57,10 +88,13 @@ class SlideAgentClient:
             self.list_themes()
             return False
         
-        # Create project structure
+        # Create project structure with new section-based layout
         project_path.mkdir(parents=True)
         (project_path / "input").mkdir()
         (project_path / "plots").mkdir()
+        (project_path / "slides").mkdir()
+        (project_path / "validation").mkdir()
+        (project_path / "validation" / "screenshots").mkdir()
         
         # Determine theme path for config
         theme_config_path = f"../../themes/{theme_relative_path}"
@@ -77,28 +111,56 @@ class SlideAgentClient:
         with open(config_path, 'w') as f:
             yaml.dump(config, f, default_flow_style=False, indent=2)
         
-        # Create initial outline.md
+        # Create initial outline.md with section-based structure
         outline_content = f"""# {config['title']}
 
-## Slide Outline
+## Section-Based Outline
 
-1. **Title Slide**
-2. **Overview**
-3. **Main Content**
-4. **Conclusion**
+# Section 1: Introduction (slides 1-2)
+## Slide 1: Title Slide
+- Template: 00_title_slide
+- Content: {config['title']}, {config['author']}, Date
 
-## Notes
+## Slide 2: Overview
+- Template: 01_base_slide
+- Content: Agenda and key objectives
+- Charts needed: None
+
+# Section 2: Main Content (slides 3-4)
+## Slide 3: Key Analysis
+- Template: 02_text_left_image_right
+- Content: Main findings and insights
+- Charts needed: [specify chart names]
+
+## Slide 4: Supporting Data
+- Template: 04_full_image_slide
+- Content: Full-screen chart or diagram
+- Charts needed: [specify chart names]
+
+# Section 3: Conclusion (slide 5)
+## Slide 5: Summary
+- Template: 01_base_slide
+- Content: Key takeaways and next steps
+- Charts needed: None
+
+## Implementation Notes
 - Place source materials in `input/`
-- Charts in `plots/`
+- Charts will be generated in `plots/`
 - Theme: {theme}
+- Each section will be rendered by separate agents in parallel
+- Individual slide HTML files will be created in `slides/` directory
 """
         
         outline_path = project_path / "outline.md"
         with open(outline_path, 'w') as f:
             f.write(outline_content)
         
+        # Create initial index.html from template
+        self._create_initial_index_html(project_path, config, theme_config_path)
+        
         print(f"✅ Created project '{project_name}' with theme '{theme}'")
         print(f"📁 {project_path}")
+        print(f"📝 New structure: slides/, validation/, index.html")
         
         return True
     

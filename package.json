@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "SlideAgent - AI-powered presentation generation framework",
   "dependencies": {
+    "pdf-lib": "^1.17.1",
     "puppeteer": "^24.15.0"
   },
   "scripts": {

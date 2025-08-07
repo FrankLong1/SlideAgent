@@ -439,7 +439,7 @@ class PlotBuddy:
         # Hide logo axes (they are inset axes)
         for ax in fig.get_axes():
             # Check if this looks like a logo axis (no ticks, labels, etc.)
-            if (not ax.get_xticks().size and not ax.get_yticks().size and 
+            if (len(ax.get_xticks()) == 0 and len(ax.get_yticks()) == 0 and 
                 not ax.get_xlabel() and not ax.get_ylabel() and
                 not ax.get_title()):
                 original_states[ax] = ax.get_visible()
