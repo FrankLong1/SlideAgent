@@ -143,6 +143,25 @@ Each theme contains 4 files:
 - `[theme]_icon_logo.png` - Icon logo for headers (PNG format)
 - `[theme]_text_logo.png` - Text logo for title slides (PNG format)
 
+### Creating Custom Themes
+
+**Required Brand Information to Gather:**
+- **Colors**: Primary, secondary, background, text, accent (hex codes)
+- **Typography**: Font families, weights, web font URLs if needed
+- **Logos**: PNG format icon and text versions
+- **Bullet Points**: Style preference (arrows, squares, brand colors, nested hierarchy)
+
+**Custom Bullet Example:**
+```css
+.slide-content ul li::before {
+    content: "▶";
+    color: var(--primary-color);
+    margin-right: 8px;
+}
+```
+
+**Process**: Create in `themes/private/[client-name]/`, customize CSS/matplotlib styling, test consistency.
+
 ### Logo File Requirements
 **IMPORTANT**: Always use authentic logos in PNG format:
 - **DO NOT create custom SVG logos** - this can result in trademark/brand violations

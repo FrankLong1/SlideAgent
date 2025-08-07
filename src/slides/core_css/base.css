@@ -119,6 +119,8 @@ li {
     flex-direction: column;
     flex: 1;
     text-align: left; /* Force left alignment */
+    max-width: 60%; /* Prevent text overflow */
+    overflow-wrap: break-word;
 }
 
 /* Main slide title in header - matches h2 styling */
