@@ -226,6 +226,14 @@ class SlideAgentClient:
             with open(config_path, 'r') as f:
                 config = yaml.safe_load(f)
                 old_theme = config.get('theme', 'acme_corp')
+                # Try to locate the current theme's path
+                old_theme_dir, old_theme_relative_path = self._find_theme(old_theme)
+                if old_theme_dir:
+                    old_theme_relative_path = old_theme_relative_path.as_posix()
+                else:
+                    print(f"⚠️ Could not locate theme '{old_theme}'. Using default examples path.")
+                    old_theme_relative_path = Path("examples") / old_theme
+                    old_theme_relative_path = old_theme_relative_path.as_posix()
         else:
             print(f"❌ No config.yaml found in project!")
             return False
@@ -242,34 +250,35 @@ class SlideAgentClient:
             return False
         
         print(f"🔄 Swapping theme from '{old_theme}' to '{new_theme}'...")
-        
+
+        old_css_base = Path("themes") / old_theme_relative_path / f"{old_theme}_theme.css"
+        new_css_base = Path("themes") / theme_relative_path / f"{new_theme}_theme.css"
+
         # Update each slide file
         for slide_file in slide_files:
             with open(slide_file, 'r') as f:
                 content = f.read()
-            
-            # Replace the theme CSS path
-            old_css_path = f"themes/examples/{old_theme}/{old_theme}_theme.css"
-            new_css_path = f"themes/{theme_relative_path}/{new_theme}_theme.css"
-            
-            # Try different possible path formats
-            replacements = [
-                (f"../../../{old_css_path}", f"../../../themes/{theme_relative_path}/{new_theme}_theme.css"),
-                (f"../../{old_css_path}", f"../../themes/{theme_relative_path}/{new_theme}_theme.css"),
-                (old_css_path, f"themes/{theme_relative_path}/{new_theme}_theme.css"),
+
+            # Replace the theme CSS path using discovered paths
+            base_replacements = [
+                (Path("..") / Path("..") / old_css_base, Path("..") / Path("..") / new_css_base),
+                (Path("..") / old_css_base, Path("..") / new_css_base),
+                (old_css_base, new_css_base),
             ]
-            
+
+            replacements = [(a.as_posix(), b.as_posix()) for a, b in base_replacements]
+
             for old_path, new_path in replacements:
                 if old_path in content:
                     content = content.replace(old_path, new_path)
                     break
-            
+
             with open(slide_file, 'w') as f:
                 f.write(content)
         
         # Update config.yaml
         config['theme'] = new_theme
-        config['theme_path'] = f"../../themes/{theme_relative_path}"
+        config['theme_path'] = f"../../themes/{theme_relative_path.as_posix()}"
         
         with open(config_path, 'w') as f:
             yaml.dump(config, f, default_flow_style=False, indent=2)
