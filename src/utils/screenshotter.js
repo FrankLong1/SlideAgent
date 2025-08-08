@@ -122,10 +122,10 @@ class Screenshotter {
 // CLI Usage
 async function main() {
     const projectPath = process.argv[2];
-    
+
     if (!projectPath) {
-        console.error('Usage: node ai_visual_validator.js <project-path>');
-        console.error('Example: node ai_visual_validator.js /path/to/projects/test-sections');
+        console.error('Usage: node screenshotter.js <project-path>');
+        console.error('Example: node screenshotter.js /path/to/projects/test-sections');
         process.exit(1);
     }
     
