@@ -1,9 +1,25 @@
 #!/usr/bin/env node
 
-const puppeteer = require('puppeteer');
+const { launchBrowser, injectCommonCSS } = require('./puppeteer_helper');
 const path = require('path');
 const fs = require('fs');
 const { PDFDocument: PDFLib } = require('pdf-lib');
+
+// Run an array of async operations with a concurrency limit
+async function processWithConcurrency(items, limit, iteratorFn) {
+    const ret = [];
+    const executing = [];
+    for (const [i, item] of items.entries()) {
+        const p = Promise.resolve().then(() => iteratorFn(item, i));
+        ret.push(p);
+        const e = p.then(() => executing.splice(executing.indexOf(e), 1));
+        executing.push(e);
+        if (executing.length >= limit) {
+            await Promise.race(executing);
+        }
+    }
+    return Promise.all(ret);
+}
 
 async function generatePDF(input, outputPath = null) {
     // Check if input is a directory (for multiple slides) or single file
@@ -44,83 +60,55 @@ async function generatePDFFromSlides(slidesDir, outputPath = null) {
     console.log(`📝 Generating PDF from ${slideFiles.length} slides`);
     console.log(`📁 Output will be saved to: ${outputPath}`);
 
-    const browser = await puppeteer.launch({
-        headless: 'new',
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-gpu'
-        ]
-    });
+    const browser = await launchBrowser();
 
     try {
         // Create array to store individual PDF buffers
-        const pdfBuffers = [];
-        
-        // Process each slide
-        for (let i = 0; i < slideFiles.length; i++) {
-            const slideFile = slideFiles[i];
+        const pdfBuffers = new Array(slideFiles.length);
+
+        // Process slides concurrently with a limit
+        const CONCURRENCY_LIMIT = 4;
+        await processWithConcurrency(slideFiles, CONCURRENCY_LIMIT, async (slideFile, i) => {
             const slidePath = path.join(slidesDir, slideFile);
             console.log(`  📄 Processing ${slideFile}...`);
-            
             const page = await browser.newPage();
-            
-            // Set viewport to match slide dimensions
-            await page.setViewport({
-                width: 1920,
-                height: 1080,
-                deviceScaleFactor: 1
-            });
+            try {
+                await page.setViewport({
+                    width: 1920,
+                    height: 1080,
+                    deviceScaleFactor: 1
+                });
 
-            // Load the HTML file
-            const fileUrl = `file://${path.resolve(slidePath)}`;
-            await page.goto(fileUrl, {
-                waitUntil: 'networkidle2',
-                timeout: 60000
-            });
+                const fileUrl = `file://${path.resolve(slidePath)}`;
+                await page.goto(fileUrl, {
+                    waitUntil: 'networkidle2',
+                    timeout: 60000
+                });
 
-            // Wait for content to render
-            await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
-            // Inject minimal CSS to optimize for PDF printing
-            // The slides already have proper CSS, we just need to clean up for PDF
-            await page.addStyleTag({
-                content: `
-                    /* Remove browser viewport styling */
-                    body {
-                        background: white !important;
-                        padding: 0 !important;
-                        margin: 0 !important;
-                    }
-                    
-                    /* Ensure slides render at exact dimensions */
-                    .slide, section.slide {
-                        box-shadow: none !important;
-                        border: none !important;
-                    }
-                `
-            });
+                await injectCommonCSS(page);
 
-            // Generate PDF for this slide
-            const pdfBuffer = await page.pdf({
-                width: '16in',
-                height: '9in',
-                printBackground: true,
-                preferCSSPageSize: false,
-                margin: {
-                    top: 0,
-                    right: 0,
-                    bottom: 0,
-                    left: 0
-                },
-                displayHeaderFooter: false,
-                scale: 1.0
-            });
+                const pdfBuffer = await page.pdf({
+                    width: '16in',
+                    height: '9in',
+                    printBackground: true,
+                    preferCSSPageSize: false,
+                    margin: {
+                        top: 0,
+                        right: 0,
+                        bottom: 0,
+                        left: 0
+                    },
+                    displayHeaderFooter: false,
+                    scale: 1.0
+                });
 
-            pdfBuffers.push(pdfBuffer);
-            await page.close();
-        }
+                pdfBuffers[i] = pdfBuffer;
+            } finally {
+                await page.close();
+            }
+        });
 
         // Merge all PDFs into one
         console.log(`🔀 Merging ${pdfBuffers.length} slides into single PDF...`);
@@ -167,15 +155,7 @@ async function generatePDFFromSingleFile(htmlFilePath, outputPath = null) {
     console.log(`Generating PDF from: ${htmlFilePath}`);
     console.log(`Output will be saved to: ${outputPath}`);
 
-    const browser = await puppeteer.launch({
-        headless: 'new',
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-gpu'
-        ]
-    });
+    const browser = await launchBrowser();
 
     try {
         const page = await browser.newPage();
@@ -198,26 +178,8 @@ async function generatePDFFromSingleFile(htmlFilePath, outputPath = null) {
         // Wait for any dynamic content to load
         await new Promise(resolve => setTimeout(resolve, 2000));
 
-        // Inject CSS to optimize for PDF printing
-        await page.addStyleTag({
-            content: `
-                body {
-                    background: white !important;
-                    padding: 0 !important;
-                    margin: 0 !important;
-                    display: block !important;
-                    min-height: auto !important;
-                }
-                .slide, section.slide, div.slide {
-                    width: 1920px !important;
-                    height: 1080px !important;
-                    margin: 0 !important;
-                    box-shadow: none !important;
-                    border: none !important;
-                    overflow: hidden !important;
-                }
-            `
-        });
+        // Inject common slide CSS
+        await injectCommonCSS(page);
 
         // Generate PDF with settings that respect CSS dimensions
         const pdfBuffer = await page.pdf({
