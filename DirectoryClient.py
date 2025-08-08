@@ -40,36 +40,6 @@ class SlideAgentClient:
                 return root_path, root_path.relative_to(self.themes_dir)
         return None, None
     
-    def _create_initial_index_html(self, project_path, config, theme_config_path):
-        """Create initial index.html with placeholder content."""
-        template_path = self.src_dir / "slides" / "slide_templates" / "index_aggregator.html"
-        
-        if not template_path.exists():
-            print("⚠️  Index template not found, skipping index.html creation")
-            return
-        
-        with open(template_path, 'r') as f:
-            template_content = f.read()
-        
-        # Create placeholder content for 5 slides
-        placeholder_content = []
-        for i in range(1, 6):
-            placeholder_content.append(f'''<div class="slide-container">
-    <div class="slide-number">Slide {i}</div>
-    <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #999; font-size: 24px;">
-        Slide {i} - Content will be generated here
-    </div>
-</div>''')
-        
-        # Replace template variables
-        index_content = template_content.replace('{{PRESENTATION_TITLE}}', config['title'])
-        index_content = index_content.replace('{{THEME_CSS_PATH}}', f"{theme_config_path}/{config['theme']}_theme.css")
-        index_content = index_content.replace('{{SLIDE_CONTENT}}', '\n'.join(placeholder_content))
-        
-        # Write index.html
-        index_path = project_path / "index.html"
-        with open(index_path, 'w') as f:
-            f.write(index_content)
     
     def create_project(self, project_name, theme="acme_corp"):
         """Create a new SlideAgent project with proper structure."""
@@ -154,12 +124,9 @@ class SlideAgentClient:
         with open(outline_path, 'w') as f:
             f.write(outline_content)
         
-        # Create initial index.html from template
-        self._create_initial_index_html(project_path, config, theme_config_path)
-        
         print(f"✅ Created project '{project_name}' with theme '{theme}'")
         print(f"📁 {project_path}")
-        print(f"📝 New structure: slides/, validation/, index.html")
+        print(f"📝 New structure: slides/, validation/")
         
         return True
     
@@ -236,6 +203,80 @@ class SlideAgentClient:
         slides_count = len(list((project_path / "slides").glob('slide_*.html'))) if (project_path / "slides").exists() else 0
         print(f"  Slides: {slides_count} HTML files")
         print(f"  PDF: {'✅' if (project_path / f'{project_name}.pdf').exists() else '❌'}")
+    
+    def swap_theme(self, project_name, new_theme):
+        """Swap the theme for all slides in a project."""
+        project_path = self.projects_dir / project_name
+        
+        if not project_path.exists():
+            print(f"❌ Project '{project_name}' not found!")
+            return False
+        
+        # Find new theme
+        theme_dir, theme_relative_path = self._find_theme(new_theme)
+        
+        if not theme_dir:
+            print(f"❌ Theme '{new_theme}' not found!")
+            self.list_themes()
+            return False
+        
+        # Load current config to get old theme
+        config_path = project_path / "config.yaml"
+        if config_path.exists():
+            with open(config_path, 'r') as f:
+                config = yaml.safe_load(f)
+                old_theme = config.get('theme', 'acme_corp')
+        else:
+            print(f"❌ No config.yaml found in project!")
+            return False
+        
+        # Update all HTML files in slides directory
+        slides_dir = project_path / "slides"
+        if not slides_dir.exists():
+            print(f"❌ No slides directory found!")
+            return False
+        
+        slide_files = list(slides_dir.glob('slide_*.html'))
+        if not slide_files:
+            print(f"❌ No slide files found!")
+            return False
+        
+        print(f"🔄 Swapping theme from '{old_theme}' to '{new_theme}'...")
+        
+        # Update each slide file
+        for slide_file in slide_files:
+            with open(slide_file, 'r') as f:
+                content = f.read()
+            
+            # Replace the theme CSS path
+            old_css_path = f"themes/examples/{old_theme}/{old_theme}_theme.css"
+            new_css_path = f"themes/{theme_relative_path}/{new_theme}_theme.css"
+            
+            # Try different possible path formats
+            replacements = [
+                (f"../../../{old_css_path}", f"../../../themes/{theme_relative_path}/{new_theme}_theme.css"),
+                (f"../../{old_css_path}", f"../../themes/{theme_relative_path}/{new_theme}_theme.css"),
+                (old_css_path, f"themes/{theme_relative_path}/{new_theme}_theme.css"),
+            ]
+            
+            for old_path, new_path in replacements:
+                if old_path in content:
+                    content = content.replace(old_path, new_path)
+                    break
+            
+            with open(slide_file, 'w') as f:
+                f.write(content)
+        
+        # Update config.yaml
+        config['theme'] = new_theme
+        config['theme_path'] = f"../../themes/{theme_relative_path}"
+        
+        with open(config_path, 'w') as f:
+            yaml.dump(config, f, default_flow_style=False, indent=2)
+        
+        print(f"✅ Successfully updated {len(slide_files)} slides to use '{new_theme}' theme")
+        print(f"📝 Updated config.yaml with new theme settings")
+        return True
 
 def main():
     """Main CLI interface."""
@@ -267,6 +308,11 @@ Examples:
     info_parser = subparsers.add_parser('info', help='Show project information')
     info_parser.add_argument('name', help='Project name')
     
+    # Swap theme command
+    swap_parser = subparsers.add_parser('swap-theme', help='Swap theme for all slides in a project')
+    swap_parser.add_argument('project', help='Project name')
+    swap_parser.add_argument('theme', help='New theme name')
+    
     args = parser.parse_args()
     
     if not args.command:
@@ -283,6 +329,8 @@ Examples:
         client.list_themes()
     elif args.command == 'info':
         client.show_project(args.name)
+    elif args.command == 'swap-theme':
+        client.swap_theme(args.project, args.theme)
 
 if __name__ == "__main__":
     main()

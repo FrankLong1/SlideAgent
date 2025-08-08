@@ -1,0 +1,82 @@
+# Pokemon Matplotlib Style
+
+# Figure settings
+figure.figsize: 14, 7.875
+figure.dpi: 150
+figure.facecolor: white
+figure.edgecolor: FF0000
+
+# Axes settings
+axes.facecolor: white
+axes.edgecolor: CC0000
+axes.linewidth: 2.0
+axes.grid: True
+axes.labelcolor: 1A1A1A
+axes.titlesize: 18
+axes.titleweight: bold
+axes.labelsize: 13
+axes.labelweight: bold
+axes.spines.top: False
+axes.spines.right: False
+axes.prop_cycle: cycler('color', ['FF0000', '3B4CCA', 'FFDE00', 'CC0000', 'B3A125', 'FF6B6B', '4ECDC4', 'FFA500'])
+
+# Grid settings
+grid.color: D0D0D0
+grid.linestyle: --
+grid.linewidth: 0.7
+grid.alpha: 0.6
+
+# Legend settings
+legend.frameon: True
+legend.facecolor: white
+legend.edgecolor: FF0000
+legend.framealpha: 0.95
+legend.fontsize: 11
+legend.title_fontsize: 13
+
+# Tick settings
+xtick.color: 5A5A5A
+xtick.labelsize: 11
+xtick.major.size: 6
+xtick.major.width: 1.5
+ytick.color: 5A5A5A
+ytick.labelsize: 11
+ytick.major.size: 6
+ytick.major.width: 1.5
+
+# Font settings
+font.family: sans-serif
+font.sans-serif: Futura, Trebuchet MS, Arial, DejaVu Sans, Helvetica, sans-serif
+font.size: 12
+font.weight: bold
+
+# Line settings
+lines.linewidth: 3.0
+lines.markersize: 10
+lines.markeredgewidth: 2.0
+lines.markeredgecolor: white
+
+# Patch settings
+patch.linewidth: 0
+patch.edgecolor: FF0000
+
+# Colormap
+image.cmap: plasma
+
+# Bar plot settings
+bars.edgecolor: white
+bars.linewidth: 2.5
+
+# Histogram settings
+hist.bins: auto
+
+# Scatter plot settings
+scatter.marker: o
+scatter.edgecolors: white
+
+# Save settings
+savefig.dpi: 150
+savefig.facecolor: white
+savefig.edgecolor: none
+savefig.bbox: tight
+savefig.pad_inches: 0.2

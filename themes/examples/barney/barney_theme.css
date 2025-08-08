@@ -1,0 +1,257 @@
+/* Barney & Friends Theme CSS */
+
+:root {
+    /* Primary Brand Colors */
+    --primary-color: #B62684;      /* Fandango - Barney purple */
+    --secondary-color: #009849;     /* Spanish Green */
+    --accent-color: #155BA9;        /* Green-Blue */
+    
+    /* Background and Text Colors */
+    --background-color: #D4F4DD;      /* Barney green background */
+    --text-color: #2A2A2A;
+    --light-text: #666666;
+    
+    /* Additional UI Colors */
+    --header-bg: #F8F0F5;           /* Light purple tint */
+    --border-color: #E0E0E0;
+    --highlight-bg: #FFF4E6;        /* Warm highlight */
+    --success-color: #009849;
+    --warning-color: #FFDE00;
+    --info-color: #155BA9;
+    
+    /* Typography */
+    --font-primary: 'Comic Sans MS', 'Comic Neue', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --font-display: 'Comic Sans MS', 'Comic Neue', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --font-mono: 'Courier New', Courier, monospace;
+}
+
+/* Header Styling */
+.header {
+    background: linear-gradient(135deg, var(--header-bg) 0%, #E8FFE8 100%);
+    border-bottom: 3px solid var(--primary-color);
+    border-radius: 15px 15px 0 0;
+}
+
+.section-label {
+    color: var(--primary-color);
+    font-weight: 700;
+    font-family: var(--font-display);
+}
+
+.slide-title {
+    color: var(--primary-color);
+    font-family: var(--font-display);
+    font-weight: 700;
+}
+
+.slide-subtitle {
+    color: var(--secondary-color);
+    font-family: var(--font-primary);
+}
+
+/* Logo Styling */
+.logo {
+    background-image: url('barney_icon_logo.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+}
+
+.title-slide .company-logo {
+    background-image: url('barney_text_logo.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* Body Text */
+body {
+    font-family: var(--font-primary);
+    color: var(--text-color);
+    background-color: var(--background-color);
+}
+
+/* Slide background */
+.slide {
+    background-color: var(--background-color);
+    border-radius: 20px;
+}
+
+/* Bullet Points - Fun arrows */
+.slide-content ul li::before {
+    content: "▸";
+    color: var(--primary-color);
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-right: 10px;
+}
+
+.slide-content ul ul li::before {
+    content: "◦";
+    color: var(--secondary-color);
+    font-size: 1em;
+}
+
+/* Tables */
+.data-table {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.data-table th {
+    background-color: var(--primary-color);
+    color: white;
+    font-family: var(--font-display);
+}
+
+.data-table tr:nth-child(even) {
+    background-color: #FFF0F8;
+}
+
+.data-table tr:hover {
+    background-color: #FFE6F4;
+}
+
+/* Highlight Box */
+.highlight-box {
+    background-color: var(--highlight-bg);
+    border-left: 4px solid var(--secondary-color);
+    border-radius: 15px;
+    padding: 15px;
+}
+
+/* Quote Slides */
+.quote-slide blockquote {
+    color: var(--primary-color);
+    border-left: 6px solid var(--secondary-color);
+}
+
+.quote-slide .attribution {
+    color: var(--accent-color);
+}
+
+/* Section Dividers */
+.section-divider {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+}
+
+/* Two Column Slides */
+.column-left {
+    background-color: #F8E6FF;
+    border-right: 2px solid var(--primary-color);
+    border-radius: 15px 0 0 15px;
+    padding: 20px;
+}
+
+.column-right {
+    background-color: #E6FFE6;
+    border-radius: 0 15px 15px 0;
+    padding: 20px;
+}
+
+/* Timeline Elements */
+.timeline-marker {
+    background-color: var(--primary-color);
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px var(--secondary-color);
+}
+
+.timeline-line {
+    background-color: var(--secondary-color);
+}
+
+/* Quadrant Dashboard */
+.quadrant {
+    border: 2px solid var(--border-color);
+    border-radius: 20px;
+    padding: 15px;
+}
+
+.quadrant.q1 {
+    background-color: #FFF0F8;
+    border-color: var(--primary-color);
+}
+
+.quadrant.q2 {
+    background-color: #F0FFF8;
+    border-color: var(--secondary-color);
+}
+
+.quadrant.q3 {
+    background-color: #F0F8FF;
+    border-color: var(--accent-color);
+}
+
+.quadrant.q4 {
+    background-color: #FFFEF0;
+    border-color: var(--warning-color);
+}
+
+/* Links and Buttons */
+a {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+a:hover {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
+/* Footer */
+.footer {
+    border-top: 2px solid var(--primary-color);
+    background-color: var(--header-bg);
+    color: var(--light-text);
+    border-radius: 0 0 15px 15px;
+}
+
+/* Page Numbers */
+.page-number {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: bold;
+}
+
+/* Special Elements */
+.badge {
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.9em;
+    font-weight: 600;
+}
+
+/* Full Image Slides */
+.full-image-slide img {
+    border: 3px solid var(--primary-color);
+    border-radius: 20px;
+}
+
+/* Matrix/Grid Headers */
+.matrix-header {
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: 700;
+    font-family: var(--font-display);
+}
+
+/* Architecture Boxes */
+.architecture-box {
+    border: 2px solid var(--accent-color);
+    border-radius: 20px;
+    background-color: #E8FFE8;
+    padding: 15px;
+}
+
+.transformation-arrow {
+    color: var(--secondary-color);
+    font-size: 3em;
+}

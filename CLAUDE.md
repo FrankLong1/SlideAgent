@@ -246,6 +246,7 @@ Each theme contains 4 files:
 python3 DirectoryClient.py list-themes        # View available themes
 python3 DirectoryClient.py list-projects      # View projects with themes
 python3 DirectoryClient.py info <project>     # Detailed project theme info
+python3 DirectoryClient.py swap-theme <project> <theme>  # Swap theme for all slides in a project (updates CSS references and config.yaml)
 ```
 
 ### Project Configuration (config.yaml)

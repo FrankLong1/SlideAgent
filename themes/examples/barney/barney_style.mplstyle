@@ -1,0 +1,81 @@
+# Barney & Friends Matplotlib Style
+
+# Figure settings
+figure.figsize: 14, 7.875
+figure.dpi: 150
+figure.facecolor: white
+figure.edgecolor: B62684
+
+# Axes settings
+axes.facecolor: white
+axes.edgecolor: B62684
+axes.linewidth: 1.5
+axes.grid: True
+axes.labelcolor: 2A2A2A
+axes.titlesize: 16
+axes.titleweight: bold
+axes.labelsize: 12
+axes.labelweight: normal
+axes.spines.top: False
+axes.spines.right: False
+axes.prop_cycle: cycler('color', ['B62684', '009849', '155BA9', 'FFDE00', 'FF6B9D', '66D9EF', 'FFA500', '9370DB'])
+
+# Grid settings
+grid.color: E0E0E0
+grid.linestyle: --
+grid.linewidth: 0.5
+grid.alpha: 0.7
+
+# Legend settings
+legend.frameon: True
+legend.facecolor: white
+legend.edgecolor: B62684
+legend.framealpha: 0.95
+legend.fontsize: 11
+legend.title_fontsize: 12
+
+# Tick settings
+xtick.color: 666666
+xtick.labelsize: 11
+xtick.major.size: 5
+xtick.major.width: 1.0
+ytick.color: 666666
+ytick.labelsize: 11
+ytick.major.size: 5
+ytick.major.width: 1.0
+
+# Font settings
+font.family: sans-serif
+font.sans-serif: Comic Sans MS, Comic Neue, DejaVu Sans, Helvetica, Arial, sans-serif
+font.size: 12
+
+# Line settings
+lines.linewidth: 2.5
+lines.markersize: 8
+lines.markeredgewidth: 1.5
+lines.markeredgecolor: white
+
+# Patch settings
+patch.linewidth: 0
+patch.edgecolor: B62684
+
+# Colormap
+image.cmap: plasma
+
+# Bar plot settings
+bars.edgecolor: white
+bars.linewidth: 2
+
+# Histogram settings
+hist.bins: auto
+
+# Scatter plot settings
+scatter.marker: o
+scatter.edgecolors: white
+
+# Save settings
+savefig.dpi: 150
+savefig.facecolor: white
+savefig.edgecolor: none
+savefig.bbox: tight
+savefig.pad_inches: 0.2

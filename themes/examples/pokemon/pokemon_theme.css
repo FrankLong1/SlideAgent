@@ -1,0 +1,285 @@
+/* Pokemon Theme CSS */
+
+:root {
+    /* Primary Brand Colors */
+    --primary-color: #FF0000;       /* Red */
+    --secondary-color: #3B4CCA;     /* Cerulean Blue */
+    --accent-color: #FFDE00;        /* Golden Yellow */
+    --dark-red: #CC0000;            /* Boston University Red */
+    --gold-accent: #B3A125;         /* Gold Foil */
+    
+    /* Background and Text Colors */
+    --background-color: #FFFFFF;
+    --text-color: #1A1A1A;
+    --light-text: #5A5A5A;
+    
+    /* Additional UI Colors */
+    --header-bg: #FFF8E1;           /* Light yellow tint */
+    --border-color: #D0D0D0;
+    --highlight-bg: #FFF3CD;        /* Yellow highlight */
+    --success-color: #4CAF50;
+    --warning-color: #FF9800;
+    --info-color: #3B4CCA;
+    
+    /* Typography */
+    --font-primary: 'Futura', 'Trebuchet MS', 'Arial', sans-serif;
+    --font-display: 'Futura', 'Impact', 'Arial Black', sans-serif;
+    --font-mono: 'Courier New', Courier, monospace;
+}
+
+/* Header Styling */
+.header {
+    background: linear-gradient(135deg, var(--accent-color) 0%, var(--header-bg) 100%);
+    border-bottom: 4px solid var(--primary-color);
+}
+
+.section-label {
+    color: var(--dark-red);
+    font-weight: 900;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+}
+
+.slide-title {
+    color: var(--primary-color);
+    font-family: var(--font-display);
+    font-weight: 900;
+    text-shadow: 2px 2px 0px var(--accent-color);
+}
+
+.slide-subtitle {
+    color: var(--secondary-color);
+    font-family: var(--font-primary);
+    font-weight: 600;
+}
+
+/* Logo Styling */
+.logo {
+    background-image: url('pokemon_icon_logo.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 90px;
+    height: 90px;
+}
+
+.title-slide .company-logo {
+    background-image: url('pokemon_text_logo.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* Body Text */
+body {
+    font-family: var(--font-primary);
+    color: var(--text-color);
+}
+
+/* Bullet Points - Pokeball style */
+.slide-content ul li::before {
+    content: "●";
+    color: var(--primary-color);
+    font-weight: bold;
+    font-size: 1.3em;
+    margin-right: 12px;
+}
+
+.slide-content ul ul li::before {
+    content: "○";
+    color: var(--secondary-color);
+    font-size: 1.1em;
+}
+
+/* Tables */
+.data-table th {
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--dark-red) 100%);
+    color: white;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.data-table tr:nth-child(even) {
+    background-color: #FFF9E6;
+}
+
+.data-table tr:hover {
+    background-color: var(--highlight-bg);
+}
+
+/* Highlight Box */
+.highlight-box {
+    background: linear-gradient(135deg, var(--highlight-bg) 0%, #FFFFFF 100%);
+    border-left: 5px solid var(--primary-color);
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Quote Slides */
+.quote-slide blockquote {
+    color: var(--dark-red);
+    border-left: 8px solid var(--accent-color);
+    font-style: italic;
+}
+
+.quote-slide .attribution {
+    color: var(--secondary-color);
+    font-weight: bold;
+}
+
+/* Section Dividers */
+.section-divider {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    position: relative;
+}
+
+.section-divider::before {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: repeating-linear-gradient(
+        90deg,
+        var(--accent-color),
+        var(--accent-color) 20px,
+        var(--gold-accent) 20px,
+        var(--gold-accent) 40px
+    );
+}
+
+/* Two Column Slides */
+.column-left {
+    background-color: #FFF0F0;
+    border-right: 3px solid var(--primary-color);
+}
+
+.column-right {
+    background-color: #F0F5FF;
+}
+
+/* Timeline Elements */
+.timeline-marker {
+    background: radial-gradient(circle, var(--primary-color) 40%, white 42%, white 58%, var(--dark-red) 60%);
+    border: 4px solid var(--accent-color);
+    box-shadow: 0 0 0 2px white, 0 0 0 4px var(--secondary-color);
+}
+
+.timeline-line {
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    height: 4px;
+}
+
+/* Quadrant Dashboard */
+.quadrant {
+    border: 3px solid var(--border-color);
+    border-radius: 15px;
+    transition: transform 0.2s;
+}
+
+.quadrant:hover {
+    transform: scale(1.02);
+}
+
+.quadrant.q1 {
+    background: linear-gradient(135deg, #FFE6E6 0%, #FFFFFF 100%);
+    border-color: var(--primary-color);
+}
+
+.quadrant.q2 {
+    background: linear-gradient(135deg, #E6EFFF 0%, #FFFFFF 100%);
+    border-color: var(--secondary-color);
+}
+
+.quadrant.q3 {
+    background: linear-gradient(135deg, #FFFBE6 0%, #FFFFFF 100%);
+    border-color: var(--accent-color);
+}
+
+.quadrant.q4 {
+    background: linear-gradient(135deg, #F5F0E6 0%, #FFFFFF 100%);
+    border-color: var(--gold-accent);
+}
+
+/* Links and Buttons */
+a {
+    color: var(--secondary-color);
+    text-decoration: none;
+    font-weight: 700;
+    transition: color 0.2s;
+}
+
+a:hover {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
+/* Footer */
+.footer {
+    border-top: 3px solid var(--accent-color);
+    background: linear-gradient(90deg, var(--header-bg) 0%, #FFFFFF 100%);
+    color: var(--light-text);
+}
+
+/* Page Numbers */
+.page-number {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--dark-red) 100%);
+    color: white;
+    padding: 5px 15px;
+    border-radius: 25px;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Special Elements */
+.badge {
+    background: linear-gradient(135deg, var(--accent-color) 0%, var(--gold-accent) 100%);
+    color: var(--text-color);
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+/* Full Image Slides */
+.full-image-slide img {
+    border: 5px solid var(--primary-color);
+    border-radius: 15px;
+    box-shadow: 0 0 0 3px var(--accent-color);
+}
+
+/* Matrix/Grid Headers */
+.matrix-header {
+    background: linear-gradient(90deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+    color: white;
+    font-weight: 900;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+}
+
+/* Architecture Boxes */
+.architecture-box {
+    border: 3px solid var(--secondary-color);
+    border-radius: 12px;
+    background: linear-gradient(135deg, #F8FBFF 0%, #FFFFFF 100%);
+}
+
+.transformation-arrow {
+    color: var(--accent-color);
+    font-size: 3.5em;
+    text-shadow: 2px 2px 0px var(--gold-accent);
+}
+
+/* Special Pokemon Elements */
+.energy-bar {
+    background: linear-gradient(90deg, 
+        var(--primary-color) 0%, 
+        var(--accent-color) 50%, 
+        var(--secondary-color) 100%);
+    height: 6px;
+    border-radius: 3px;
+    margin: 10px 0;
+}
