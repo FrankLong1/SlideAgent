@@ -4,9 +4,25 @@
  * Takes screenshots of slides and prepares them for AI visual analysis
  */
 
-const puppeteer = require('puppeteer');
+const { launchBrowser, injectCommonCSS } = require('./puppeteer_helper');
 const fs = require('fs').promises;
 const path = require('path');
+
+// Concurrency helper
+async function processWithConcurrency(items, limit, iteratorFn) {
+    const ret = [];
+    const executing = [];
+    for (const [i, item] of items.entries()) {
+        const p = Promise.resolve().then(() => iteratorFn(item, i));
+        ret.push(p);
+        const e = p.then(() => executing.splice(executing.indexOf(e), 1));
+        executing.push(e);
+        if (executing.length >= limit) {
+            await Promise.race(executing);
+        }
+    }
+    return Promise.all(ret);
+}
 
 class Screenshotter {
     constructor(projectPath) {
@@ -21,10 +37,7 @@ class Screenshotter {
         await fs.mkdir(this.screenshotsDir, { recursive: true });
         
         // Launch browser
-        this.browser = await puppeteer.launch({
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
-        });
+        this.browser = await launchBrowser();
     }
 
     async validateAllSlides() {
@@ -52,30 +65,34 @@ class Screenshotter {
         const htmlFiles = slideFiles.filter(file => file.endsWith('.html')).sort();
         
         console.log(`📸 Taking screenshots of ${htmlFiles.length} slides...`);
-        
-        for (const slideFile of htmlFiles) {
+
+        const CONCURRENCY_LIMIT = 4;
+        await processWithConcurrency(htmlFiles, CONCURRENCY_LIMIT, async slideFile => {
             console.log(`  📷 ${slideFile}...`);
             await this.takeScreenshot(slideFile);
-        }
-        
+        });
+
         return htmlFiles;
     }
 
     async takeScreenshot(slideFile) {
         const page = await this.browser.newPage();
-        
+
         try {
             // Set viewport to presentation size (16:9)
             await page.setViewport({ width: 1920, height: 1080 });
-            
+
             // Load slide
             const slidePath = path.join(this.slidesDir, slideFile);
             const slideUrl = `file://${path.resolve(slidePath)}`;
             await page.goto(slideUrl, { waitUntil: 'networkidle0' });
-            
+
+            // Inject common slide CSS
+            await injectCommonCSS(page);
+
             // Take screenshot
             const screenshotPath = path.join(this.screenshotsDir, `${slideFile.replace('.html', '.png')}`);
-            await page.screenshot({ 
+            await page.screenshot({
                 path: screenshotPath,
                 fullPage: false,
                 clip: { x: 0, y: 0, width: 1920, height: 1080 }
