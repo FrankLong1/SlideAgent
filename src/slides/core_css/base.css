@@ -145,10 +145,10 @@ li {
 
 /* Optional subtitle below slide title */
 .header .slide-subtitle {
-    font-size: 18px;
-    font-weight: 400;
+    font-size: 20px;  /* Increased from 18px for better readability */
+    font-weight: 500;  /* Increased from 400 for better visual weight */
     /* PDF-SAFE: Using solid color instead of opacity */
-    color: #666666;
+    color: #4a4a4a;  /* Darker gray for better contrast (was #666666) */
     margin-top: 8px; /* Increased margin */
     margin-bottom: 8px; /* Added bottom margin to prevent overlap */
     line-height: 1.4;

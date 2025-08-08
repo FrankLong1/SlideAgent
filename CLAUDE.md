@@ -112,25 +112,95 @@ The system provides a set of professional slide templates, each optimized for sp
 - **Professional Styling**: Consistent corporate appearance
 - **Theme Integration and Local Style Loading**: Uses local `.mplstyle` files without system installation to match matplotlib styles with CSS themes
 
-### Usage Example
+### CRITICAL: Slide-Optimized Chart Guidelines
+When generating charts for slides, follow these requirements:
+
+#### Chart Dimensions & Aspect Ratio
+- **Use 16:9 aspect ratio** for slide charts: `figsize=(12, 6.75)` or `figsize=(14, 7.875)`
+- **Never use square charts** for slides - they waste horizontal space
+- **Full-image slides**: Use even wider ratios like `figsize=(16, 8)` to maximize coverage
+
+#### Clean Version Requirements (for slides)
+- **NO TITLES in clean versions** - the slide header provides the title
+- **Include ONLY descriptive subtitles** if needed - state what the chart shows, not conclusions
+  - Good: "Revenue by Quarter ($M)" or "Thread Count per Architecture"
+  - Bad: "Dramatic Performance Improvements" or "Industry-Leading Growth"
+- **Keep axis labels and legends** but position them efficiently
+- **Remove any promotional or interpretive text**
+
+#### Legend Positioning
+- **Prefer side placement**: Use `bbox_to_anchor=(1.05, 0.5)` for right-side legends
+- **Avoid bottom legends** on slides - they waste vertical space
+- **For bar charts**: Consider embedding legend within the plot area
+
+#### Example: Slide-Optimized Chart Generation
 ```python
 from src.charts.utils.plot_buddy import PlotBuddy
 import matplotlib.pyplot as plt
+import numpy as np
 
-# Simple initialization - reads theme from project config.yaml
+# Initialize PlotBuddy
 buddy = PlotBuddy.from_project_config()
 
-# Alternative: specify theme directly  
-# buddy = PlotBuddy.from_theme("acme_corp")
+# SLIDE-OPTIMIZED CHART (16:9 aspect ratio)
+fig, ax = buddy.setup_figure(figsize=(14, 7.875))  # Wide format for slides
 
-# Create chart
-fig, ax = buddy.setup_figure()
-# ... add your data plotting code ...
-buddy.add_titles(ax, "Revenue Growth", "Q1-Q4 2024 Performance")
+# Create your visualization
+categories = ['Q1 2024', 'Q2 2024', 'Q3 2024', 'Q4 2024']
+revenue = [45, 52, 61, 73]
+profit = [12, 15, 18, 24]
+
+x = np.arange(len(categories))
+width = 0.35
+
+bars1 = ax.bar(x - width/2, revenue, width, label='Revenue ($M)')
+bars2 = ax.bar(x + width/2, profit, width, label='Profit ($M)')
+
+ax.set_xlabel('Quarter')
+ax.set_ylabel('Amount ($M)')
+ax.set_xticks(x)
+ax.set_xticklabels(categories)
+
+# CRITICAL: Position legend on the RIGHT for slides (not bottom)
+ax.legend(bbox_to_anchor=(1.05, 0.5), loc='center left')
+
+# For BRANDED version (standalone use): Add titles
+buddy.add_titles(ax, "Financial Performance", "Q1-Q4 2024 Results")
 buddy.add_logo(fig, "themes/acme_corp/acme_corp_icon_logo.svg")
+buddy.save("plots/financial_performance_branded.png", branded=False)
 
-# Save both versions automatically
-branded_path, clean_path = buddy.save("plots/revenue_analysis.png", branded=True)
+# For CLEAN version (slide use): Descriptive subtitle only
+fig, ax = buddy.setup_figure(figsize=(14, 7.875))
+# ... recreate the chart ...
+# Add ONLY a descriptive subtitle (no title)
+ax.text(0.5, 1.02, 'Quarterly Revenue and Profit Comparison ($M)', 
+        transform=ax.transAxes, ha='center', fontsize=12, color='#666')
+plt.tight_layout()
+plt.savefig("plots/financial_performance_clean.png", dpi=150, bbox_inches='tight')
+```
+
+### Alternative: Separate Methods for Slide Charts
+```python
+def generate_slide_chart(data, output_name):
+    """Generate a chart optimized for slide presentation"""
+    buddy = PlotBuddy.from_project_config()
+    
+    # Wide 16:9 format
+    fig, ax = buddy.setup_figure(figsize=(14, 7.875))
+    
+    # Create visualization
+    # ... your plotting code ...
+    
+    # Right-side legend
+    ax.legend(bbox_to_anchor=(1.02, 0.5), loc='center left')
+    
+    # Save WITHOUT titles for slides
+    plt.tight_layout()
+    plt.savefig(f"plots/{output_name}_clean.png", dpi=150, bbox_inches='tight')
+    
+    # Also create branded version with titles if needed
+    buddy.add_titles(ax, "Title", "Subtitle")
+    plt.savefig(f"plots/{output_name}_branded.png", dpi=150, bbox_inches='tight')
 ```
 
 ### Dual Chart Output
@@ -461,19 +531,15 @@ node src/utils/screenshotter.js projects/[project-name] --slides "slide_04.html,
 node src/utils/screenshotter.js projects/[project-name] --pattern "slide_0[4-7].html"
 ```
 
-2. **MANDATORY: Review EVERY Screenshot** using Read tool:
-```python
-# CRITICAL: Must read EVERY SINGLE screenshot - no sampling allowed
-# For Section 2 example (slides 4-7):
-Read("projects/[project-name]/validation/screenshots/slide_04.png")
-Read("projects/[project-name]/validation/screenshots/slide_05.png")
-Read("projects/[project-name]/validation/screenshots/slide_06.png")
-Read("projects/[project-name]/validation/screenshots/slide_07.png")
+2. **MANDATORY: Visual Review & Overflow Fix Protocol**
+   - Read EVERY screenshot using the Read tool (no sampling allowed)
+   - Check for any content cutoff, overflow, or truncation issues
+   - **If overflow detected**, fix it immediately (resize, adjust font, add constraints, split content, etc.)
+   - Re-run screenshotter ONLY for fixed slides
+   - Re-validate to ensure the fix worked
+   - Document what was changed in validation report
 
-# NO EXCEPTIONS - Every slide must be visually inspected
-```
-
-**IMPORTANT**: Screenshots represent PDF rendering, not HTML browser rendering. Issues found in screenshots will appear in the final PDF.
+**IMPORTANT**: Screenshots represent PDF rendering, not HTML. Issues found WILL appear in the final PDF and MUST be fixed.
 
 3. **Write Detailed Validation Report** to `validation/section_N_report.txt`:
 ```
@@ -486,12 +552,20 @@ Visual Inspection Results:
 - Slide XX: [PASS/FAIL] - [Issues if any]
 - Slide XX: [PASS/FAIL] - [Issues if any]
 
-Issues Found:
+Overflow Issues Fixed:
+- Slide XX: [Description of overflow and fix applied]
+- Slide XX: [Description of overflow and fix applied]
+
+Other Issues Found:
 1. [Issue description and affected slide]
 2. [Issue description and affected slide]
 
+Fixes Applied:
+- [List of HTML modifications made]
+- [Font-size reductions, max-height additions, etc.]
+
 Recommendations:
-- [Any fixes needed before PDF generation]
+- [Any remaining fixes needed before PDF generation]
 
 Status: [READY FOR PDF / NEEDS FIXES]
 ```
@@ -516,6 +590,13 @@ Read("projects/[project-name]/validation/section_2_report.txt")
 
 ##### Visual Validation Checklist
 When reviewing screenshots, check EVERY slide for these issues:
+
+###### PRIORITY 1 - Overflow Issues (MUST FIX):
+- **Bottom overflow**: Content cut off at bottom of slide
+- **Right overflow**: Content extending past right edge
+- **Image/chart cutoff**: Visuals not fully visible
+- **Table truncation**: Rows partially visible or cut off
+- **Text clipping**: Any text that appears cut off at edges
 
 ###### Layout & Spacing:
 - **Text overlap**: Headers/subtitles overlapping with content
