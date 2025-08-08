@@ -27,6 +27,9 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    /* Scale down for browser viewing - 70% size (30% zoom out) */
+    transform: scale(0.7);
+    transform-origin: center center;
 }
 
 /* Slide container - Fixed 16:9 dimensions for PDF compatibility */
@@ -46,7 +49,16 @@ body {
     justify-content: space-between;
 }
 
-/* Typography */
+/* ============================================
+   SIMPLIFIED 5-LEVEL TYPOGRAPHY SYSTEM
+   1. Main Title (h1): 48px - Title slides
+   2. Slide Header (h2): 36px - Slide headers  
+   3. Secondary (h3): 26px - Subtitles, labels
+   4. Body Text (p, li): 22px - Main content
+   5. Small (small): 14px - Footers, metadata
+   ============================================ */
+
+/* Level 1: Main Title */
 h1 {
     font-size: 48px;
     font-weight: 700;
@@ -54,6 +66,7 @@ h1 {
     margin-bottom: 24px;
 }
 
+/* Level 2: Slide Header */
 h2 {
     font-size: 36px;
     font-weight: 600;
@@ -61,35 +74,44 @@ h2 {
     margin-bottom: 20px;
 }
 
+/* Level 3: Secondary (subtitles, labels) */
 h3 {
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 600;
-    line-height: 1.2;
+    line-height: 1.3;
     margin-bottom: 16px;
 }
 
+/* h4 inherits from h3 for consistency */
 h4 {
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 500;
-    line-height: 1.2;
+    line-height: 1.3;
     margin-bottom: 12px;
 }
 
+/* Level 4: Body Text */
 p {
-    font-size: 18px;
-    line-height: 1.5;
-    margin-bottom: 16px;
+    font-size: 22px;
+    line-height: 1.6;
+    margin-bottom: 20px;
 }
 
 ul, ol {
-    font-size: 18px;
-    line-height: 1.6;
-    margin-bottom: 16px;
-    padding-left: 24px;
+    font-size: 22px;
+    line-height: 1.7;
+    margin-bottom: 20px;
+    padding-left: 32px;
 }
 
 li {
-    margin-bottom: 8px;
+    margin-bottom: 12px;
+}
+
+/* Level 5: Small */
+small, .small {
+    font-size: 14px;
+    line-height: 1.4;
 }
 
 /* Footer - consistent across all slides */
@@ -103,11 +125,11 @@ li {
 }
 
 .footer .footer-text {
-    font-size: 14px;
+    font-size: 14px;  /* Level 5: Small */
 }
 
 .footer .page-number {
-    font-size: 16px;
+    font-size: 14px;  /* Level 5: Small */
     font-weight: 500;
 }
 
@@ -143,16 +165,16 @@ li {
     /* Color will be inherited from theme */
 }
 
-/* Optional subtitle below slide title */
+/* Optional subtitle below slide title - uses Secondary size */
 .header .slide-subtitle {
-    font-size: 20px;  /* Increased from 18px for better readability */
-    font-weight: 500;  /* Increased from 400 for better visual weight */
+    font-size: 26px;  /* Level 3: Secondary */
+    font-weight: 500;
     /* PDF-SAFE: Using solid color instead of opacity */
-    color: #4a4a4a;  /* Darker gray for better contrast (was #666666) */
-    margin-top: 8px; /* Increased margin */
-    margin-bottom: 8px; /* Added bottom margin to prevent overlap */
+    color: #4a4a4a;
+    margin-top: 10px;
+    margin-bottom: 10px;
     line-height: 1.4;
-    text-align: left; /* Explicit left alignment */
+    text-align: left;
 }
 
 /* Right side of header - section label and logo */
@@ -167,10 +189,10 @@ li {
 
 /* Small section label above logo on right side */
 .header .section-label {
-    font-size: 12px;
+    font-size: 14px;  /* Level 5: Small */
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     font-weight: 500;
     /* PDF-SAFE: Using solid color instead of opacity */
     color: #666666;
@@ -230,7 +252,7 @@ img {
 }
 
 .highlight-box p {
-    font-size: 18px;
+    /* Inherits Level 4: Body Text (22px) from base p styling */
     margin: 0;
 }
 
@@ -246,16 +268,96 @@ img {
 }
 
 .metric-card h3 {
-    font-size: 20px;
-    margin-bottom: 15px;
-    font-weight: 600;
+    /* Inherits Level 3: Secondary (26px) from base h3 styling */
+    margin-bottom: 18px;
 }
 
 .metric-value {
-    font-size: 28px;
+    font-size: 36px;  /* Special case - same as Slide Header for emphasis */
     font-weight: 700;
 }
 
 /* Utilities */
 .mt-large { margin-top: 48px; }
 .text-center { text-align: center; }
+
+/* ============================================
+   PRINT STYLES - Optimizes slides for PDF export
+   These styles ONLY apply when printing (File > Print > Save as PDF)
+   They override browser styles to create perfect slide PDFs
+   
+   PDF-SAFE CSS RULES:
+   
+   ALWAYS REMOVE for PDF:
+   - box-shadow (creates halos/artifacts)
+   - CSS gradients (render poorly)
+   - opacity < 1 (causes transparency issues)
+   - CSS filters (blur, drop-shadow, etc.)
+   - transform: scale/rotate/3d (distorts layout)
+   
+   ALWAYS ENFORCE for PDF:
+   - Fixed dimensions (16in x 9in)
+   - Solid colors only
+   - page-break-after: always between slides
+   - Zero margins on all elements
+   ============================================ */
+
+@media print {
+    /* Set exact page size for PDF - this is critical for slide dimensions */
+    @page {
+        size: 16in 9in;              /* Force 16:9 aspect ratio pages */
+        margin: 0;                   /* No page margins - slides fill entire page */
+    }
+    
+    /* Remove browser viewing styles that interfere with PDF */
+    body {
+        background: none !important;  /* No gray background in PDF */
+        padding: 0 !important;        /* No spacing around slides in PDF */
+        margin: 0 !important;         /* No margins in PDF */
+        transform: none !important;   /* Reset browser zoom for PDF */
+        transform-origin: initial !important;
+    }
+    
+    /* Ensure each slide prints perfectly on its own page */
+    .slide, section.slide {
+        width: 16in !important;       /* Exact slide width */
+        height: 9in !important;       /* Exact slide height */
+        margin: 0 !important;         /* No spacing between slides in PDF */
+        box-shadow: none !important;  /* No shadows in PDF */
+        page-break-after: always !important;  /* Each slide = new page */
+        page-break-inside: avoid !important;  /* Never break slide content across pages */
+        break-after: page !important;         /* Modern page break syntax */
+        break-inside: avoid !important;       /* Modern break avoidance */
+    }
+    
+    /* Don't add a page break after the last slide */
+    .slide:last-child, section.slide:last-child {
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+    }
+    
+    /* Prevent text elements from breaking across pages */
+    h1, h2, h3, h4, h5, h6 {
+        page-break-after: avoid !important;  /* Keep headings with following content */
+        break-after: avoid !important;
+    }
+    
+    /* Prevent images from being cut in half across pages */
+    img {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+    
+    /* Hide any elements marked as "no-print" (useful for browser-only UI) */
+    .no-print {
+        display: none !important;
+    }
+    
+    /* Preserve colors and styling in PDF output */
+    /* By default, browsers might remove background colors to save ink */
+    * {
+        -webkit-print-color-adjust: exact !important;  /* Safari/Chrome */
+        color-adjust: exact !important;                /* Standard property */
+        print-color-adjust: exact !important;          /* Alternative syntax */
+    }
+}
