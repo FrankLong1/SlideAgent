@@ -52,12 +52,19 @@ class Screenshotter {
         const htmlFiles = slideFiles.filter(file => file.endsWith('.html')).sort();
         
         console.log(`📸 Taking screenshots of ${htmlFiles.length} slides...`);
-        
-        for (const slideFile of htmlFiles) {
-            console.log(`  📷 ${slideFile}...`);
-            await this.takeScreenshot(slideFile);
+
+        // Limit number of pages open at once to avoid exhausting resources
+        const MAX_CONCURRENT_PAGES = 5;
+        for (let i = 0; i < htmlFiles.length; i += MAX_CONCURRENT_PAGES) {
+            const batch = htmlFiles.slice(i, i + MAX_CONCURRENT_PAGES);
+            await Promise.all(
+                batch.map(slideFile => {
+                    console.log(`  📷 ${slideFile}...`);
+                    return this.takeScreenshot(slideFile);
+                })
+            );
         }
-        
+
         return htmlFiles;
     }
 
