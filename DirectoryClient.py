@@ -9,6 +9,7 @@ Usage:
     python DirectoryClient.py new-project <project-name> [--theme <theme>]
     python DirectoryClient.py list-projects
     python DirectoryClient.py list-themes
+    python DirectoryClient.py init-slide <project> <number> [--template <path>] [--title "Title"] [--subtitle "Subtitle"] [--section "Section"]
 """
 
 import os
@@ -16,7 +17,69 @@ import sys
 import yaml
 import argparse
 import shutil
+import re
 from pathlib import Path
+
+# String constants for templates
+MEMORY_TEMPLATE = """# Project Memory: {project_name}
+
+## What's Working
+- Project structure created with theme '{theme}'
+- Initial outline template established
+- Section-based parallel generation ready
+
+## What's Not Working
+- No issues identified yet
+
+## Ideas & Improvements
+- Add specific content to input/ folder
+- Customize outline for presentation goals
+- Consider which charts will best support the narrative
+
+---
+*Last Updated: Project Creation*
+"""
+
+OUTLINE_TEMPLATE = """# {title}
+
+## Section-Based Outline
+
+# Section 1: Introduction (slides 1-2)
+## Slide 1: Title Slide
+- Template: 00_title_slide
+- Content: {title}, {author}, Date
+
+## Slide 2: Overview
+- Template: 01_base_slide
+- Content: Agenda and key objectives
+- Charts needed: None
+
+# Section 2: Main Content (slides 3-4)
+## Slide 3: Key Analysis
+- Template: 02_text_left_image_right
+- Content: Main findings and insights
+- Charts needed: [specify chart names]
+
+## Slide 4: Supporting Data
+- Template: 04_full_image_slide
+- Content: Full-screen chart or diagram
+- Charts needed: [specify chart names]
+
+# Section 3: Conclusion (slide 5)
+## Slide 5: Summary
+- Template: 01_base_slide
+- Content: Key takeaways and next steps
+- Charts needed: None
+
+## Implementation Notes
+- Place source materials in `input/`
+- Charts will be generated in `plots/`
+- Theme: {theme}
+- Each section will be rendered by separate agents in parallel
+- Individual slide HTML files will be created in `slides/` directory
+"""
+
+DEFAULT_BLANK_SLIDE_PATH = "src/slides/slide_templates/blank_slide.html"
 
 class SlideAgentClient:
     """Main client for SlideAgent project management."""
@@ -81,68 +144,21 @@ class SlideAgentClient:
             yaml.dump(config, f, default_flow_style=False, indent=2)
         
         # Create initial outline.md with section-based structure
-        outline_content = f"""# {config['title']}
-
-## Section-Based Outline
-
-# Section 1: Introduction (slides 1-2)
-## Slide 1: Title Slide
-- Template: 00_title_slide
-- Content: {config['title']}, {config['author']}, Date
-
-## Slide 2: Overview
-- Template: 01_base_slide
-- Content: Agenda and key objectives
-- Charts needed: None
-
-# Section 2: Main Content (slides 3-4)
-## Slide 3: Key Analysis
-- Template: 02_text_left_image_right
-- Content: Main findings and insights
-- Charts needed: [specify chart names]
-
-## Slide 4: Supporting Data
-- Template: 04_full_image_slide
-- Content: Full-screen chart or diagram
-- Charts needed: [specify chart names]
-
-# Section 3: Conclusion (slide 5)
-## Slide 5: Summary
-- Template: 01_base_slide
-- Content: Key takeaways and next steps
-- Charts needed: None
-
-## Implementation Notes
-- Place source materials in `input/`
-- Charts will be generated in `plots/`
-- Theme: {theme}
-- Each section will be rendered by separate agents in parallel
-- Individual slide HTML files will be created in `slides/` directory
-"""
+        outline_content = OUTLINE_TEMPLATE.format(
+            title=config['title'],
+            author=config['author'],
+            theme=theme
+        )
         
         outline_path = project_path / "outline.md"
         with open(outline_path, 'w') as f:
             f.write(outline_content)
         
         # Create memory.md for the project
-        memory_content = f"""# Project Memory: {project_name}
-
-## What's Working
-- Project structure created with theme '{theme}'
-- Initial outline template established
-- Section-based parallel generation ready
-
-## What's Not Working
-- No issues identified yet
-
-## Ideas & Improvements
-- Add specific content to input/ folder
-- Customize outline for presentation goals
-- Consider which charts will best support the narrative
-
----
-*Last Updated: Project Creation*
-"""
+        memory_content = MEMORY_TEMPLATE.format(
+            project_name=project_name,
+            theme=theme
+        )
         
         memory_path = project_path / "memory.md"
         with open(memory_path, 'w') as f:
@@ -301,6 +317,122 @@ class SlideAgentClient:
         print(f"✅ Successfully updated {len(slide_files)} slides to use '{new_theme}' theme")
         print(f"📝 Updated config.yaml with new theme settings")
         return True
+    
+    def init_slide(self, project_name, slide_number, template_path=None, title="", subtitle="", section=""):
+        """Initialize a slide from template with proper paths and content.
+        
+        Args:
+            project_name: Name of the project
+            slide_number: Slide number (e.g., "01" or "slide_01")
+            template_path: Path to template file (e.g., "src/slides/slide_templates/00_title_slide.html")
+            title: Main title for the slide
+            subtitle: Subtitle for the slide
+            section: Section label for the slide
+        """
+        project_path = self.projects_dir / project_name
+        
+        if not project_path.exists():
+            print(f"❌ Project '{project_name}' not found!")
+            return False
+        
+        # Load project config to get theme
+        config_path = project_path / "config.yaml"
+        if not config_path.exists():
+            print(f"❌ No config.yaml found in project!")
+            return False
+        
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
+            theme = config.get('theme', 'acme_corp')
+        
+        # Find theme for logo paths
+        _, theme_relative_path = self._find_theme(theme)
+        
+        # Ensure slide number is formatted correctly
+        if not slide_number.startswith('slide_'):
+            slide_number = f"slide_{slide_number.zfill(2)}"
+        
+        slide_path = project_path / "slides" / f"{slide_number}.html"
+        
+        # Get the HTML content
+        if template_path:
+            # Convert to Path and handle relative/absolute paths
+            template_file = Path(template_path)
+            if not template_file.is_absolute():
+                # Try relative to base directory
+                template_file = self.base_dir / template_path
+            
+            if not template_file.exists():
+                print(f"❌ Template not found at: {template_file}")
+                return False
+            
+            with open(template_file, 'r') as f:
+                html_content = f.read()
+            
+            # Fix CSS paths (from template location to project slide location)
+            # Templates use ../core_css/, we need ../../../src/slides/core_css/
+            html_content = html_content.replace('../core_css/', '../../../src/slides/core_css/')
+            
+            # Fix theme CSS path
+            # Replace any existing theme CSS link with the correct one
+            theme_css_pattern = r'<link rel="stylesheet" href="[^"]*_theme\.css">'
+            theme_css_replacement = f'<link rel="stylesheet" href="../../../themes/{theme_relative_path}/{theme}_theme.css">'
+            html_content = re.sub(theme_css_pattern, theme_css_replacement, html_content)
+            
+            # Also handle cases where theme path might be different
+            # Generic pattern to catch various theme paths
+            html_content = re.sub(
+                r'href="[^"]*themes/[^/]+/[^/]+/[^"]+_theme\.css"',
+                f'href="../../../themes/{theme_relative_path}/{theme}_theme.css"',
+                html_content
+            )
+            
+            # Fix logo paths - replace any existing logo paths with current theme logos
+            html_content = re.sub(
+                r'src="[^"]*_icon_logo\.(png|svg)"',
+                f'src="../../../themes/{theme_relative_path}/{theme}_icon_logo.png"',
+                html_content
+            )
+            html_content = re.sub(
+                r'src="[^"]*_text_logo\.(png|svg)"',
+                f'src="../../../themes/{theme_relative_path}/{theme}_text_logo.png"',
+                html_content
+            )
+            
+            # Simple, standardized replacements
+            slide_num = slide_number.replace('slide_', '')
+            
+            # Core replacements - these work for ALL templates now
+            html_content = html_content.replace('[TITLE]', title or '')
+            html_content = html_content.replace('[SUBTITLE]', subtitle or '')
+            html_content = html_content.replace('[SECTION]', section or '')
+            html_content = html_content.replace('[PAGE_NUMBER]', slide_num)
+            
+            # Legacy support for XX placeholder
+            html_content = html_content.replace('XX', slide_num)
+            
+        else:
+            # Use default blank_slide template
+            default_template = self.base_dir / DEFAULT_BLANK_SLIDE_PATH
+            if default_template.exists():
+                # Use blank_slide template as fallback
+                return self.init_slide(project_name, slide_number, str(default_template), title, subtitle, section)
+            else:
+                print(f"❌ Default blank_slide template not found at {default_template}")
+                return False
+        
+        # Save the slide
+        slides_dir = project_path / "slides"
+        slides_dir.mkdir(exist_ok=True)
+        
+        with open(slide_path, 'w') as f:
+            f.write(html_content)
+        
+        template_name = Path(template_path).name if template_path else "boilerplate"
+        print(f"✅ Initialized {slide_number}.html from {template_name}")
+        print(f"📄 {slide_path}")
+        
+        return True
 
 def main():
     """Main CLI interface."""
@@ -337,6 +469,15 @@ Examples:
     swap_parser.add_argument('project', help='Project name')
     swap_parser.add_argument('theme', help='New theme name')
     
+    # Init slide command
+    init_parser = subparsers.add_parser('init-slide', help='Initialize a slide from template')
+    init_parser.add_argument('project', help='Project name')
+    init_parser.add_argument('number', help='Slide number (e.g., 01 or slide_01)')
+    init_parser.add_argument('--template', help='Path to template file (e.g., src/slides/slide_templates/00_title_slide.html)')
+    init_parser.add_argument('--title', default='', help='Main title for the slide')
+    init_parser.add_argument('--subtitle', default='', help='Subtitle for the slide')
+    init_parser.add_argument('--section', default='', help='Section label for the slide')
+    
     args = parser.parse_args()
     
     if not args.command:
@@ -355,6 +496,8 @@ Examples:
         client.show_project(args.name)
     elif args.command == 'swap-theme':
         client.swap_theme(args.project, args.theme)
+    elif args.command == 'init-slide':
+        client.init_slide(args.project, args.number, args.template, args.title, args.subtitle, args.section)
 
 if __name__ == "__main__":
     main()

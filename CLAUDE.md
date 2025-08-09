@@ -434,18 +434,117 @@ Section Agent receives:
 └── Full system instructions
 
 Section Agent performs:
-├── 1. Read slide templates
-├── 2. Generate HTML slides
-├── 3. Save slides to disk
-├── 4. Run screenshotter on own slides
-├── 5. Read each screenshot for visual QA
-├── 6. Document issues found
-└── 7. Write validation report
+├── 1. Initialize slides using DirectoryClient init-slide command
+├── 2. Edit HTML content using Edit/MultiEdit tools (replace sample content)
+├── 3. Run screenshotter on own slides
+├── 4. Read each screenshot for visual QA
+├── 5. Document issues found
+└── 6. Write validation report
 
 Section Agent outputs:
 ├── Generated slide files (slide_XX.html)
 ├── Screenshots (slide_XX.png)
 └── Validation report (section_N_report.txt)
+```
+
+##### NEW: Optimized Slide Generation with init-slide
+
+**CRITICAL**: Always use the DirectoryClient `init-slide` command to initialize slides from templates. NEVER generate HTML from scratch using Write tool.
+
+```bash
+# Initialize a slide from a template
+python3 DirectoryClient.py init-slide <project> <number> \
+    --template <path-to-template> \
+    --title "Title Text" \
+    --subtitle "Subtitle Text" \
+    --section "Section Label"
+
+# Examples:
+# Title slide
+python3 DirectoryClient.py init-slide my-project 01 \
+    --template src/slides/slide_templates/00_title_slide.html \
+    --title "Q4 2024 Results" \
+    --subtitle "Financial Performance Review"
+
+# Base slide (uses default blank_slide if no template specified)  
+python3 DirectoryClient.py init-slide my-project 02 \
+    --title "Overview" \
+    --subtitle "Key objectives" \
+    --section "Introduction"
+
+# Text with image
+python3 DirectoryClient.py init-slide my-project 03 \
+    --template src/slides/slide_templates/02_text_left_image_right.html \
+    --title "Market Analysis" \
+    --section "Main Content"
+```
+
+**How Templates Work:**
+- All templates use standardized placeholders: `[TITLE]`, `[SUBTITLE]`, `[SECTION]`, `[PAGE_NUMBER]`
+- Templates include `<!-- TEMPLATE_TYPE: standard/title/divider -->` metadata
+- The init-slide command automatically handles all path fixes and replacements
+- Sample content remains in templates - agents edit this directly
+
+**Workflow for Section Agents:**
+1. **Initialize slide** using `init-slide` with appropriate template
+2. **Edit content** using `Edit` or `MultiEdit` to replace sample content with actual data
+3. **Add charts** by replacing image placeholders with actual chart paths
+4. **Validate** with screenshots as usual
+
+**Template Reference:**
+- Templates location: `src/slides/slide_templates/`
+- Default template: `blank_slide.html` (used when no --template specified)
+- Available templates:
+  - `00_title_slide.html` - Opening/title slides
+  - `01_base_slide.html` - Standard content slides  
+  - `02_text_left_image_right.html` - Text with image
+  - `03_two_column_slide.html` - Side-by-side comparison
+  - `04_full_image_slide.html` - Full-screen charts
+  - `05_quote_slide.html` - Quotes/testimonials
+  - `06_section_divider.html` - Section breaks
+  - `07_financial_data_table.html` - Financial tables
+  - `08_grid_matrix.html` - Comparison grids
+  - `09_two_stack_architecture.html` - Before/after stacks
+  - `10_timeline_process_flow.html` - Timelines
+  - `11_quadrants.html` - 4-metric dashboards
+  - `12_value_chain_flow.html` - Process flows
+  - `13_four_chart_dashboard.html` - Multi-chart displays
+
+##### Example Agent Workflow for a Single Slide:
+```python
+# Step 1: Initialize slide from template
+Bash("python3 DirectoryClient.py init-slide my-project 03 --template src/slides/slide_templates/02_text_left_image_right.html --title 'Market Analysis' --subtitle 'Q4 Performance' --section 'FINANCIALS'")
+
+# Step 2: Edit the content area to add actual data
+Edit("projects/my-project/slides/slide_03.html",
+     old_string="""<ul style="font-size: 18px; line-height: 1.6; color: #333; list-style: none; padding: 0;">
+                <li style="margin-bottom: 20px;">
+                    <strong style="color: #1B365D;">Market Leadership:</strong> Dominant in cloud infrastructure with 35% market share and strong partnerships.
+                </li>
+                <li style="margin-bottom: 20px;">
+                    <strong style="color: #1B365D;">Leadership Team:</strong> Executive team with deep industry experience and proven success.
+                </li>
+            </ul>""",
+     new_string="""<ul style="font-size: 18px; line-height: 1.6; color: #333; list-style: none; padding: 0;">
+                <li style="margin-bottom: 20px;">
+                    <strong style="color: #1B365D;">Revenue Growth:</strong> Q4 revenue increased 28% YoY to $4.2B, exceeding guidance.
+                </li>
+                <li style="margin-bottom: 20px;">
+                    <strong style="color: #1B365D;">Market Expansion:</strong> Successfully entered 3 new international markets.
+                </li>
+                <li style="margin-bottom: 20px;">
+                    <strong style="color: #1B365D;">Product Innovation:</strong> Launched 5 new AI-powered features driving adoption.
+                </li>
+            </ul>""")
+
+# Step 3: Replace image placeholder with actual chart
+Edit("projects/my-project/slides/slide_03.html",
+     old_string="""<div style="width: 100%; height: 400px; background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%); border: 2px dashed #ced4da; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; color: #6c757d; text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 10px; opacity: 0.5;">🏢</div>
+                <div style="font-weight: 500; margin-bottom: 5px; font-size: 14px;">Image Placeholder</div>
+                <div style="font-size: 12px; opacity: 0.7;">Replace with: images/datacenter.png</div>
+            </div>""",
+     new_string="""<img src="../plots/q4_revenue_growth_clean.png" alt="Q4 Revenue Growth Chart" style="width: 100%; height: 100%; object-fit: contain;">""")
 ```
 
 ##### Parallel Execution Example:
