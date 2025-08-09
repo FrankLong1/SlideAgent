@@ -20,65 +20,6 @@ import shutil
 import re
 from pathlib import Path
 
-# String constants for templates
-MEMORY_TEMPLATE = """# Project Memory: {project_name}
-
-## What's Working
-- Project structure created with theme '{theme}'
-- Initial outline template established
-- Section-based parallel generation ready
-
-## What's Not Working
-- No issues identified yet
-
-## Ideas & Improvements
-- Add specific content to input/ folder
-- Customize outline for presentation goals
-- Consider which charts will best support the narrative
-
----
-*Last Updated: Project Creation*
-"""
-
-OUTLINE_TEMPLATE = """# {title}
-
-## Section-Based Outline
-
-# Section 1: Introduction (slides 1-2)
-## Slide 1: Title Slide
-- Template: 00_title_slide
-- Content: {title}, {author}, Date
-
-## Slide 2: Overview
-- Template: 01_base_slide
-- Content: Agenda and key objectives
-- Charts needed: None
-
-# Section 2: Main Content (slides 3-4)
-## Slide 3: Key Analysis
-- Template: 02_text_left_image_right
-- Content: Main findings and insights
-- Charts needed: [specify chart names]
-
-## Slide 4: Supporting Data
-- Template: 04_full_image_slide
-- Content: Full-screen chart or diagram
-- Charts needed: [specify chart names]
-
-# Section 3: Conclusion (slide 5)
-## Slide 5: Summary
-- Template: 01_base_slide
-- Content: Key takeaways and next steps
-- Charts needed: None
-
-## Implementation Notes
-- Place source materials in `input/`
-- Charts will be generated in `plots/`
-- Theme: {theme}
-- Each section will be rendered by separate agents in parallel
-- Individual slide HTML files will be created in `slides/` directory
-"""
-
 DEFAULT_BLANK_SLIDE_PATH = "src/slides/slide_templates/blank_slide.html"
 
 class SlideAgentClient:
@@ -90,10 +31,36 @@ class SlideAgentClient:
         self.projects_dir = self.base_dir / "projects"
         self.themes_dir = self.base_dir / "themes"
         self.src_dir = self.base_dir / "src"
+        self.templates_dir = self.base_dir / "markdown_templates"
         
         # Ensure required directories exist
         self.projects_dir.mkdir(exist_ok=True)
         self.themes_dir.mkdir(exist_ok=True)
+        self.templates_dir.mkdir(exist_ok=True)
+        
+        # Load templates
+        self._load_templates()
+    
+    def _load_templates(self):
+        """Load template files from templates directory."""
+        memory_template_path = self.templates_dir / "memory_template.md"
+        outline_template_path = self.templates_dir / "outline_template.md"
+        
+        # Load memory template
+        if memory_template_path.exists():
+            with open(memory_template_path, 'r') as f:
+                self.memory_template = f.read()
+        else:
+            # Fallback template if file doesn't exist
+            self.memory_template = "# Project Memory: {project_name}\n\n## What's Working\n- Project created\n\n## What's Not Working\n- TBD\n\n## Ideas & Improvements\n- TBD\n"
+        
+        # Load outline template
+        if outline_template_path.exists():
+            with open(outline_template_path, 'r') as f:
+                self.outline_template = f.read()
+        else:
+            # Fallback template if file doesn't exist
+            self.outline_template = "# {title}\n\n## Outline\n\nTBD"
     
     def _find_theme(self, theme_name):
         """Find a theme by name in any subdirectory."""
@@ -102,6 +69,26 @@ class SlideAgentClient:
             if root_path.name == theme_name and (root_path / f"{theme_name}_theme.css").exists():
                 return root_path, root_path.relative_to(self.themes_dir)
         return None, None
+    
+    def _get_theme_css_path(self, theme_name, from_slide=True):
+        """Get the CSS path for a theme from slide location."""
+        _, theme_relative = self._find_theme(theme_name)
+        if not theme_relative:
+            return None
+        if from_slide:
+            return f"../../../themes/{theme_relative}/{theme_name}_theme.css"
+        else:
+            return f"../../themes/{theme_relative}"
+    
+    def _update_slide_paths(self, content, old_theme, new_theme):
+        """Update theme paths in slide content."""
+        old_css = self._get_theme_css_path(old_theme)
+        new_css = self._get_theme_css_path(new_theme)
+        
+        if old_css and new_css:
+            content = content.replace(old_css, new_css)
+        
+        return content
     
     
     def create_project(self, project_name, theme="acme_corp"):
@@ -129,7 +116,7 @@ class SlideAgentClient:
         (project_path / "validation" / "screenshots").mkdir()
         
         # Determine theme path for config
-        theme_config_path = f"../../themes/{theme_relative_path}"
+        theme_config_path = self._get_theme_css_path(theme, from_slide=False)
         
         # Create config.yaml
         config = {
@@ -144,7 +131,7 @@ class SlideAgentClient:
             yaml.dump(config, f, default_flow_style=False, indent=2)
         
         # Create initial outline.md with section-based structure
-        outline_content = OUTLINE_TEMPLATE.format(
+        outline_content = self.outline_template.format(
             title=config['title'],
             author=config['author'],
             theme=theme
@@ -155,7 +142,7 @@ class SlideAgentClient:
             f.write(outline_content)
         
         # Create memory.md for the project
-        memory_content = MEMORY_TEMPLATE.format(
+        memory_content = self.memory_template.format(
             project_name=project_name,
             theme=theme
         )
@@ -288,21 +275,8 @@ class SlideAgentClient:
             with open(slide_file, 'r') as f:
                 content = f.read()
             
-            # Replace the theme CSS path
-            old_css_path = f"themes/examples/{old_theme}/{old_theme}_theme.css"
-            new_css_path = f"themes/{theme_relative_path}/{new_theme}_theme.css"
-            
-            # Try different possible path formats
-            replacements = [
-                (f"../../../{old_css_path}", f"../../../themes/{theme_relative_path}/{new_theme}_theme.css"),
-                (f"../../{old_css_path}", f"../../themes/{theme_relative_path}/{new_theme}_theme.css"),
-                (old_css_path, f"themes/{theme_relative_path}/{new_theme}_theme.css"),
-            ]
-            
-            for old_path, new_path in replacements:
-                if old_path in content:
-                    content = content.replace(old_path, new_path)
-                    break
+            # Update theme CSS path using helper method
+            content = self._update_slide_paths(content, old_theme, new_theme)
             
             with open(slide_file, 'w') as f:
                 f.write(content)

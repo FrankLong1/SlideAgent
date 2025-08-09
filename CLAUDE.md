@@ -44,68 +44,27 @@ SlideAgent/
 └── DirectoryClient.py          # Project management CLI
 ```
 
-## Slide Templates Overview
+## Slide Templates Reference
 
-The system provides a set of professional slide templates, each optimized for specific content types:
+The system provides 14 professional slide templates in `src/slides/slide_templates/`:
 
-### **00_title_slide.html** - Opening Slide
-**Use Case**: Opening a presentation or section  
-**Layout**: Centered layout with company logo at top right, main title/subtitle in center, date and department info at bottom
-**Key Elements**: Large centered title (48-60px), subtitle, date badge, department/division info
-
-### **01_base_slide.html** - General Content  
-**Use Case**: Lists, key points, structured information
-**Layout**: Standard header → main content area → optional highlight box → footer
-**Key Elements**: Section label and slide title in header, flexible content area, optional yellow highlight box
-
-### **02_text_left_image_right.html** - Content + Visual
-**Use Case**: Explaining concepts with supporting visuals
-**Layout**: 60/40 split with text content on left, image/chart/visual on right
-**Key Elements**: Left side bullets/paragraphs, right side image/chart container
-
-### **03_two_column_slide.html** - Side-by-Side Comparison  
-**Use Case**: Comparing two options or states (before/after, option A vs. B, pros/cons)
-**Layout**: 50/50 split with distinct visual separation
-**Key Elements**: Two equal columns with different background colors, column headers
-
-### **04_full_image_slide.html** - Full-Screen Display
-**Use Case**: Large charts, diagrams, or images that need maximum space
-**Layout**: Full-screen content with minimal header/footer
-
-### **05_quote_slide.html** - Emphasis Slide
-**Use Case**: Highlighting important statements (testimonials, CEO quotes, key insights)
-**Layout**: Centered content with dramatic typography
-**Key Elements**: Large quotation marks, centered quote text, attribution line
-
-### **06_section_divider.html** - Section Breaks
-**Use Case**: Transitioning between major topics
-**Layout**: Full-screen with brand colors and large centered text
-**Key Elements**: Full blue background, large white text, no header/footer
-
-### **07_financial_data_table.html** - Financial Data
-**Use Case**: Structured financial or operational data (income statements, KPI tables)
-**Layout**: Professional table with structured data presentation
-**Key Elements**: Styled table headers, row striping, footnotes section
-
-### **08_grid_matrix.html** - Flexible Grid/Matrix
-**Use Case**: Multi-dimensional comparisons (SWOT analysis, feature matrices, vendor evaluation)
-**Layout**: Flexible table/grid structure adaptable to various configurations
-**Key Elements**: Customizable rows/columns, colored headers, analysis box
-
-### **09_two_stack_architecture.html** - Architecture Transformation
-**Use Case**: Showing system transformation (technology migration, process improvement)
-**Layout**: Two vertical stacks side-by-side with transformation arrow
-**Key Elements**: Left stack (old state), right stack (new state), center transformation arrow
-
-### **10_timeline_process_flow.html** - Timeline/Process Flow
-**Use Case**: Sequential steps or progression over time (project timelines, workflows)
-**Layout**: Horizontal flow with connected circular markers
-**Key Elements**: Numbered circular markers, connecting lines, status indicators
-
-### **11_quadrants.html** - 4-Metric Dashboard
-**Use Case**: Key metrics or KPIs in dashboard format
-**Layout**: 2x2 grid of metric cards with central comparison element
-**Key Elements**: Four color-coded quadrants, large numeric displays, central summary
+| Template | Use Case | Key Features |
+|----------|----------|-------------|
+| `00_title_slide` | Opening presentations/sections | Centered title, logo, date badge |
+| `01_base_slide` | Lists, key points, general content | Header with section label, flexible content area |
+| `02_text_left_image_right` | Content with visuals | 60/40 split layout |
+| `03_two_column_slide` | Side-by-side comparisons | 50/50 split with distinct columns |
+| `04_full_image_slide` | Large charts/diagrams | Maximum content space |
+| `05_quote_slide` | Testimonials, key statements | Centered with quotation marks |
+| `06_section_divider` | Section transitions | Full-screen with brand colors |
+| `07_financial_data_table` | Financial/operational data | Styled table with footnotes |
+| `08_grid_matrix` | SWOT, feature matrices | Flexible grid structure |
+| `09_two_stack_architecture` | System transformations | Before/after stacks with arrow |
+| `10_timeline_process_flow` | Timelines, workflows | Connected circular markers |
+| `11_quadrants` | 4-metric dashboards | 2x2 grid with color coding |
+| `12_value_chain_flow` | Process flows | Horizontal value chain |
+| `13_four_chart_dashboard` | Multi-chart displays | 4 chart grid layout |
+| `blank_slide` | Default template | Basic structure for customization |
 
 ## Chart Generation with PlotBuddy
 
@@ -264,32 +223,12 @@ title: Your Presentation Title
 
 ### CSS Path Management
 
-**CRITICAL**: CSS paths in slides are context-dependent. Each slide file must reference CSS files using the correct relative path from its location:
-
-#### Standard Project Structure:
-```
-SlideAgent/
-├── src/slides/core_css/
-│   ├── base.css
-│   └── print.css
-├── themes/[theme-location]/
-│   └── [theme]_theme.css
-└── projects/[project]/slides/
-    └── slide_XX.html
-```
-
-#### Required CSS Links in Each Slide:
+**Required CSS paths from slide location** (`projects/[project]/slides/`):
 ```html
 <link rel="stylesheet" href="../../../src/slides/core_css/base.css">
 <link rel="stylesheet" href="../../../src/slides/core_css/print.css">
 <link rel="stylesheet" href="../../../themes/[theme-location]/[theme]_theme.css">
 ```
-
-#### Path Calculation:
-- From `projects/[project]/slides/` to `src/slides/core_css/` = `../../../src/slides/core_css/`
-- From `projects/[project]/slides/` to `themes/` = `../../../themes/`
-
-**AI Guidance**: Always verify CSS paths are correct for the specific slide location. Test that files exist at the specified paths before generating slides.
 
 
 ## Critical Header Structure Requirements
@@ -406,46 +345,18 @@ For other commands (list projects, themes, etc.), see the Theme System section a
 - Ensure theme consistency
 - Save in appropriate formats for slide integration
 
-#### 5. Parallel Slide Generation & Validation Architecture
+#### 5. Parallel Slide Generation & Validation
 
-The system uses a hierarchical agent structure for maximum efficiency and speed:
+**Architecture**: Main agent spawns ALL section agents simultaneously for parallel processing of each section laid out in the outline. If the sections are extremely short (i.e. <3 slides) consolidate mutliple sections into the workload of a single agent.
 
-##### Main Agent (Orchestrator)
-- Parses outline into sections
-- Spawns ALL section agents simultaneously in parallel  
-- Collects validation reports from all agents
-- Makes final go/no-go decision for PDF generation
-- Handles any cross-section issues or fixes
+**Section Agent Workflow**:
+1. Initialize slides using `DirectoryClient init-slide` command
+2. Edit HTML content to replace sample content  
+3. Run screenshotter on section's slides
+4. Read screenshots for visual QA
+5. Write validation report to `validation/section_N_report.txt`
 
-##### Section Sub-Agents (Workers)
-Each section agent is a COMPLETE, self-contained worker that:
-
-**1. GENERATES** - Creates all slides for their section
-**2. VALIDATES** - Takes screenshots of their own slides  
-**3. REVIEWS** - Visually inspects each screenshot using Read tool
-**4. REPORTS** - Writes structured validation report
-
-##### Section Agent Full Workflow:
-```
-Section Agent receives:
-├── Section outline chunk (e.g., slides 4-7)
-├── Theme configuration
-├── Project context
-└── Full system instructions
-
-Section Agent performs:
-├── 1. Initialize slides using DirectoryClient init-slide command
-├── 2. Edit HTML content using Edit/MultiEdit tools (replace sample content)
-├── 3. Run screenshotter on own slides
-├── 4. Read each screenshot for visual QA
-├── 5. Document issues found
-└── 6. Write validation report
-
-Section Agent outputs:
-├── Generated slide files (slide_XX.html)
-├── Screenshots (slide_XX.png)
-└── Validation report (section_N_report.txt)
-```
+**Output**: Each section produces slide HTML files, screenshots, and validation report.
 
 ##### NEW: Optimized Slide Generation with init-slide
 
@@ -491,24 +402,7 @@ python3 DirectoryClient.py init-slide my-project 03 \
 3. **Add charts** by replacing image placeholders with actual chart paths
 4. **Validate** with screenshots as usual
 
-**Template Reference:**
-- Templates location: `src/slides/slide_templates/`
-- Default template: `blank_slide.html` (used when no --template specified)
-- Available templates:
-  - `00_title_slide.html` - Opening/title slides
-  - `01_base_slide.html` - Standard content slides  
-  - `02_text_left_image_right.html` - Text with image
-  - `03_two_column_slide.html` - Side-by-side comparison
-  - `04_full_image_slide.html` - Full-screen charts
-  - `05_quote_slide.html` - Quotes/testimonials
-  - `06_section_divider.html` - Section breaks
-  - `07_financial_data_table.html` - Financial tables
-  - `08_grid_matrix.html` - Comparison grids
-  - `09_two_stack_architecture.html` - Before/after stacks
-  - `10_timeline_process_flow.html` - Timelines
-  - `11_quadrants.html` - 4-metric dashboards
-  - `12_value_chain_flow.html` - Process flows
-  - `13_four_chart_dashboard.html` - Multi-chart displays
+See **Slide Templates Reference** section above for complete template list.
 
 ##### Example Agent Workflow for a Single Slide:
 ```python
@@ -547,24 +441,6 @@ Edit("projects/my-project/slides/slide_03.html",
      new_string="""<img src="../plots/q4_revenue_growth_clean.png" alt="Q4 Revenue Growth Chart" style="width: 100%; height: 100%; object-fit: contain;">""")
 ```
 
-##### Parallel Execution Example:
-```
-User: "Generate presentation"
-    ↓
-Main Agent: "Spawning 6 section agents in parallel"
-    ↓
-[PARALLEL EXECUTION]
-├── Agent 1: Section 1 (slides 1-3)   → Generate → Screenshot → Review → Report
-├── Agent 2: Section 2 (slides 4-7)   → Generate → Screenshot → Review → Report
-├── Agent 3: Section 3 (slides 8-10)  → Generate → Screenshot → Review → Report
-├── Agent 4: Section 4 (slides 11-14) → Generate → Screenshot → Review → Report
-├── Agent 5: Section 5 (slides 15-17) → Generate → Screenshot → Review → Report
-└── Agent 6: Section 6 (slides 18-19) → Generate → Screenshot → Review → Report
-    ↓
-Main Agent: "Collecting all reports"
-    ↓
-Main Agent: "All sections READY → Generating PDF"
-```
 
 ##### Flexible Outline Format (Example)
 Organize your outline into logical sections. The format below is a suggestion - adapt sections and slide counts to match your presentation needs:
@@ -606,174 +482,39 @@ Organize your outline into logical sections. The format below is a suggestion - 
 
 ##### Parallel Generation Process
 
-**CRITICAL**: Always spawn ALL section agents in parallel using a single message with multiple Task tool calls. This dramatically improves speed and efficiency.
+**CRITICAL**: Spawn ALL section agents in parallel using multiple Task tool calls in a single message.
 
-**Step 1:** Parse outline and identify section boundaries using pattern `# Section N:`
+1. Parse outline for section boundaries (`# Section N:`)
+2. Spawn all sections simultaneously via multiple `<invoke name="Task">` calls
+3. Each agent independently generates, validates, and reports
 
-**Step 2:** Spawn ALL section agents in parallel via single message with multiple Task tool calls:
-```
-Main Agent spawns ALL sections simultaneously:
-├── Task Agent 1: Section 1 (slides 1-3)
-├── Task Agent 2: Section 2 (slides 4-8)  
-├── Task Agent 3: Section 3 (slides 9-11)
-├── Task Agent 4: Section 4 (slides 12-16)
-└── Task Agent 5: Section 5 (slides 17-20)
-```
+##### HTML Slide Requirements:
+- Properly structured HTML with DOCTYPE
+- External CSS references (see CSS Path Management section)
+- Charts: `<img src="../plots/chart_name_clean.png">`
+- 16:9 slide dimensions (1920x1080px)
+- Individual slide files (no aggregator needed)
 
-**Example Usage**: Use multiple `<invoke name="Task">` calls in a single message:
-```xml
-<function_calls>
-<invoke name="Task">...</invoke>
-<invoke name="Task">...</invoke>  
-<invoke name="Task">...</invoke>
-<invoke name="Task">...</invoke>
-<invoke name="Task">...</invoke>
-</function_calls>
-```
+##### Validation Process:
 
-**Step 3:** Each section agent operates independently and performs COMPLETE validation:
-- Receives complete system instructions (same as parent agent)
-- Gets section outline chunk + theme config + project context
-- Charts already generated (no need to regenerate)
-- Reads appropriate slide templates 
-- Creates individual **fully self-contained** HTML slide "websites": `slide_XX.html` in slides/ directory
-- **GENERATES SCREENSHOTS** of their own slides using screenshotter
-- **REVIEWS SCREENSHOTS** using Read tool to identify issues
-- **WRITES VALIDATION REPORT** to `validation/section_N_report.txt`
+1. **Screenshot Generation**: Use screenshotter with `--range`, `--slides`, or `--pattern` options
+2. **Visual Review**: Read ALL screenshots, fix any overflow/truncation immediately
+3. **Validation Report**: Write structured report to `validation/section_N_report.txt` with status
+4. **Main Agent Review**: Collect all reports for go/no-go PDF decision
 
-##### CRITICAL - HTML Slide Requirements:
-- Each slide should be a properly structured HTML document
-- Reference external CSS files using `<link rel="stylesheet">` tags for maintainability
-- Include references to: base.css, print.css, and theme CSS files
-- **IMPORTANT CSS PATHS**: From `projects/[project]/slides/slide_XX.html`:
-  - Base CSS: `../../../src/slides/core_css/base.css`
-  - Print CSS: `../../../src/slides/core_css/print.css`
-  - Theme CSS: `../../../themes/[theme-location]/[theme]_theme.css` you should use the DirectoryClient.py tool to list out available themes so we know which one to use.
-- Charts referenced as `<img src="../plots/chart_name_clean.png">` 
-- Each slide must render perfectly when opened in any browser
-- Complete DOCTYPE html structure with proper 16:9 slide dimensions
-- Dependencies: external CSS files and chart images in plots/
-- Clean, maintainable code structure with external stylesheets
-- No aggregator HTML files needed - PDF is generated directly from individual slides
-
-##### Section Agent Validation Process:
-Each section agent MUST perform these validation steps:
-
-1. **Generate Screenshots** for their slides only:
-```bash
-# Example for Section 2 (slides 4-7)
-# Option A: Using slide range
-node src/utils/screenshotter.js projects/[project-name] --range 4-7
-
-# Option B: Using specific slide list
-node src/utils/screenshotter.js projects/[project-name] --slides "slide_04.html,slide_05.html,slide_06.html,slide_07.html"
-
-# Option C: Using glob pattern
-node src/utils/screenshotter.js projects/[project-name] --pattern "slide_0[4-7].html"
-```
-
-2. **MANDATORY: Visual Review & Overflow Fix Protocol**
-   - Read EVERY screenshot using the Read tool (no sampling allowed)
-   - Check for any content cutoff, overflow, or truncation issues
-   - **If overflow detected**, fix it immediately (resize, adjust font, add constraints, split content, etc.)
-   - Re-run screenshotter ONLY for fixed slides
-   - Re-validate to ensure the fix worked
-   - Document what was changed in validation report
-
-**IMPORTANT**: Screenshots represent PDF rendering, not HTML. Issues found WILL appear in the final PDF and MUST be fixed.
-
-3. **Write Detailed Validation Report** to `validation/section_N_report.txt`:
-```
-Section N Validation Report
-===========================
-Generated Slides: [list]
-Screenshots Taken: [list]
-
-Visual Inspection Results:
-- Slide XX: [PASS/FAIL] - [Issues if any]
-- Slide XX: [PASS/FAIL] - [Issues if any]
-
-Overflow Issues Fixed:
-- Slide XX: [Description of overflow and fix applied]
-- Slide XX: [Description of overflow and fix applied]
-
-Other Issues Found:
-1. [Issue description and affected slide]
-2. [Issue description and affected slide]
-
-Fixes Applied:
-- [List of HTML modifications made]
-- [Font-size reductions, max-height additions, etc.]
-
-Recommendations:
-- [Any remaining fixes needed before PDF generation]
-
-Status: [READY FOR PDF / NEEDS FIXES]
-```
-
-**Step 4:** Main agent collects and reviews all section reports:
-```bash
-# Main agent reads all validation reports
-Read("projects/[project-name]/validation/section_1_report.txt")
-Read("projects/[project-name]/validation/section_2_report.txt")
-# ... etc
-
-# If all sections report READY FOR PDF, proceed to PDF generation
-# If any section reports NEEDS FIXES, address issues first
-```
-
-**CRITICAL**: This parallel validation ensures:
-- Each section agent is responsible for their own quality control
-- Screenshots are generated in parallel, not sequentially
-- Validation happens immediately after slide creation
-- Structured feedback is documented for review
-- Main agent has clear go/no-go decision based on reports
+**Key**: Screenshots show exact PDF rendering - fix issues immediately.
 
 ##### Visual Validation Checklist
-When reviewing screenshots, check EVERY slide for these issues:
 
-###### PRIORITY 1 - Overflow Issues (MUST FIX):
-- **Bottom overflow**: Content cut off at bottom of slide
-- **Right overflow**: Content extending past right edge
-- **Image/chart cutoff**: Visuals not fully visible
-- **Table truncation**: Rows partially visible or cut off
-- **Text clipping**: Any text that appears cut off at edges
+**Priority Issues**: Overflow (bottom/right), content cutoff, truncation
+**Layout**: Proper 16:9 aspect ratio, alignment, spacing
+**PDF Rendering**: Avoid box-shadows, gradients, transparency
+**Content**: Logo placement, chart sizing, readability
 
-###### Layout & Spacing:
-- **Text overlap**: Headers/subtitles overlapping with content
-- **Aspect ratio**: Slides must maintain exact 16:9 (1920x1080px) dimensions
-- **Alignment**: Elements properly aligned to grid, no misaligned content
-- **White space**: No awkward empty spaces or overcrowding
+##### PDF-Safe CSS
 
-###### PDF Rendering Issues:
-- **Shadow artifacts**: Box-shadows create unwanted halos in PDFs
-- **Gradient problems**: CSS gradients render as solid blocks
-- **Transparency issues**: Semi-transparent elements appear broken
-- **Dimension distortion**: Viewport units causing incorrect sizing
-
-###### Content & Branding:
-- **Logo placement**: Consistent positioning and sizing
-- **Chart integration**: Proper sizing within allocated space
-- **Font readability**: Appropriate sizes and contrast
-- **Page numbering**: Correct sequential numbering
-
-##### PDF-Safe CSS Guidelines
-**IMPORTANT**: Avoid these CSS features that cause PDF rendering issues:
-
-###### Never Use:
-- **`box-shadow`**: Creates unwanted halos and artifacts in PDFs
-- **CSS gradients**: `linear-gradient()` or `radial-gradient()` render poorly
-- **Opacity/transparency**: `opacity` less than 1 or `rgba()` with alpha
-- **CSS filters**: `blur()`, `drop-shadow()`, `brightness()`, etc.
-- **Blend modes**: `mix-blend-mode` or `background-blend-mode`
-- **Complex transforms**: 3D transforms or perspective effects
-
-###### Use Instead:
-- **Solid borders**: Replace `box-shadow` with `border: 1px solid #color`
-- **Solid colors**: Use hex or rgb colors without transparency
-- **Fixed dimensions**: Use `1920px x 1080px` instead of viewport units for slides
-- **Simple backgrounds**: Solid colors only, no gradients or patterns
-- **Clear spacing**: Ensure adequate margins between headers and content
+**Never use**: box-shadow, gradients, opacity<1, CSS filters, blend modes, 3D transforms
+**Use instead**: Solid borders/colors, fixed dimensions (1920x1080px), simple backgrounds
 
 ##### Critical HTML vs PDF Rendering Differences
 
