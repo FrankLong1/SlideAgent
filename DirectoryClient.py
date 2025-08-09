@@ -407,6 +407,123 @@ class SlideAgentClient:
         print(f"📄 {slide_path}")
         
         return True
+    
+    def init_chart(self, project_name, chart_name, template_path=None):
+        """Initialize a chart from a template.
+        
+        Args:
+            project_name: Name of the project
+            chart_name: Name for the chart file (without .py extension)
+            template_path: Path to template file (e.g., src/charts/chart_templates/bar_chart.py)
+        
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        # Get project path
+        project_dir = self.projects_dir / project_name
+        if not project_dir.exists():
+            print(f"❌ Project '{project_name}' does not exist")
+            return False
+        
+        # Ensure plots directory exists
+        plots_dir = project_dir / "plots"
+        plots_dir.mkdir(exist_ok=True)
+        
+        # Clean chart name (remove .py extension if provided)
+        if chart_name.endswith('.py'):
+            chart_name = chart_name[:-3]
+        
+        chart_path = plots_dir / f"{chart_name}.py"
+        
+        # Read template or create minimal boilerplate
+        if template_path:
+            template_file = Path(template_path)
+            if not template_file.exists():
+                print(f"❌ Template file not found: {template_path}")
+                return False
+            
+            with open(template_file, 'r') as f:
+                python_content = f.read()
+            
+            # No path adjustment needed - both templates and project charts are 3 levels deep
+            # Templates: src/charts/chart_templates/ -> 3 up to root
+            # Projects: projects/[project]/plots/ -> 3 up to root
+            
+            # Update output filenames in the template
+            # Replace the OUTPUT_NAME placeholder with actual chart name
+            python_content = python_content.replace('OUTPUT_NAME', chart_name)
+            
+            # Also replace any specific template output names (for backward compatibility)
+            python_content = python_content.replace('plots/bar_chart_', f'plots/{chart_name}_')
+            python_content = python_content.replace('plots/line_chart_', f'plots/{chart_name}_')
+            python_content = python_content.replace('plots/pie_chart_', f'plots/{chart_name}_')
+            python_content = python_content.replace('plots/stacked_bar_', f'plots/{chart_name}_')
+        else:
+            # Create minimal boilerplate if no template specified
+            python_content = f'''#!/usr/bin/env python3
+"""
+Chart: {chart_name}
+Generated chart for {project_name} project
+"""
+
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+
+from src.charts.utils.plot_buddy import PlotBuddy
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Initialize PlotBuddy with project config
+buddy = PlotBuddy.from_project_config()
+
+# === EDIT THIS SECTION ===
+# Configure your data and chart here
+data = [10, 20, 30, 40]
+labels = ['A', 'B', 'C', 'D']
+# === END EDIT SECTION ===
+
+# Create figure with theme styling
+fig, ax = buddy.setup_figure(figsize=(14, 7.875))  # Wide format for slides
+
+# Create your visualization
+ax.bar(labels, data)
+ax.set_xlabel('Categories')
+ax.set_ylabel('Values')
+
+# Save branded version (with titles)
+buddy.add_titles(ax, "Chart Title", "Chart Subtitle")
+buddy.add_logo(fig, buddy.icon_logo_path)
+buddy.save("plots/{chart_name}_branded.png", branded=False)
+
+# Create clean version for slides
+fig, ax = buddy.setup_figure(figsize=(14, 7.875))
+ax.bar(labels, data)
+ax.set_xlabel('Categories')
+ax.set_ylabel('Values')
+ax.text(0.5, 1.02, 'Chart Subtitle', transform=ax.transAxes, 
+        ha='center', fontsize=12, color='#666')
+plt.tight_layout()
+plt.savefig("plots/{chart_name}_clean.png", dpi=150, bbox_inches='tight')
+
+print("✅ Chart generated successfully!")
+print("   - Branded version: plots/{chart_name}_branded.png")
+print("   - Clean version: plots/{chart_name}_clean.png")
+'''
+        
+        # Write chart file
+        with open(chart_path, 'w') as f:
+            f.write(python_content)
+        
+        # Make executable
+        chart_path.chmod(0o755)
+        
+        template_name = Path(template_path).name if template_path else "boilerplate"
+        print(f"✅ Initialized {chart_name}.py from {template_name}")
+        print(f"📊 {chart_path}")
+        print(f"💡 To generate the chart: cd {project_dir} && python {chart_path.relative_to(project_dir)}")
+        
+        return True
 
 def main():
     """Main CLI interface."""
@@ -452,6 +569,12 @@ Examples:
     init_parser.add_argument('--subtitle', default='', help='Subtitle for the slide')
     init_parser.add_argument('--section', default='', help='Section label for the slide')
     
+    # Init chart command
+    chart_parser = subparsers.add_parser('init-chart', help='Initialize a chart from template')
+    chart_parser.add_argument('project', help='Project name')
+    chart_parser.add_argument('name', help='Chart name (e.g., quarterly_revenue)')
+    chart_parser.add_argument('--template', help='Path to template file (e.g., src/charts/chart_templates/bar_chart.py)')
+    
     args = parser.parse_args()
     
     if not args.command:
@@ -472,6 +595,8 @@ Examples:
         client.swap_theme(args.project, args.theme)
     elif args.command == 'init-slide':
         client.init_slide(args.project, args.number, args.template, args.title, args.subtitle, args.section)
+    elif args.command == 'init-chart':
+        client.init_chart(args.project, args.name, args.template)
 
 if __name__ == "__main__":
     main()

@@ -15,8 +15,7 @@ SlideAgent/
 │   │       └── plot_buddy.py    # Main chart generation class
 │   ├── slides/
 │   │   ├── core_css/
-│   │   │   ├── base.css         # Core slide styling
-│   │   │   └── print.css        # PDF optimization
+│   │   │   └── base.css         # Core slide styling & PDF optimization
 │   │   └── slide_templates/     # 12 slide templates (00-11)
 │   └── utils/
 │       ├── pdf_generator.js     # PDF generation script
@@ -66,12 +65,38 @@ The system provides 14 professional slide templates in `src/slides/slide_templat
 | `13_four_chart_dashboard` | Multi-chart displays | 4 chart grid layout |
 | `blank_slide` | Default template | Basic structure for customization |
 
-## Chart Generation with PlotBuddy
+## Chart Generation Workflow
+
+### Template-Based Chart Creation  
+**NEW**: Just like slides, charts now use a **template-based initialization system** that saves ~80% of tokens and ensures consistency:
+
+```bash
+# Initialize a chart from a template
+python3 DirectoryClient.py init-chart [project-name] [chart-name] --template src/charts/chart_templates/[template].py
+
+# Example:
+python3 DirectoryClient.py init-chart quarterly-review revenue_analysis --template src/charts/chart_templates/bar_chart.py
+```
+
+### Available Chart Templates
+- **`bar_chart.py`** - Single or grouped bar charts (quarterly revenue, comparisons)
+- **`line_chart.py`** - Trend lines, time series, growth patterns  
+- **`pie_chart.py`** - Market share, proportions, distribution
+- **`stacked_bar.py`** - Component breakdowns, budget allocation
+
+### Chart Generation Process
+1. **Initialize from template**: Use `init-chart` to copy a template to your project
+2. **Edit the EDIT SECTION**: Modify only the data and configuration section
+3. **Run the script**: `cd projects/[project] && python plots/[chart_name].py`
+4. **Get both versions**: Automatically generates `_branded.png` and `_clean.png`
 
 ### Key Features
-- **Dual Output**: Automatically generates both branded and clean versions
-- **Professional Styling**: Consistent corporate appearance
-- **Theme Integration and Local Style Loading**: Uses local `.mplstyle` files without system installation to match matplotlib styles with CSS themes
+- **Dual Output**: Every chart generates branded (with logo/titles/footnotes) and clean (for slides) versions
+- **Professional Styling**: PlotBuddy automatically applies theme styling from config.yaml
+- **Automatic Logo Detection**: PlotBuddy loads both icon and text logos from theme directory
+- **Footnote Support**: Source attribution at bottom-left of branded charts
+- **16:9 Optimization**: Charts pre-sized for slides (14x7.875 figsize)
+- **Theme Consistency**: Uses project's theme_path from config.yaml
 
 ### CRITICAL: Slide-Optimized Chart Guidelines
 When generating charts for slides, follow these requirements:
@@ -226,7 +251,6 @@ title: Your Presentation Title
 **Required CSS paths from slide location** (`projects/[project]/slides/`):
 ```html
 <link rel="stylesheet" href="../../../src/slides/core_css/base.css">
-<link rel="stylesheet" href="../../../src/slides/core_css/print.css">
 <link rel="stylesheet" href="../../../themes/[theme-location]/[theme]_theme.css">
 ```
 
@@ -253,13 +277,10 @@ title: Your Presentation Title
 
 ## CSS Architecture
 
-### Three-Layer Structure
+### Two-Layer Structure
 Core CSS
-1. **`core_css/base.css`** - Foundation (layout, typography, slide dimensions)
-2. **`core_css/print.css`** - PDF Export optimization
-
-### theme specific stuff
-3.**`themes/`** - Brand Identity (colors, fonts, brand elements)
+1. **`core_css/base.css`** - Foundation (layout, typography, slide dimensions, PDF optimization)
+2.**`themes/`** - Brand Identity (colors, fonts, brand elements)
 
 ### Static Slide Design Philosophy
 - **No animations or CSS transitions** - Designed for static presentation and PDF export
@@ -309,15 +330,35 @@ Simply read the file, edit the appropriate section (What's Working, What's Not W
 
 # Complete Workflow & AI Guidelines
 
+## NEW: Template-Based Slide Generation
+
+**CRITICAL CHANGE**: Always use `init-slide` for creating slides instead of generating HTML from scratch:
+
+```bash
+# Initialize a slide from template
+python3 DirectoryClient.py init-slide [project] [slide-number] --template [template-path] --title "Title" --subtitle "Subtitle" --section "Section"
+
+# Example:
+python3 DirectoryClient.py init-slide quarterly-review 01 --template src/slides/slide_templates/00_title_slide.html --title "Q4 2024 Review" --subtitle "Financial Performance"
+```
+
+This approach:
+- **Saves ~80% tokens** by not regenerating boilerplate HTML
+- **Ensures consistency** across all slides
+- **Prevents errors** from manual HTML generation
+- **Speeds up generation** dramatically
+
 Core Principles for AI Assistants
 1. **ALWAYS use DirectoryClient for project creation** - Never manually create project folders or structure
-2. **Always activate venv first** for any chart generation work: `source venv/bin/activate && pip install -r requirements.txt && npm install`
-3. **Analyze input/ folder comprehensively** before generating outlines - read every file in input/ before proceeding
-4. **Generate data-driven outlines when they make sense** based on available materials and insights
-5. **Use PlotBuddy.from_project_config()** for automatic theme loading
-6. **Match templates to content** - select appropriate slide templates for each section
-8. **Maintain consistency** across charts, slides, and narrative flow
-9. **Use authentic logos only** - see Theme System section for logo requirements
+2. **ALWAYS use init-slide for slide creation** - Never generate HTML from scratch
+3. **ALWAYS use init-chart for chart creation** - Use templates, don't write charts from scratch
+4. **Always activate venv first** for any chart generation work: `source venv/bin/activate && pip install -r requirements.txt && npm install`
+5. **Analyze input/ folder comprehensively** before generating outlines - read every file in input/ before proceeding
+6. **Generate data-driven outlines when they make sense** based on available materials and insights
+7. **Use PlotBuddy.from_project_config()** for automatic theme loading
+8. **Match templates to content** - select appropriate slide templates for each section
+9. **Maintain consistency** across charts, slides, and narrative flow
+10. **Use authentic logos only** - see Theme System section for logo requirements
 
 ## Complete Workflow with Parallel Generation
 

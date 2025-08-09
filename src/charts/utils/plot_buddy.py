@@ -48,6 +48,15 @@ class PlotBuddy:
         self.style_dir_path = style_dir_path or os.getcwd()
         self.current_style = None
         
+        # Auto-detect logo paths from theme directory
+        theme_name = os.path.basename(self.style_dir_path)
+        icon_logo = os.path.join(self.style_dir_path, f"{theme_name}_icon_logo.png")
+        text_logo = os.path.join(self.style_dir_path, f"{theme_name}_text_logo.png")
+        
+        # Store logo paths if they exist
+        self.icon_logo_path = icon_logo if os.path.exists(icon_logo) else None
+        self.text_logo_path = text_logo if os.path.exists(text_logo) else None
+        
         # Layout and styling constants
         self.tight_layout_rect = self.DEFAULT_TIGHT_LAYOUT_RECT
         self.wide_figure = self.DEFAULT_WIDE_FIGURE
@@ -258,6 +267,31 @@ class PlotBuddy:
         fig.text(x, y, f"Source: {source}",
                  fontsize=fontsize, color=color,
                  ha=ha, va='bottom')
+    
+    def add_footnote(self, fig, text, position='bottom-left', fontsize=10, color='#666666'):
+        """
+        Add footnote text at the bottom of the figure.
+        
+        Args:
+            fig: Matplotlib figure object
+            text (str): Footnote text to display
+            position (str): Position of footnote ('bottom-left', 'bottom-center', 'bottom-right')
+            fontsize (int): Font size for footnote
+            color (str): Color of footnote text
+        """
+        if position == 'bottom-left':
+            x = 0.02
+            ha = 'left'
+        elif position == 'bottom-center':
+            x = 0.5
+            ha = 'center'
+        else:  # bottom-right
+            x = 0.98
+            ha = 'right'
+        
+        fig.text(x, 0.02, text, ha=ha, va='bottom', 
+                fontsize=fontsize, color=color, 
+                transform=fig.transFigure, style='italic')
     
     def add_titles(self, ax, title, subtitle=None, subtitle2=None):
         """
