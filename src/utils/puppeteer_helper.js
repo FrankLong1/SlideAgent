@@ -65,19 +65,24 @@ class PagePool {
         this.pages = [];
         this.available = [];
         this.initialized = false;
+        this.createdCount = 0;
     }
 
-    async init() {
+    async init(lazyLoad = false) {
         if (this.initialized) return;
-        
-        // Create all pages upfront
-        for (let i = 0; i < this.size; i++) {
-            const page = await this.browser.newPage();
-            await page.setViewport({ width: 1920, height: 1080 });
-            this.pages.push(page);
-            this.available.push(page);
-        }
         this.initialized = true;
+        
+        if (!lazyLoad) {
+            // Create all pages upfront (original behavior)
+            for (let i = 0; i < this.size; i++) {
+                const page = await this.browser.newPage();
+                await page.setViewport({ width: 1920, height: 1080 });
+                this.pages.push(page);
+                this.available.push(page);
+                this.createdCount++;
+            }
+        }
+        // If lazyLoad is true, pages will be created on-demand in acquire()
     }
 
     async acquire() {

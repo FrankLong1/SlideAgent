@@ -27,8 +27,8 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    /* Scale down for browser viewing - 70% size (30% zoom out) */
-    transform: scale(0.7);
+    /* Scale down for browser viewing - 80% size (20% zoom out) */
+    transform: scale(0.8);
     transform-origin: center center;
 }
 
