@@ -38,7 +38,9 @@ SlideAgent/
 │       ├── input/              # Source materials
 │       ├── config.yaml         # Project configuration
 │       ├── outline.md          # Section-based outline
+│       ├── memory.md           # Project-specific memory and learnings
 │       └── [project-name].pdf  # Generated PDF
+├── MEMORY.md                   # Global memory across all projects
 └── DirectoryClient.py          # Project management CLI
 ```
 
@@ -326,6 +328,45 @@ Core CSS
 - **Print-focused styling** - No visual effects just static stuff for printed/PDF format
 - **PDF-safe CSS only** - No box-shadows, gradients, transparency, or filters that render poorly in PDFs
 - **No emojis** - Professional and institutional appearance
+
+## Memory System
+
+SlideAgent includes a memory system to track learnings, improvements, and ideas across projects. This helps maintain institutional knowledge and continuously improve the presentation generation process.
+
+### Memory Structure
+- **`MEMORY.md`** - Global memory file in SlideAgent root tracking cross-project learnings
+- **`projects/[project]/memory.md`** - Project-specific memory for individual presentations
+
+### Memory Sections
+Each memory file contains three key sections:
+1. **What's Working** - Successful patterns, techniques, and approaches
+2. **What's Not Working** - Issues, limitations, and problematic patterns to avoid
+3. **Ideas & Improvements** - Creative solutions and potential enhancements
+
+### When to Update Memory
+**IMPORTANT for AI Assistants**: Update memory files proactively when:
+- Making significant changes or discoveries during slide generation
+- Encountering and solving complex issues
+- Discovering new patterns or best practices
+- Having creative insights about improvements
+- Completing major project milestones
+- Learning what works/doesn't work through trial and error
+
+### Memory Management
+
+**For AI Assistants**: Memory files are simple markdown documents that should be updated directly using Read/Edit tools:
+- **Global memory**: `/MEMORY.md` - Cross-project learnings
+- **Project memory**: `/projects/[project-name]/memory.md` - Project-specific discoveries
+
+Simply read the file, edit the appropriate section (What's Working, What's Not Working, Ideas & Improvements), and update the timestamp at the bottom.
+
+### AI Guidelines for Memory Updates
+- Update project memory after completing significant tasks or encountering issues
+- Update global memory when discovering patterns that apply across projects
+- Be specific and actionable in memory entries
+- Include context about why something works or doesn't work
+- Document creative solutions that might be reusable
+- Track both technical and design-related learnings
 
 # Complete Workflow & AI Guidelines
 

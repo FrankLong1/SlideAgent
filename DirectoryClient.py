@@ -124,9 +124,33 @@ class SlideAgentClient:
         with open(outline_path, 'w') as f:
             f.write(outline_content)
         
+        # Create memory.md for the project
+        memory_content = f"""# Project Memory: {project_name}
+
+## What's Working
+- Project structure created with theme '{theme}'
+- Initial outline template established
+- Section-based parallel generation ready
+
+## What's Not Working
+- No issues identified yet
+
+## Ideas & Improvements
+- Add specific content to input/ folder
+- Customize outline for presentation goals
+- Consider which charts will best support the narrative
+
+---
+*Last Updated: Project Creation*
+"""
+        
+        memory_path = project_path / "memory.md"
+        with open(memory_path, 'w') as f:
+            f.write(memory_content)
+        
         print(f"✅ Created project '{project_name}' with theme '{theme}'")
         print(f"📁 {project_path}")
-        print(f"📝 New structure: slides/, validation/")
+        print(f"📝 New structure: slides/, validation/, memory.md")
         
         return True
     
