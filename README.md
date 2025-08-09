@@ -1,4 +1,4 @@
-# SlideAgent - Powered by BitterMax
+# SlideAgent
 
 *A minimal, AI-first presentation framework inspired by Richard Sutton's Bitter Lesson*
 
@@ -11,7 +11,7 @@ SlideAgent embodies the core principle of Sutton's bitter lesson: **computation 
 
 > "We have to learn the bitter lesson that building in how we think we think does not work in the long run."
 
-### The Framework's Bitter Truth
+### Machine Editability First as a Design
 
 Traditional presentation tools are built around human cognitive limitations—complex UIs, WYSIWYG editors, and intricate feature sets that feel satisfying to human users but add abstractions between the model and raw context. SlideAgent takes the opposite approach: a deliberately minimal HTML/CSS micro-library as a foundation that is almost useless for humans, but becomes powerful only when paired with increasingly capable AI models The system is intentionally more verbose than any human would want to write directly with very few shared components. 
 

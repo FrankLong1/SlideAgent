@@ -329,10 +329,7 @@ Simply read the file, edit the appropriate section (What's Working, What's Not W
 - Track both technical and design-related learnings
 
 # Complete Workflow & AI Guidelines
-
-## NEW: Template-Based Slide Generation
-
-**CRITICAL CHANGE**: Always use `init-slide` for creating slides instead of generating HTML from scratch:
+Always use `init-slide` for creating slides instead of generating HTML from scratch:
 
 ```bash
 # Initialize a slide from template
@@ -341,13 +338,6 @@ python3 DirectoryClient.py init-slide [project] [slide-number] --template [templ
 # Example:
 python3 DirectoryClient.py init-slide quarterly-review 01 --template src/slides/slide_templates/00_title_slide.html --title "Q4 2024 Review" --subtitle "Financial Performance"
 ```
-
-This approach:
-- **Saves ~80% tokens** by not regenerating boilerplate HTML
-- **Ensures consistency** across all slides
-- **Prevents errors** from manual HTML generation
-- **Speeds up generation** dramatically
-
 Core Principles for AI Assistants
 1. **ALWAYS use DirectoryClient for project creation** - Never manually create project folders or structure
 2. **ALWAYS use init-slide for slide creation** - Never generate HTML from scratch
@@ -388,6 +378,20 @@ For other commands (list projects, themes, etc.), see the Theme System section a
 
 #### 5. Parallel Slide Generation & Validation
 
+**CRITICAL WORKFLOW - ALWAYS START LIVE VIEWER FIRST**: 
+⚠️ **MANDATORY**: The live viewer server MUST be running BEFORE generating any slides. This is NOT optional- Users can't watch progress without the live viewer. Use the Node.js server.
+
+
+```bash
+# Step 1: ALWAYS START THE LIVE VIEWER FIRST (NON-NEGOTIABLE)
+node src/utils/live_viewer_server.js [project-name]
+# This starts a local server at http://localhost:8080 and opens the browser
+# The viewer shows section rows with slide placeholders waiting to be filled
+
+# Step 2: ONLY AFTER viewer is running, spawn parallel agents to generate slides
+# Users will see slides appear as mini previews in each section row as they're created
+```
+
 **Architecture**: Main agent spawns ALL section agents simultaneously for parallel processing of each section laid out in the outline. If the sections are extremely short (i.e. <3 slides) consolidate mutliple sections into the workload of a single agent.
 
 **Section Agent Workflow**:
@@ -398,8 +402,6 @@ For other commands (list projects, themes, etc.), see the Theme System section a
 5. Write validation report to `validation/section_N_report.txt`
 
 **Output**: Each section produces slide HTML files, screenshots, and validation report.
-
-##### NEW: Optimized Slide Generation with init-slide
 
 **CRITICAL**: Always use the DirectoryClient `init-slide` command to initialize slides from templates. NEVER generate HTML from scratch using Write tool.
 
@@ -483,10 +485,27 @@ Edit("projects/my-project/slides/slide_03.html",
 ```
 
 
-##### Flexible Outline Format (Example)
-Organize your outline into logical sections. The format below is a suggestion - adapt sections and slide counts to match your presentation needs:
+##### Flexible Outline Format with Agent Distribution
+
+**IMPORTANT**: Start your outline with an `agent_distribution` YAML block to optimize parallel generation. Sections with <3 slides should be consolidated into a single agent's workload.
 
 ```markdown
+# Project Outline
+
+## Agent Distribution
+```yaml
+agent_distribution:
+  agent_1:
+    sections: ["Introduction", "Main Analysis"]
+    slides: [1-5]
+  agent_2:
+    sections: ["Supporting Data", "Implementation"]
+    slides: [6-12]
+  agent_3:
+    sections: ["Results", "Conclusion"]
+    slides: [13-18]
+```
+
 # Section 1: Introduction (slides 1-2)
 ## Slide 1: Title Slide
 - Template: 00_title_slide
@@ -516,18 +535,24 @@ Organize your outline into logical sections. The format below is a suggestion - 
 ```
 
 **Key Principles:**
+- **Agent Distribution YAML**: Define how sections are grouped for parallel agents
+- **Section names**: Use exact section names from your outline headers
+- **Slide ranges**: Use format `[start-end]` for continuous ranges
+- **Consolidation rule**: Combine sections with <3 slides into nearby agents
 - Use `# Section N: Title (slides X-Y)` to mark section boundaries
 - Choose appropriate templates for each slide's content type
-- Specify required charts that need to be generated
 - Organize sections logically for your presentation narrative
 
 ##### Parallel Generation Process
 
-**CRITICAL**: Spawn ALL section agents in parallel using multiple Task tool calls in a single message.
+**CRITICAL**: Spawn agents based on the `agent_distribution` YAML, not raw section count.
 
-1. Parse outline for section boundaries (`# Section N:`)
-2. Spawn all sections simultaneously via multiple `<invoke name="Task">` calls
-3. Each agent independently generates, validates, and reports
+1. Parse the `agent_distribution` YAML block from outline
+2. Spawn N agents simultaneously via multiple `<invoke name="Task">` calls (where N = number of agents in YAML)
+3. Each agent handles their assigned sections/slides as specified in YAML
+4. Each agent independently generates, validates, and reports
+
+**Example**: If YAML specifies 3 agents, spawn exactly 3 parallel Task calls, even if there are 5 sections in the outline.
 
 ##### HTML Slide Requirements:
 - Properly structured HTML with DOCTYPE
