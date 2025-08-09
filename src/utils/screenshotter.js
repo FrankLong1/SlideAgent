@@ -4,7 +4,8 @@
  * Takes screenshots of slides and prepares them for AI visual analysis
  */
 
-const { launchBrowser, injectCommonCSS } = require('./puppeteer_helper');
+const { launchBrowser, injectCommonCSS, PagePool, waitForSlideReady } = require('./puppeteer_helper');
+const cliProgress = require('cli-progress');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -38,6 +39,10 @@ class Screenshotter {
         
         // Launch browser
         this.browser = await launchBrowser();
+        
+        // Initialize page pool with 8 pages
+        this.pagePool = new PagePool(this.browser, 8);
+        await this.pagePool.init();
     }
 
     async validateAllSlides() {
@@ -66,26 +71,38 @@ class Screenshotter {
         
         console.log(`📸 Taking screenshots of ${htmlFiles.length} slides...`);
 
-        const CONCURRENCY_LIMIT = 4;
-        await processWithConcurrency(htmlFiles, CONCURRENCY_LIMIT, async slideFile => {
-            console.log(`  📷 ${slideFile}...`);
-            await this.takeScreenshot(slideFile);
+        // Create progress bar
+        const progressBar = new cliProgress.SingleBar({
+            format: '📸 Screenshots |{bar}| {percentage}% | {value}/{total} | {slide}',
+            barCompleteChar: '█',
+            barIncompleteChar: '░',
+            hideCursor: true
         });
+        
+        progressBar.start(htmlFiles.length, 0, { slide: 'Starting...' });
+        
+        let completed = 0;
+        const CONCURRENCY_LIMIT = 8; // Increased for better CPU utilization
+        await processWithConcurrency(htmlFiles, CONCURRENCY_LIMIT, async slideFile => {
+            await this.takeScreenshot(slideFile);
+            completed++;
+            progressBar.update(completed, { slide: slideFile });
+        });
+        
+        progressBar.stop();
+        console.log('✅ All screenshots captured!');
 
         return htmlFiles;
     }
 
     async takeScreenshot(slideFile) {
-        const page = await this.browser.newPage();
+        const page = await this.pagePool.acquire();
 
         try {
-            // Set viewport to presentation size (16:9)
-            await page.setViewport({ width: 1920, height: 1080 });
-
-            // Load slide
+            // Load slide with smart waiting
             const slidePath = path.join(this.slidesDir, slideFile);
             const slideUrl = `file://${path.resolve(slidePath)}`;
-            await page.goto(slideUrl, { waitUntil: 'networkidle0' });
+            await waitForSlideReady(page, slideUrl);
 
             // Inject common slide CSS
             await injectCommonCSS(page);
@@ -99,7 +116,7 @@ class Screenshotter {
             });
             
         } finally {
-            await page.close();
+            await this.pagePool.release(page);
         }
     }
 
@@ -130,6 +147,9 @@ class Screenshotter {
     }
 
     async close() {
+        if (this.pagePool) {
+            await this.pagePool.destroy();
+        }
         if (this.browser) {
             await this.browser.close();
         }

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-const { launchBrowser, injectCommonCSS } = require('./puppeteer_helper');
+const { launchBrowser, injectCommonCSS, PagePool, waitForSlideReady } = require('./puppeteer_helper');
+const cliProgress = require('cli-progress');
 const path = require('path');
 const fs = require('fs');
 const { PDFDocument: PDFLib } = require('pdf-lib');
@@ -61,31 +62,32 @@ async function generatePDFFromSlides(slidesDir, outputPath = null) {
     console.log(`📁 Output will be saved to: ${outputPath}`);
 
     const browser = await launchBrowser();
+    const pagePool = new PagePool(browser, 8);
+    await pagePool.init();
+
+    // Create progress bar
+    const progressBar = new cliProgress.SingleBar({
+        format: '🗝 PDF Generation |{bar}| {percentage}% | {value}/{total} | {slide}',
+        barCompleteChar: '█',
+        barIncompleteChar: '░',
+        hideCursor: true
+    });
+    
+    progressBar.start(slideFiles.length, 0, { slide: 'Starting...' });
 
     try {
         // Create array to store individual PDF buffers
         const pdfBuffers = new Array(slideFiles.length);
+        let completed = 0;
 
         // Process slides concurrently with a limit
-        const CONCURRENCY_LIMIT = 4;
+        const CONCURRENCY_LIMIT = 8; // Increased for modern CPUs
         await processWithConcurrency(slideFiles, CONCURRENCY_LIMIT, async (slideFile, i) => {
             const slidePath = path.join(slidesDir, slideFile);
-            console.log(`  📄 Processing ${slideFile}...`);
-            const page = await browser.newPage();
+            const page = await pagePool.acquire();
             try {
-                await page.setViewport({
-                    width: 1920,
-                    height: 1080,
-                    deviceScaleFactor: 1
-                });
-
                 const fileUrl = `file://${path.resolve(slidePath)}`;
-                await page.goto(fileUrl, {
-                    waitUntil: 'networkidle2',
-                    timeout: 60000
-                });
-
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await waitForSlideReady(page, fileUrl);
 
                 await injectCommonCSS(page);
 
@@ -105,10 +107,14 @@ async function generatePDFFromSlides(slidesDir, outputPath = null) {
                 });
 
                 pdfBuffers[i] = pdfBuffer;
+                completed++;
+                progressBar.update(completed, { slide: slideFile });
             } finally {
-                await page.close();
+                await pagePool.release(page);
             }
         });
+        
+        progressBar.stop();
 
         // Merge all PDFs into one
         console.log(`🔀 Merging ${pdfBuffers.length} slides into single PDF...`);
@@ -134,6 +140,7 @@ async function generatePDFFromSlides(slidesDir, outputPath = null) {
         console.error('❌ Error generating PDF:', error.message);
         process.exit(1);
     } finally {
+        await pagePool.destroy();
         await browser.close();
     }
 }
