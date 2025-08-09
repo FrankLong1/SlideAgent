@@ -489,6 +489,8 @@ Edit("projects/my-project/slides/slide_03.html",
 
 **IMPORTANT**: Start your outline with an `agent_distribution` YAML block to optimize parallel generation. Sections with <3 slides should be consolidated into a single agent's workload.
 
+- When assigning slides to agents, consider slide complexity—not just quantity. Simpler slides (e.g., title, base) can be grouped together, while more complex slides (e.g., tables) may warrant fewer per agent. Distribute work accordingly.
+
 ```markdown
 # Project Outline
 
@@ -633,7 +635,7 @@ ls -la projects/[project-name]/*.pdf
 - [ ] File size is reasonable (typically 2-10MB for 20 slides)
 - [ ] All pages present (match slide count)
 - [ ] No rendering artifacts from validation reports
-- [ ] Ready for distribution
+- [ ] Ready for distribution, open the PDF file when everything is done!
 
 **Key Principle**: The system leverages parallel processing for generation and validation, while maintaining quality through automated review at each stage. Final PDF must be verified before distribution.
 

@@ -100,4 +100,3 @@ agent_distribution:
 - Theme: {theme}
 - Each section will be rendered by separate agents in parallel
 - Individual slide HTML files will be created in `slides/` directory
-- When assigning slides to agents, consider slide complexity—not just quantity. Simpler slides (e.g., title, base) can be grouped together, while more complex slides (e.g., tables) may warrant fewer per agent. Distribute work accordingly.
