@@ -45,7 +45,7 @@ SlideAgent/
 
 ## Slide Templates Reference
 
-The system provides 14 professional slide templates in `src/slides/slide_templates/`:
+The system provides 16 professional slide templates in `src/slides/slide_templates/`:
 
 | Template | Use Case | Key Features |
 |----------|----------|-------------|
@@ -63,7 +63,59 @@ The system provides 14 professional slide templates in `src/slides/slide_templat
 | `11_quadrants` | 4-metric dashboards | 2x2 grid with color coding |
 | `12_value_chain_flow` | Process flows | Horizontal value chain |
 | `13_four_chart_dashboard` | Multi-chart displays | 4 chart grid layout |
+| `14_metro_tiles` | Company landscapes, portfolio overview | Grid of colored tiles with varying sizes (small/wide/tall/large) |
+| `15_split_comparison` | Before/after, A vs B comparisons | Clean 50/50 split with VS badge and metrics |
 | `blank_slide` | Default template | Basic structure for customization |
+
+### New Advanced Templates (14-15)
+
+#### Template 14: Metro Tiles (`14_metro_tiles.html`)
+Modern tile-based layout inspired by Windows Metro design, perfect for creating visual landscapes and portfolio overviews.
+
+**Best for:**
+- Company/competitor landscape mapping
+- Product portfolio displays
+- Feature showcases with categories
+- Team member grids
+- Multi-metric dashboards
+- Logo splash screens
+
+**Features:**
+- 4-column grid system with 140px base row height
+- Four tile sizes: small (1x1), wide (2x1), tall (1x2), large (2x2)
+- Six color schemes: primary, accent, warning, danger, info, dark
+- Flexible content types: icons, values, labels, titles, subtitles
+- Clean flat design with no shadows or animations (PDF-safe)
+
+**Usage example:**
+```bash
+python3 DirectoryClient.py init-slide project-name 01 --template src/slides/slide_templates/14_metro_tiles.html --title "Market Landscape" --subtitle "2024 Key Players"
+```
+
+#### Template 15: Split Comparison (`15_split_comparison.html`)
+Professional side-by-side comparison layout for contrasting two options, solutions, or time periods.
+
+**Best for:**
+- Before/after comparisons
+- Product A vs Product B analysis
+- Old way vs new way presentations
+- Competitor comparisons
+- Pro/con evaluations
+- Current state vs future state
+
+**Features:**
+- True 50/50 split with visual separation
+- Central "VS" badge for emphasis
+- Comparison lists with customizable icons
+- Bottom metrics section for quantitative comparison
+- Color-coded metrics (good/bad/neutral)
+- Subtle background differentiation
+- Clean flat design optimized for PDF export
+
+**Usage example:**
+```bash
+python3 DirectoryClient.py init-slide project-name 02 --template src/slides/slide_templates/15_split_comparison.html --title "Solution Comparison" --subtitle "Traditional vs AI-Powered"
+```
 
 ## Chart Generation Workflow
 

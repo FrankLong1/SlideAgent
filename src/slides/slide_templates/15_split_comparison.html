@@ -1,0 +1,302 @@
+<!-- TEMPLATE_TYPE: standard -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Split Screen Comparison Template</title>
+    <!-- 
+    SPLIT SCREEN COMPARISON TEMPLATE
+    
+    Clean side-by-side comparison layout for contrasting two options.
+    Use for:
+    - Before/After comparisons
+    - Product A vs Product B
+    - Old way vs New way
+    - Competitor comparison
+    - Pro/Con analysis
+    
+    Features a 50/50 split with clear visual separation.
+    -->
+    <link rel="stylesheet" href="../core_css/base.css">
+    <link rel="stylesheet" href="../themes/examples/acme_corp/acme_corp_theme.css">
+    <style>
+        .comparison-container {
+            display: flex;
+            height: 100%;
+            position: relative;
+        }
+        
+        .comparison-side {
+            flex: 1;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .comparison-left {
+            background: #f8f9fa;
+            border-right: 3px solid #dee2e6;
+        }
+        
+        .comparison-right {
+            background: #ffffff;
+        }
+        
+        .comparison-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(0,0,0,0.1);
+        }
+        
+        .comparison-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #1B365D;
+        }
+        
+        .comparison-subtitle {
+            font-size: 16px;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .comparison-content {
+            flex: 1;
+        }
+        
+        .comparison-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .comparison-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .comparison-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .comparison-icon {
+            width: 24px;
+            margin-right: 12px;
+            flex-shrink: 0;
+            font-size: 18px;
+        }
+        
+        .comparison-left .comparison-icon {
+            color: #666;
+        }
+        
+        .comparison-right .comparison-icon {
+            color: #2E7D32;
+        }
+        
+        .comparison-text {
+            flex: 1;
+            font-size: 16px;
+            line-height: 1.5;
+            color: #333;
+        }
+        
+        /* Center VS badge */
+        .vs-badge {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: #1B365D;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 20px;
+            border: 4px solid white;
+            z-index: 10;
+        }
+        
+        /* Metrics row */
+        .comparison-metrics {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .metric-item {
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1B365D;
+        }
+        
+        .metric-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+        
+        /* Color coding for metrics */
+        .metric-good {
+            color: #2E7D32;
+        }
+        
+        .metric-bad {
+            color: #C62828;
+        }
+        
+        .metric-neutral {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+<section class="slide bg-white" style="display: flex; flex-direction: column; justify-content: space-between; align-items: stretch;">
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <div class="slide-title">[TITLE]</div>
+            <div class="slide-subtitle">[SUBTITLE]</div>
+        </div>
+        <div class="header-right">
+            <div class="section-label">[SECTION]</div>
+            <div class="logo" alt="Company Logo"></div>
+        </div>
+    </div>
+    
+    <!-- Main content area -->
+    <div class="content" style="flex: 1; position: relative;">
+        
+        <div class="comparison-container">
+            <!-- Left side -->
+            <div class="comparison-side comparison-left">
+                <div class="comparison-header">
+                    <div class="comparison-title">Option A</div>
+                    <div class="comparison-subtitle">Current State / Traditional Approach</div>
+                </div>
+                
+                <div class="comparison-content">
+                    <ul class="comparison-list">
+                        <li>
+                            <span class="comparison-icon">•</span>
+                            <span class="comparison-text">First key characteristic or feature of this option</span>
+                        </li>
+                        <li>
+                            <span class="comparison-icon">•</span>
+                            <span class="comparison-text">Second important aspect to consider</span>
+                        </li>
+                        <li>
+                            <span class="comparison-icon">•</span>
+                            <span class="comparison-text">Third differentiating factor</span>
+                        </li>
+                        <li>
+                            <span class="comparison-icon">•</span>
+                            <span class="comparison-text">Fourth point of comparison</span>
+                        </li>
+                        <li>
+                            <span class="comparison-icon">•</span>
+                            <span class="comparison-text">Fifth consideration or attribute</span>
+                        </li>
+                    </ul>
+                    
+                    <div class="comparison-metrics">
+                        <div class="metric-item">
+                            <div class="metric-value metric-neutral">85%</div>
+                            <div class="metric-label">Metric 1</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value metric-bad">2.5x</div>
+                            <div class="metric-label">Metric 2</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value metric-neutral">$45K</div>
+                            <div class="metric-label">Metric 3</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right side -->
+            <div class="comparison-side comparison-right">
+                <div class="comparison-header">
+                    <div class="comparison-title">Option B</div>
+                    <div class="comparison-subtitle">Future State / New Approach</div>
+                </div>
+                
+                <div class="comparison-content">
+                    <ul class="comparison-list">
+                        <li>
+                            <span class="comparison-icon">✓</span>
+                            <span class="comparison-text">Enhanced capability or improved feature</span>
+                        </li>
+                        <li>
+                            <span class="comparison-icon">✓</span>
+                            <span class="comparison-text">Better performance or efficiency gains</span>
+                        </li>
+                        <li>
+                            <span class="comparison-icon">✓</span>
+                            <span class="comparison-text">Advanced functionality or innovation</span>
+                        </li>
+                        <li>
+                            <span class="comparison-icon">✓</span>
+                            <span class="comparison-text">Superior outcome or result</span>
+                        </li>
+                        <li>
+                            <span class="comparison-icon">✓</span>
+                            <span class="comparison-text">Additional benefit or advantage</span>
+                        </li>
+                    </ul>
+                    
+                    <div class="comparison-metrics">
+                        <div class="metric-item">
+                            <div class="metric-value metric-good">95%</div>
+                            <div class="metric-label">Metric 1</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value metric-good">0.8x</div>
+                            <div class="metric-label">Metric 2</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value metric-good">$32K</div>
+                            <div class="metric-label">Metric 3</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- VS Badge -->
+            <div class="vs-badge">VS</div>
+        </div>
+        
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-text">
+            Company Name | Confidential
+        </div>
+        <div class="page-number">
+            Page [PAGE_NUMBER]
+        </div>
+    </div>
+</section>
+
+</body>
+</html>
