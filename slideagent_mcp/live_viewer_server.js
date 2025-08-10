@@ -14,7 +14,7 @@ if (!projectName) {
     process.exit(1);
 }
 
-const ROOT_DIR = path.join(__dirname, '..', '..');
+const ROOT_DIR = path.join(__dirname, '..');  // SlideAgent root
 const projectPath = path.join(ROOT_DIR, 'projects', projectName);
 const slidesPath = path.join(projectPath, 'slides');
 

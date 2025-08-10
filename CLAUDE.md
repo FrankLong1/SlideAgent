@@ -179,6 +179,18 @@ Use the `update_memory` tool to track:
 5. **Use PlotBuddy.from_project_config()** for automatic theme loading
 6. **Match templates to content** - Review template metadata for best fit
 
+## CSS Architecture
+
+**Two-Layer Structure:**
+1. **`src/slides/base.css`** - Foundation (layout, typography, dimensions)
+2. **`themes/`** - Brand Identity (colors, fonts, logos)
+
+**Design Philosophy:**
+- Fixed 16:9 dimensions (1920x1080px)
+- PDF-safe CSS only (no shadows, gradients, opacity<1)
+- Static design (no animations)
+- Professional appearance (no emojis)
+
 ## Workflow Steps
 
 ### 1. Project Setup
@@ -192,11 +204,27 @@ Use the `create_project` tool to create a new project. This automatically:
 Add source materials to `input/` folder, then analyze comprehensively. 
 
 ### 3. Template Discovery & Outline Generation
+
+**CRITICAL OUTLINE FORMAT** (Required for live viewer to work):
+```markdown
+# Project Title
+
+# Section 1: Section Name (slides X-Y)    ← Use single # for sections
+## Slide X: Slide Title                   ← Use double ## for slides
+- Template: src/slides/slide_templates/00_title_slide.html
+- Content: Details...
+```
+
+**IMPORTANT FORMAT RULES**:
+- Use `#` (single hash) for section headers, NOT `##` 
+- Use `##` (double hash) for slide headers, NOT `###`
+- Include `(slides X-Y)` in section headers
+
 **CRITICAL STEPS**:
 1. Call `list_slide_templates` to discover all available templates with paths
 2. Call `list_chart_templates` to see chart options
 3. Review the metadata to understand best use cases
-4. Generate the outline content with sections and slides
+4. Generate the outline content with sections and slides **using the format above**
 5. **AS THE FINAL STEP**: Add `agent_distribution` YAML for parallel workload balancing
 
 **Agent Distribution (Workload Balancing):**
@@ -241,93 +269,22 @@ start_live_viewer(project="[project-name]", port=8080)
 
 **Then spawn parallel agents** based on `agent_distribution` YAML. Each agent handles BOTH slides and charts in their sections:
 
-**Agent Workflow:**
+#### **Agent Workflow:**
 1. **Generate charts first** (if any assigned):
-   - Call `init_chart` with template path
+   - Call `init_chart` tool with template path
    - Edit the Python script's data section
    - Run the script to generate both _branded.png and _clean.png
    - Verify outputs exist
    
 2. **Then generate slides**:
-   - Call `init_slide` with template path from outline
-   - Edit HTML content to replace placeholders
-   - Insert chart paths where needed (use _clean.png versions)
+   - Call `init_slide` tool with template path from outline and the content you have.
+   - Edit HTML content to replace placeholders and insert chart paths (use _clean.png versions) using the file editing tools
 
-3. **Validate each slide using Puppeteer MCP**:
-   ```python
-   # Navigate to the slide
-   mcp__puppeteer__puppeteer_navigate(url=f"file://{slide_path}")
-   
-   # Take a screenshot for validation
-   mcp__puppeteer__puppeteer_screenshot(
-       name=f"slide_{number}_validation",
-       width=1920,
-       height=1080
-   )
-   ```
+3. Validate as you build using Puppeteer MCP (navigate + screenshot) when helpful. No separate validation or review step is required. **Puppeteer screenshots show EXACTLY what PDF will look like** because both use Chromium's rendering engine. Best practice is to always validate via Puppeteer screenshots, not browser preview.
 
-4. **Write validation report** for the entire section
+### 5. PDF Generation
+Use the PDF tool from the SlideAgent MCP to generate the project PDF (saved to `projects/[project-name]/[project-name].pdf`).
 
-**Template placeholders**: `[TITLE]`, `[SUBTITLE]`, `[SECTION]`, `[PAGE_NUMBER]`
 
-### 5. Validation Process
-
-**Use Puppeteer MCP for all screenshot validation:**
-- No need for complex screenshotter.js infrastructure
-- Direct integration without subprocess calls
-- Validate slides as you create them
-
-**Validation workflow:**
-```python
-# For each slide that needs validation
-for slide in slides_to_validate:
-    # Navigate to the slide
-    mcp__puppeteer__puppeteer_navigate(url=f"file://{slide_path}")
-    
-    # Capture screenshot
-    screenshot_path = mcp__puppeteer__puppeteer_screenshot(
-        name=f"{project_name}_slide_{slide_number}",
-        width=1920,
-        height=1080
-    )
-    
-    # Review screenshot to ensure:
-    # - Layout is correct
-    # - No text overflow
-    # - Images positioned properly
-    # - Charts display correctly
-```
-
-### 6. Review & Iteration
-Based on validation screenshots, make targeted adjustments to slides.
-
-### 7. PDF Generation
-```python
-# Use the MCP tool for PDF generation
-generate_pdf(project="[project-name]")
-# PDF will be saved to projects/[project-name]/[project-name].pdf
-```
-
-## CSS Architecture
-
-**Two-Layer Structure:**
-1. **`src/slides/base.css`** - Foundation (layout, typography, dimensions)
-2. **`themes/`** - Brand Identity (colors, fonts, logos)
-
-**Design Philosophy:**
-- Fixed 16:9 dimensions (1920x1080px)
-- PDF-safe CSS only (no shadows, gradients, opacity<1)
-- Static design (no animations)
-- Professional appearance (no emojis)
-
-## Critical HTML vs PDF Rendering
-
-**Puppeteer screenshots show EXACTLY what PDF will look like** because both use Chromium's rendering engine.
-
-**Common Issues:**
-- Flexbox/Grid layouts break - use simpler positioning
-- Two-column layouts overlap - ensure adequate spacing
-- Images shift - use fixed dimensions
-- Text wraps differently - leave extra margins
-
-**Best Practice**: Always validate via Puppeteer screenshots, not browser preview.
+## General Notes
+- There are oftentimes path issues referencing files, be wary of that and try to diagnose that when something isn't working!
