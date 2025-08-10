@@ -144,48 +144,7 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    // Serve CSS files
-    if (req.url.includes('.css')) {
-        const cssPath = path.join(ROOT_DIR, req.url.substring(1));
-        try {
-            const content = fs.readFileSync(cssPath, 'utf8');
-            res.writeHead(200, { 
-                'Content-Type': 'text/css',
-                'Cache-Control': 'no-cache'
-            });
-            res.end(content);
-        } catch (err) {
-            res.writeHead(404);
-            res.end('CSS file not found');
-        }
-        return;
-    }
-
-    // Serve image files (logos, etc)
-    if (req.url.match(/\.(png|jpg|jpeg|svg|gif)$/i)) {
-        const imagePath = path.join(ROOT_DIR, req.url.substring(1));
-        try {
-            const content = fs.readFileSync(imagePath);
-            const ext = path.extname(req.url).toLowerCase();
-            const contentType = {
-                '.png': 'image/png',
-                '.jpg': 'image/jpeg',
-                '.jpeg': 'image/jpeg',
-                '.svg': 'image/svg+xml',
-                '.gif': 'image/gif'
-            }[ext] || 'application/octet-stream';
-            
-            res.writeHead(200, { 
-                'Content-Type': contentType,
-                'Cache-Control': 'max-age=3600'
-            });
-            res.end(content);
-        } catch (err) {
-            res.writeHead(404);
-            res.end('Image not found');
-        }
-        return;
-    }
+    // Note: CSS and image files are now served through the project directory handler below
 
     // API endpoint to get sections and slide status
     if (req.url === '/api/status') {
@@ -350,20 +309,13 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    // Serve slide content with CSS path fixes
-    if (req.url.startsWith('/slides/')) {
-        const slideName = req.url.substring(8).split('?')[0];
+    // Serve slide content
+    if (req.url.match(/slide_\d+\.html/)) {
+        const slideName = path.basename(req.url).split('?')[0];
         const slidePath = path.join(slidesPath, slideName);
         
         try {
-            let content = fs.readFileSync(slidePath, 'utf8');
-            
-            // Fix relative CSS paths to work with our server
-            content = content.replace(/href="\.\.\/\.\.\/\.\.\//g, 'href="/');
-            content = content.replace(/src="\.\.\/\.\.\/\.\.\//g, 'src="/');
-            content = content.replace(/href="\.\.\//g, 'href="/projects/' + projectName + '/');
-            content = content.replace(/src="\.\.\//g, 'src="/projects/' + projectName + '/');
-            
+            const content = fs.readFileSync(slidePath, 'utf8');
             res.writeHead(200, { 
                 'Content-Type': 'text/html',
                 'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -377,9 +329,46 @@ const server = http.createServer((req, res) => {
         }
         return;
     }
+    
+    // Serve any file from the project directory (theme files, plots, etc)
+    // This handles all relative paths from slides like ../theme/base.css
+    if (req.url.includes('/theme/') || req.url.includes('/plots/')) {
+        // Extract the relative path part (theme/base.css or plots/chart.png)
+        let relativePath = req.url;
+        if (relativePath.includes('/theme/')) {
+            relativePath = 'theme' + relativePath.split('/theme')[1];
+        } else if (relativePath.includes('/plots/')) {
+            relativePath = 'plots' + relativePath.split('/plots')[1];
+        }
+        
+        const filePath = path.join(projectPath, relativePath);
+        
+        try {
+            const content = fs.readFileSync(filePath);
+            
+            // Determine content type
+            const ext = path.extname(filePath).toLowerCase();
+            let contentType = 'application/octet-stream';
+            if (ext === '.css') contentType = 'text/css';
+            else if (ext === '.png') contentType = 'image/png';
+            else if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
+            else if (ext === '.svg') contentType = 'image/svg+xml';
+            else if (ext === '.gif') contentType = 'image/gif';
+            
+            res.writeHead(200, { 
+                'Content-Type': contentType,
+                'Cache-Control': 'no-cache'
+            });
+            res.end(content);
+        } catch (err) {
+            res.writeHead(404);
+            res.end('File not found: ' + relativePath);
+        }
+        return;
+    }
 
-    // Serve files from project directory (plots, etc)
-    if (req.url.startsWith('/projects/')) {
+    // Serve files from project directory (plots, theme files, etc)
+    if (req.url.startsWith('/user_projects/')) {
         const filePath = path.join(ROOT_DIR, req.url.substring(1));
         try {
             const content = fs.readFileSync(filePath);
@@ -839,9 +828,9 @@ const server = http.createServer((req, res) => {
                             slideEl.className += ' new-slide';
                             slideEl.innerHTML = \`
                                 <div class="slide-number-overlay">Slide \${slide.number}</div>
-                                <iframe class="slide-iframe" src="/slides/\${slide.file}?t=\${Date.now()}"></iframe>
+                                <iframe class="slide-iframe" src="/\${slide.file}?t=\${Date.now()}"></iframe>
                             \`;
-                            slideEl.onclick = () => window.open(\`/slides/\${slide.file}\`, '_blank');
+                            slideEl.onclick = () => window.open(\`/\${slide.file}\`, '_blank');
                         }
                         
                         slidesRow.appendChild(slideEl);
@@ -851,9 +840,9 @@ const server = http.createServer((req, res) => {
                         slideEl.className = 'slide-container completed new-slide';
                         slideEl.innerHTML = \`
                             <div class="slide-number-overlay">Slide \${slide.number}</div>
-                            <iframe class="slide-iframe" src="/slides/\${slide.file}?t=\${Date.now()}"></iframe>
+                            <iframe class="slide-iframe" src="/\${slide.file}?t=\${Date.now()}"></iframe>
                         \`;
-                        slideEl.onclick = () => window.open(\`/slides/\${slide.file}\`, '_blank');
+                        slideEl.onclick = () => window.open(\`/\${slide.file}\`, '_blank');
                         
                         // Scroll the row to show the new slide
                         slidesRow.scrollLeft = slideEl.offsetLeft - 20;

@@ -66,8 +66,13 @@ SlideAgent/
 │   ├── examples/                # Example themes for reference
 │   │   └── acme_corp/           # Default professional theme
 │   └── private/                  # Custom/client-specific themes
-├── projects/
+├── user_projects/               # All user projects
 │   └── [project-name]/
+│       ├── theme/               # Project-local theme files (self-contained)
+│       │   ├── base.css         # Copy of core CSS
+│       │   ├── [theme]_theme.css# Theme-specific CSS
+│       │   ├── [theme]_icon_logo.png  # Icon logo
+│       │   └── [theme]_text_logo.png  # Text logo
 │       ├── slides/              # Individual standalone HTML slide files
 │       ├── validation/          # Screenshots for quality control
 │       ├── plots/               # Chart files (_clean.png for slides)
@@ -129,11 +134,15 @@ Each theme contains 4 files:
 - For private/corporate themes, store in `themes/private/`
 
 ### CSS Path Management
-**Required CSS paths from slide location** (`projects/[project]/slides/`):
+**IMPORTANT**: Projects are self-contained with their own theme folder.
+
+**CSS paths in all slides** (from `slides/` folder):
 ```html
-<link rel="stylesheet" href="../../../src/slides/base.css">
-<link rel="stylesheet" href="../../../themes/[theme-location]/[theme]_theme.css">
+<link rel="stylesheet" href="../theme/base.css">
+<link rel="stylesheet" href="../theme/[theme]_theme.css">
 ```
+
+When you use `init_slide` MCP tool, these paths are automatically set correctly. The theme files are copied to each project during `create_project`.
 
 ## Critical Header Structure
 
@@ -194,10 +203,12 @@ Use the `update_memory` tool to track:
 ## Workflow Steps
 
 ### 1. Project Setup
-Use the `create_project` tool to create a new project. This automatically:
-- Creates directory structure (slides/, plots/, input/, validation/)
+Use the `create_project` MCP tool to create a new project. This automatically:
+- Creates directory structure (slides/, plots/, input/, validation/, theme/)
+- Copies base.css and all theme files to project's theme/ folder
+- Makes project self-contained with all necessary CSS and assets
 - Initializes config.yaml with theme settings
-- Creates outline.md from template with agent distribution YAML
+- Creates outline.md template
 - Creates memory.md for project-specific learnings
 
 ### 2. Content Analysis & Input Preparation
@@ -311,12 +322,7 @@ agent_distribution:
 
 ### 4. Parallel Slide & Chart Generation
 
-**Start live viewer first using MCP tool:**
-```python
-# Use the MCP tool - it automatically kills any process on the port
-start_live_viewer(project="[project-name]", port=8080)
-# Then open http://localhost:8080 in browser
-```
+**IMPORTANT: You MUST start the live viewer using the MCP tool BEFORE spawning any agents. This is a required prerequisite so the user can watch progress.**
 
 **Then spawn parallel agents** based on `agent_distribution` YAML using Claude Code's Task tool. Each agent handles BOTH slides and charts in their assigned sections:
 
@@ -347,22 +353,46 @@ Task(
 # All three agents run simultaneously, drastically reducing generation time
 ```
 
-#### **Agent Workflow:**
-1. **Generate charts first** (if any assigned):
-   - Call `init_chart` tool with template path
-   - Edit the Python script's data section
-   - Run the script to generate both _branded.png and _clean.png
-   - Verify outputs exist
-   
-2. **Then generate slides**:
-   - Call `init_slide` tool with template path from outline and the content you have.
-   - Edit HTML content to replace placeholders and insert chart paths (use _clean.png versions) using the file editing tools
+#### **Agent Workflow**
+1. **Charts first**
+   - Use `init_chart` MCP tool with the exact template path from `list_chart_templates`
+   - Edit data/config only (EDIT SECTION)
+   - Run → outputs `_branded.png` and `_clean.png`
+   - Verify files exist
 
-3. Validate as you build using Puppeteer MCP (navigate + screenshot) when helpful. No separate validation or review step is required. **Puppeteer screenshots show EXACTLY what PDF will look like** because both use Chromium's rendering engine. Best practice is to always validate via Puppeteer screenshots, not browser preview.
+2. **Slides next**
+   - Use `init_slide` MCP tool with the exact template path from `list_slide_templates`
+   - The MCP tool automatically sets correct CSS paths to ../theme/
+   - Replace placeholders with detailed content from outline
+   - Insert chart paths (use `_clean.png` versions)
+
+3. **Continuous validation from each sub-agent on their dedicated slides**
+   - Use Puppeteer MCP (navigate + screenshot) as you build
+   - No separate review step; screenshots match the final PDF (Chromium parity)
 
 ### 5. PDF Generation
 Use the PDF tool from the SlideAgent MCP to generate the project PDF (saved to `projects/[project-name]/[project-name].pdf`).
 
 
+## Troubleshooting
+
+### CSS Not Loading in Slides
+- **Always use MCP tools** (`init_slide`) which set paths automatically
+- CSS paths should be: `../theme/base.css` and `../theme/[theme]_theme.css`
+- Each project has its own `theme/` folder with all necessary files
+- Never use paths like `../../../src/slides/` or `../../../themes/`
+
+### Live Viewer Issues
+- Restart live viewer if CSS changes: `stop_live_viewer` then `start_live_viewer`
+- Live viewer serves from project root, so paths are relative to that
+- Check http://localhost:8080/slide_01.html for preview
+
+### PDF Generation
+- PDF generator uses Chromium, same as live viewer
+- If slides look correct in live viewer, PDF will be correct
+- Always generate PDF after all slides are complete
+
 ## General Notes
-- There are oftentimes path issues referencing files, be wary of that and try to diagnose that when something isn't working!
+- Projects are self-contained - all CSS and assets are copied to project/theme/
+- Always use MCP tools for consistency
+- Path issues usually mean not using MCP tools correctly
