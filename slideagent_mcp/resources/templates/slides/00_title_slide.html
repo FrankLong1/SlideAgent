@@ -1,0 +1,57 @@
+<!-- TEMPLATE_META
+name: 00_title_slide
+title: Title Slide
+description: Opening slide with centered title and company branding
+use_cases: ["Presentation opening", "Section transitions", "Chapter dividers"]
+features: ["Centered title layout", "Company text logo", "Date badge", "Professional branding"]
+best_for: Starting presentations with strong visual impact
+placeholders: ["TITLE", "SUBTITLE", "SECTION", "PAGE_NUMBER"]
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Title Slide Template</title>
+    <link rel="stylesheet" href="[BASE_CSS_PATH]">
+    <link rel="stylesheet" href="[THEME_CSS_PATH]">
+</head>
+<body>
+
+<section class="slide title-slide" style="display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; text-align: left; position: relative;">
+    <!-- Header with logo in standard position -->
+    <div class="header" style="border-bottom: none;">
+        <div class="header-left">
+            <div style="color: #888; font-style: italic; font-size: 16px;">Confidential</div>
+        </div>
+        <div class="header-right">
+            <div class="logo" alt="Company Logo"></div>
+        </div>
+    </div>
+    
+    <!-- Main content area - left-justified title with accent bar -->
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; text-align: left; padding-left: 40px; max-width: 800px;">
+        <div style="border-left: 6px solid var(--primary-color); padding-left: 40px;">
+            <h1 class="main-title" style="font-size: 56px; font-weight: 700; margin-bottom: 24px; line-height: 1.1;">[TITLE]</h1>
+            <h2 class="subtitle" style="font-size: 28px; font-weight: 300; margin-bottom: 40px; color: var(--text-secondary);">[SUBTITLE]</h2>
+        </div>
+    </div>
+    
+    <!-- Date element above footer -->
+    <div style="padding-left: 40px; margin-bottom: 20px;">
+        <div class="date-element" style="color: #888; font-style: italic; font-size: 18px;">
+            December 2024
+        </div>
+    </div>
+    
+    <!-- Two-tone department tag on bottom right -->
+    <div style="position: absolute; bottom: 60px; right: 0; display: flex; align-items: center;">
+        <div style="background: var(--primary-color); color: white; padding: 16px 24px; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+            Corporate Strategy
+        </div>
+        <div style="background: var(--accent-color); width: 52px; height: 52px;"></div>
+    </div>
+</section>
+
+</body>
+</html>

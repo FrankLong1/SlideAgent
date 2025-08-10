@@ -1,0 +1,70 @@
+<!-- TEMPLATE_META
+name: 01_base_slide
+title: Base Slide
+description: Standard slide for lists, key points, and general content
+use_cases: ["Bullet points", "Key takeaways", "General information", "Text content"]
+features: ["Header with section label", "Flexible content area", "Logo placement", "Support for lists"]
+best_for: Most common slide type for presenting information
+placeholders: ["TITLE", "SUBTITLE", "SECTION", "PAGE_NUMBER"]
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACME Corp Base Slide Template</title>
+    <link rel="stylesheet" href="[BASE_CSS_PATH]">
+    <link rel="stylesheet" href="[THEME_CSS_PATH]">
+</head>
+<body>
+
+<section class="slide bg-grey" style="display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; text-align: left;">
+    <!-- Header with correct structure per CLAUDE.md -->
+    <div class="header">
+        <div class="header-left">
+            <div class="slide-title">[TITLE]</div>
+            <div class="slide-subtitle">[SUBTITLE]</div>
+        </div>
+        <div class="header-right">
+            <div class="section-label">[SECTION]</div>
+            <div class="logo" alt="ACME Corp"></div>
+        </div>
+    </div>
+    
+    <!-- Main content area -->
+    <!-- IMPORTANT: Do NOT use H2/H3 or other large headings in the content area.
+         The slide header already contains the title and subtitle. Additional large headings
+         create visual clutter. Use bullet points, paragraphs, or bold text for emphasis instead. -->
+    <div class="content" style="flex: 1; display: flex; flex-direction: column; justify-content: flex-start;">
+        
+        <ul>
+            <li>Strong market position with competitive advantages</li>
+            <li>Robust financial performance and growth</li>
+            <li>Experienced management with proven track record</li>
+            <li>Clear path to value creation</li>
+        </ul>
+    </div>
+    
+    <!-- Bottom Content Box -->
+    <div style="display: flex; justify-content: center; margin: 0 0 20px 0;">
+        <div class="highlight-box">
+            <p style="text-align: center;">
+                <strong>Investment Thesis:</strong> This opportunity represents a compelling value proposition 
+                with significant upside potential driven by operational improvements.
+            </p>
+        </div>
+    </div>
+    
+    <!-- Footer with page number and confidentiality notice -->
+    <div class="footer">
+        <div class="footer-text">
+            ACME Corporation | Strictly Confidential
+        </div>
+        <div class="page-number">
+            Page [PAGE_NUMBER]
+        </div>
+    </div>
+</section>
+
+</body>
+</html>

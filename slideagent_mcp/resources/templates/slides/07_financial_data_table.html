@@ -1,0 +1,211 @@
+<!-- TEMPLATE_META
+name: 07_financial_data_table
+title: Financial Data Table
+description: Structured table for financial or operational metrics
+use_cases: ['Financial reports', 'KPI dashboards', 'Quarterly results', 'Data tables']
+features: ['Styled table', 'Footnote support', 'Highlight rows', 'Professional formatting']
+best_for: Presenting structured numerical data
+placeholders: ["TITLE", "SUBTITLE", "SECTION", "PAGE_NUMBER"]
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACME Corp Financial Data Table Template</title>
+    <link rel="stylesheet" href="[BASE_CSS_PATH]">
+    <link rel="stylesheet" href="[THEME_CSS_PATH]">
+    <style>
+        .financial-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        
+        .financial-table thead th {
+            background-color: #4472c4;
+            color: white;
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 600;
+            border: 1px solid #fff;
+        }
+        
+        .financial-table thead th:first-child {
+            background-color: #4472c4;
+            text-align: left;
+            font-weight: 700;
+            padding-left: 16px;
+        }
+        
+        .financial-table tbody tr:nth-child(odd) {
+            background-color: #f8f9fa;
+        }
+        
+        .financial-table tbody tr:nth-child(even) {
+            background-color: #ffffff;
+        }
+        
+        .financial-table tbody td {
+            padding: 10px 8px;
+            border: 1px solid #e1e5e9;
+            text-align: right;
+            font-weight: 400;
+        }
+        
+        .financial-table tbody td:first-child {
+            text-align: left;
+            padding-left: 16px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .section-header {
+            background-color: #4472c4 !important;
+            color: white !important;
+            font-weight: 700 !important;
+            text-align: left !important;
+            padding-left: 16px !important;
+        }
+        
+        .section-header td {
+            background-color: #4472c4 !important;
+            color: white !important;
+            padding: 8px !important;
+            text-align: center !important;
+        }
+        
+    </style>
+</head>
+<body>
+
+<section class="slide bg-grey" style="display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; text-align: left;">
+    <!-- Header with new structure -->
+    <div class="header">
+        <div class="header-left">
+            <div class="slide-title">[TITLE]</div>
+            <div class="slide-subtitle">[SUBTITLE]</div>
+        </div>
+        <div class="header-right">
+            <div class="section-label">[SECTION]</div>
+            <div class="logo" alt="ACME Corp"></div>
+        </div>
+    </div>
+    
+    <!-- Main content area -->
+    <div class="content" style="flex: 1; display: flex; flex-direction: column; justify-content: flex-start;">
+        
+        <table class="financial-table">
+            <thead>
+                <tr>
+                    <th>($MM except per share data)</th>
+                    <th>2022A</th>
+                    <th>2023A</th>
+                    <th>2024E</th>
+                    <th>2025E</th>
+                    <th>2026E</th>
+                    <th>2027E</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="section-header">
+                    <td colspan="7">INCOME STATEMENT</td>
+                </tr>
+                <tr>
+                    <td>Revenue</td>
+                    <td>$485.2</td>
+                    <td>$562.8</td>
+                    <td>$634.1</td>
+                    <td>$720.5</td>
+                    <td>$815.7</td>
+                    <td>$922.4</td>
+                </tr>
+                <tr>
+                    <td>Gross Profit</td>
+                    <td>$291.1</td>
+                    <td>$343.7</td>
+                    <td>$396.3</td>
+                    <td>$468.3</td>
+                    <td>$547.6</td>
+                    <td>$637.7</td>
+                </tr>
+                <tr>
+                    <td>EBITDA</td>
+                    <td>$87.3</td>
+                    <td>$112.6</td>
+                    <td>$139.5</td>
+                    <td>$180.1</td>
+                    <td>$228.4</td>
+                    <td>$286.2</td>
+                </tr>
+                <tr>
+                    <td>Net Income</td>
+                    <td>$34.2</td>
+                    <td>$48.7</td>
+                    <td>$65.8</td>
+                    <td>$91.5</td>
+                    <td>$124.3</td>
+                    <td>$165.8</td>
+                </tr>
+                <tr class="section-header">
+                    <td colspan="7">KEY METRICS</td>
+                </tr>
+                <tr>
+                    <td>Revenue Growth</td>
+                    <td>12.5%</td>
+                    <td>16.0%</td>
+                    <td>12.7%</td>
+                    <td>13.6%</td>
+                    <td>13.2%</td>
+                    <td>13.1%</td>
+                </tr>
+                <tr>
+                    <td>Gross Margin</td>
+                    <td>60.0%</td>
+                    <td>61.1%</td>
+                    <td>62.5%</td>
+                    <td>65.0%</td>
+                    <td>67.1%</td>
+                    <td>69.2%</td>
+                </tr>
+                <tr>
+                    <td>EBITDA Margin</td>
+                    <td>18.0%</td>
+                    <td>20.0%</td>
+                    <td>22.0%</td>
+                    <td>25.0%</td>
+                    <td>28.0%</td>
+                    <td>31.0%</td>
+                </tr>
+                <tr class="section-header">
+                    <td colspan="7">PER SHARE DATA</td>
+                </tr>
+            </tbody>
+        </table>
+        
+    </div>
+    
+    <!-- Bottom Content Box -->
+    <div style="display: flex; justify-content: center; margin: 0 0 20px 0;">
+        <div style="background: #fffacd; padding: 12px 20px; border: 1px solid #e6d872; display: inline-block;">
+            <p style="font-size: 16px; color: #333; margin: 0; text-align: center;">
+                <strong>Notes and Assumptions:</strong> Financial data for 2022-2023 represents actual reported results. 
+                2024E-2027E figures represent management projections and ACME Corp estimates.
+            </p>
+        </div>
+    </div>
+    
+    <!-- Footer with page number and confidentiality notice -->
+    <div class="footer">
+        <div class="footer-text">
+            ACME Corporation | Strictly Confidential
+        </div>
+        <div class="page-number">
+            Page [PAGE_NUMBER]
+        </div>
+    </div>
+</section>
+
+</body>
+</html>

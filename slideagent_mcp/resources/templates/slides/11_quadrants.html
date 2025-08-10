@@ -1,0 +1,125 @@
+<!-- TEMPLATE_META
+name: 11_quadrants
+title: Quadrants Dashboard
+description: Four-quadrant layout for metrics or category comparisons
+use_cases: ['4-metric dashboards', 'Category comparisons', 'Performance quadrants', 'Multiple KPIs']
+features: ['2x2 grid', 'Color differentiation', 'Metric display', 'Visual balance']
+best_for: Displaying four related metrics or categories
+placeholders: ["TITLE", "SUBTITLE", "SECTION", "PAGE_NUMBER"]
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACME Corp Quadrants Dashboard Template</title>
+    <!-- 
+    QUADRANTS DASHBOARD TEMPLATE - 4-Metric Display
+    
+    This template creates a 2x2 grid of metric cards, perfect for displaying key statistics
+    or KPIs in a dashboard-style layout. Each quadrant can show different data types:
+    
+    Use cases:
+    - Financial metrics (Revenue, Profit, Growth, Market Share)
+    - Performance indicators (Users, Conversion, Retention, Satisfaction)
+    - Comparison data (Before/After, This Year/Last Year, Us/Competitors)
+    - Regional data (North/South/East/West regions)
+    - Product metrics (Sales, Reviews, Returns, Inventory)
+    
+    Features:
+    - Responsive 2x2 grid layout
+    - Color-coded left borders for visual differentiation
+    - Large numeric display with supporting context
+    - Icon/emoji support for visual appeal
+    - Central comparison element (optional)
+    
+    Customization:
+    - Change border colors for different categories
+    - Add icons or emojis for visual impact
+    - Modify background colors for emphasis
+    - Include trend indicators (↑↓) or percentages
+    -->
+    <link rel="stylesheet" href="[BASE_CSS_PATH]">
+    <link rel="stylesheet" href="[THEME_CSS_PATH]">
+</head>
+<body>
+
+<section class="slide bg-grey" style="display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; text-align: left;">
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <div class="slide-title">[TITLE]</div>
+            <div class="slide-subtitle">[SUBTITLE]</div>
+        </div>
+        <div class="header-right">
+            <div class="section-label">[SECTION]</div>
+            <div class="logo" alt="ACME Corp"></div>
+        </div>
+    </div>
+    
+    <!-- Main content area - 4-quadrant dashboard -->
+    <div class="content" style="flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 20px; padding: 20px 0;">
+        
+        <!-- Quadrant 1: Top Left -->
+        <div style="background: #f8f9fa; padding: 30px; border-radius: 8px; text-align: center; border-left: 5px solid #1B365D;">
+            <div style="font-size: 36px; margin-bottom: 10px;">📊</div>
+            <div style="font-size: 48px; font-weight: bold; color: #1B365D;">$2.4M</div>
+            <div style="font-size: 16px; color: #666; margin-top: 10px;">Q3 Revenue</div>
+            <div style="font-size: 14px; color: #1B365D; margin-top: 5px;">+12% vs Q2</div>
+        </div>
+        
+        <!-- Quadrant 2: Top Right -->
+        <div style="background: #f8f9fa; padding: 30px; border-radius: 8px; text-align: center; border-left: 5px solid #2C5F7A;">
+            <div style="font-size: 36px; margin-bottom: 10px;">💰</div>
+            <div style="font-size: 48px; font-weight: bold; color: #2C5F7A;">23%</div>
+            <div style="font-size: 16px; color: #666; margin-top: 10px;">Profit Margin</div>
+            <div style="font-size: 14px; color: #2C5F7A; margin-top: 5px;">↑ 2.3pts YoY</div>
+        </div>
+        
+        <!-- Quadrant 3: Bottom Left -->
+        <div style="background: #f8f9fa; padding: 30px; border-radius: 8px; text-align: center; border-left: 5px solid #DC2626;">
+            <div style="font-size: 36px; margin-bottom: 10px;">📈</div>
+            <div style="font-size: 48px; font-weight: bold; color: #DC2626;">45%</div>
+            <div style="font-size: 16px; color: #666; margin-top: 10px;">Market Share</div>
+            <div style="font-size: 14px; color: #DC2626; margin-top: 5px;">Leading position</div>
+        </div>
+        
+        <!-- Quadrant 4: Bottom Right -->
+        <div style="background: #f8f9fa; padding: 30px; border-radius: 8px; text-align: center; border-left: 5px solid #666666;">
+            <div style="font-size: 36px; margin-bottom: 10px;">👥</div>
+            <div style="font-size: 48px; font-weight: bold; color: #666666;">1,200</div>
+            <div style="font-size: 16px; color: #666; margin-top: 10px;">Active Customers</div>
+            <div style="font-size: 14px; color: #666666; margin-top: 5px;">+8% growth</div>
+        </div>
+    </div>
+    
+    <!-- Optional central comparison element -->
+    <div style="display: flex; justify-content: center; margin: 20px 0;">
+        <div style="background: #fffacd; border: 1px solid #e6d872; padding: 15px 30px; border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div style="text-align: center;">
+                    <div style="font-size: 16px; font-weight: bold; color: #1e3a5f;">Q3 2024</div>
+                    <div style="font-size: 14px;">Strong Performance</div>
+                </div>
+                <div style="font-size: 20px; color: #1e3a5f;">→</div>
+                <div style="text-align: center;">
+                    <div style="font-size: 16px; font-weight: bold; color: #666;">Target</div>
+                    <div style="font-size: 14px;">On Track</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-text">
+            ACME Corporation | Strictly Confidential
+        </div>
+        <div class="page-number">
+            Page [PAGE_NUMBER]
+        </div>
+    </div>
+</section>
+
+</body>
+</html>

@@ -4,7 +4,6 @@
 Transform SlideAgent into a fully self-contained MCP package that can be installed globally and used from any directory, while maintaining clean separation between system resources and user customizations.
 
 ## 🏗️ Target Architecture
-
 ```
 SlideAgent/
 ├── slideagent_mcp/              # SELF-CONTAINED MCP PACKAGE (system space)
@@ -32,13 +31,17 @@ SlideAgent/
 │   │   └── plot_buddy.py       # Chart generation class
 │   └── __init__.py
 │
-├── custom_themes/               # USER CUSTOM THEMES (user space)
-│   └── .gitkeep                # Empty initially, users add their themes here
+├── user_resources/              # USER CUSTOM RESOURCES (user space)
+│   ├── templates/
+│   │   ├── slides/              # User slide templates
+│   │   └── charts/              # User chart templates
+│   └── themes/                  # User themes
+│       ├── example_theme_1/
+│       ├── example_theme_2/
+│       ├── example_theme_3/
+│       └── .gitkeep
 │
-├── custom_templates/            # USER CUSTOM TEMPLATES (user space)
-│   └── .gitkeep                # Empty initially, users add their templates here
-│
-├── projects/                    # GENERATED PRESENTATIONS (user space)
+├── user_projects/               # GENERATED PRESENTATIONS (user space)
 │   ├── coreweave-s1/
 │   ├── figma-s1-analysis/
 │   └── ...
@@ -57,13 +60,15 @@ SlideAgent/
 - [ ] Move `src/slides/base.css` → `slideagent_mcp/resources/base.css`
 - [ ] Move `src/charts/utils/plot_buddy.py` → `slideagent_mcp/utils/`
 - [ ] Move `themes/examples/*` → `slideagent_mcp/resources/themes/core/`
-- [ ] Move `themes/private/*` → `custom_themes/`
+- [ ] Create `user_resources/` with `templates/slides`, `templates/charts`, and `themes/`
+- [ ] Move `themes/private/*` → `user_resources/themes/`
 - [ ] Move `markdown_templates/*` → `slideagent_mcp/resources/templates/outlines/`
 - [ ] Convert `CLAUDE.md` → `slideagent_mcp/resources/prompts/system.md`
 - [ ] Create `slideagent_mcp/resources/prompts/outline.md` from outline generation sections
 - [ ] Create `slideagent_mcp/resources/prompts/agents.yaml` from agent prompt patterns
 
 ### Phase 2: Update MCP Server
+- [ ] Listing behavior for themes/templates: aggregate from both user and system simultaneously; skip missing/empty user dirs gracefully; error if system resources are missing/unreadable
 - [ ] Update `server.py` to use new resource paths
 - [ ] Implement resource discovery (themes + templates from both system and custom)
 - [ ] Add MCP resource endpoints for templates/themes/prompts
@@ -88,12 +93,18 @@ SlideAgent/
 
 ### 1. **Clean Separation**
 - **System Space** (`slideagent_mcp/`): Never edited by users, updated via package manager
-- **User Space** (`custom_*/`, `projects/`): User's customizations and work
+- **User Space** (`user_resources/`, `user_projects/`): User's customizations and work
 
 ### 2. **Resource Resolution Order**
-1. Check `custom_themes/` or `custom_templates/` first
+Applies when resolving a single named resource (e.g., picking a template by name), not when listing. For listing behavior, see 2a.
+1. Check `user_resources/` (e.g., `user_resources/themes/`, `user_resources/templates/...`) first
 2. Fall back to `slideagent_mcp/resources/` for built-ins
 3. Return error if not found in either location
+
+### 2a. **Listing Behavior (Themes/Templates)**
+- For listing (`list_themes`, `list_slide_templates`, `list_chart_templates`), aggregate results from both `user_resources/*` and `slideagent_mcp/resources/*` concurrently without prioritization.
+- If `user_resources/*` subdirectories are missing or empty, skip them and continue; return a simple message stating there are no user templates/themes.
+- If system resource directories are missing or unreadable, return an error (fatal configuration issue).
 
 ### 3. **Backward Compatibility**
 - Existing projects continue to work
@@ -113,7 +124,7 @@ SlideAgent/
 ### For Users
 - **Zero Setup**: `pip install slideagent-mcp && claude mcp add slideagent`
 - **Works Anywhere**: Create presentations in any directory
-- **Easy Customization**: Drop themes in `custom_themes/`, templates in `custom_templates/`
+- **Easy Customization**: Drop themes in `user_resources/themes/`, templates in `user_resources/templates/...`
 - **Version Control Friendly**: Clear boundaries between system and user files
 
 ### For Development
@@ -166,6 +177,10 @@ SlideAgent/
 4. Test thoroughly with existing projects
 5. Document changes in README
 6. Merge when stable
+
+
+# Separately
+we want init project to also make a copy of the theme folder into the project, and then the html slides in the project reference this copy of the css themes that live in the same project folder, that way the whole project is pretty stnadarlone and can be copied and pasted without breaking things uecause it's weirdly referncing the css within the MCP folder or eventhe user projects or user themes
 
 ---
 

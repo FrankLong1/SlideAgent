@@ -1,0 +1,105 @@
+<!-- TEMPLATE_META
+name: 09_two_stack_architecture
+title: Two Stack Architecture
+description: Before and after architectural stacks with transformation arrow
+use_cases: ['System transformations', 'Migration plans', 'Architecture changes', 'Process improvements']
+features: ['Side-by-side stacks', 'Transformation arrow', 'Layer visualization', 'Clear progression']
+best_for: Showing system or process transformations
+placeholders: ["TITLE", "SUBTITLE", "SECTION", "PAGE_NUMBER"]
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACME Corp Two Stack Architecture Slide Template</title>
+    <link rel="stylesheet" href="[BASE_CSS_PATH]">
+    <link rel="stylesheet" href="[THEME_CSS_PATH]">
+</head>
+<body>
+
+<section class="slide bg-grey" style="display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; text-align: left;">
+    <!-- Header with new structure -->
+    <div class="header">
+        <div class="header-left">
+            <div class="slide-title">[TITLE]</div>
+            <div class="slide-subtitle">[SUBTITLE]</div>
+        </div>
+        <div class="header-right">
+            <div class="section-label">[SECTION]</div>
+            <div class="logo" alt="ACME Corp"></div>
+        </div>
+    </div>
+    
+    <!-- Main content area with two stacks, it really does not have to be 4 stacks, it can be 2 stacks, 3 stacks, etc. we're just trying to show the difference between a before and after paradigm -->
+    <div class="content" style="flex: 1; display: flex; gap: 40px; align-items: center;">
+        
+        <!-- Left Stack: Traditional Application Stack (OLD PARADIGM) -->
+        <div class="left-stack" style="flex: 1; display: flex; flex-direction: column; gap: 12px;">
+            <div style="background: #f5f5f5; padding: 16px; border-radius: 0; border: 1px solid #ccc; border-left: 4px solid #1B365D; text-align: center; opacity: 0.85;">
+                <h4 style="color: #555; margin-bottom: 6px; font-size: 16px;">Frontend UI/UX</h4>
+                <p style="font-size: 12px; margin: 0; color: #666;">Complex interface logic</p>
+            </div>
+            
+            <div style="background: #f5f5f5; padding: 16px; border-radius: 0; border: 1px solid #ccc; border-left: 4px solid #2C5F7A; text-align: center; opacity: 0.85;">
+                <h4 style="color: #555; margin-bottom: 6px; font-size: 16px;">Business Logic</h4>
+                <p style="font-size: 12px; margin: 0; color: #666;">Hand-crafted rules and conditions</p>
+            </div>
+            
+            <div style="background: #f5f5f5; padding: 16px; border-radius: 0; border: 1px solid #ccc; border-left: 4px solid #DC2626; text-align: center; opacity: 0.85;">
+                <h4 style="color: #555; margin-bottom: 6px; font-size: 16px;">Data Processing</h4>
+                <p style="font-size: 12px; margin: 0; color: #666;">Custom pipelines and transformations</p>
+            </div>
+            
+            <div style="background: #f5f5f5; padding: 16px; border-radius: 0; border: 1px solid #ccc; border-left: 4px solid #1B365D; text-align: center; opacity: 0.85;">
+                <h4 style="color: #555; margin-bottom: 6px; font-size: 16px;">API Layer</h4>
+                <p style="font-size: 12px; margin: 0; color: #666;">Extensive endpoint definitions</p>
+            </div>
+            
+            <div style="background: #f5f5f5; padding: 16px; border-radius: 0; border: 1px solid #ccc; border-left: 4px solid #2C5F7A; text-align: center; opacity: 0.85;">
+                <h4 style="color: #555; margin-bottom: 6px; font-size: 16px;">Infrastructure</h4>
+                <p style="font-size: 12px; margin: 0; color: #666;">Complex deployment architecture</p>
+            </div>
+        </div>
+        
+        <!-- Center Arrow/Connection -->
+        <div style="flex: 0 0 80px; display: flex; justify-content: center; align-items: center;">
+            <div style="font-size: 36px; color: #1B365D;">→</div>
+        </div>
+        
+        <!-- Right Stack: Model + Context (NEW PARADIGM) Same points as above, can be any number of stacks, but we're trying to show the difference between a before and after paradigm -->
+        <div class="right-stack" style="flex: 0 0 300px; display: flex; flex-direction: column; gap: 20px;">
+            <div style="background: #e8f4f8; padding: 20px; border-radius: 0; border: 2px solid #1B365D; text-align: center;">
+                <h4 style="color: #1B365D; margin-bottom: 8px; font-size: 18px;">The Model</h4>
+                <p style="font-size: 14px; margin: 0; color: #333;">Foundation model handles complexity</p>
+            </div>
+            
+            <div style="background: #f0f8f0; padding: 20px; border-radius: 0; border: 2px solid #2C5F7A; text-align: center;">
+                <h4 style="color: #2C5F7A; margin-bottom: 8px; font-size: 18px;">Context</h4>
+                <p style="font-size: 14px; margin: 0; color: #333;">Domain-specific prompts and data</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bottom insight box -->
+    <div style="display: flex; justify-content: center; margin: 20px 0;">
+        <div style="background: #fffacd; padding: 12px 20px; border: 1px solid #e6d872; border-radius: 0; max-width: 80%;">
+            <p style="font-size: 16px; color: #333; margin: 0; text-align: center;">
+                <strong>Key Insight:</strong> [Replace with your paradigm shift insight - this template shows how traditional complex software stacks are being replaced by simpler model + context approaches]
+            </p>
+        </div>
+    </div>
+    
+    <!-- Footer with page number and confidentiality notice -->
+    <div class="footer">
+        <div class="footer-text">
+            ACME Corporation | Strictly Confidential
+        </div>
+        <div class="page-number">
+            Page [PAGE_NUMBER]
+        </div>
+    </div>
+</section>
+
+</body>
+</html>

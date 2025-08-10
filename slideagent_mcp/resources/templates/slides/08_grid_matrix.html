@@ -1,0 +1,233 @@
+<!-- TEMPLATE_META
+name: 08_grid_matrix
+title: Grid Matrix
+description: Flexible grid for matrices, frameworks, or categorizations
+use_cases: ['SWOT analysis', 'Feature matrices', 'Product comparisons', 'Frameworks']
+features: ['2x2 or 3x3 grid', 'Color coding', 'Cell headers', 'Flexible content']
+best_for: Strategic frameworks and categorizations
+placeholders: ["TITLE", "SUBTITLE", "SECTION", "PAGE_NUMBER"]
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACME Corp Comparison Grid Template</title>
+    <!-- 
+    COMPARISON GRID TEMPLATE - General Purpose with Dynamic Sizing
+    
+    This template can be used for ANY type of comparison, not just financial data:
+    - Companies vs financial metrics
+    - Products vs features (e.g., lawnmowers vs horsepower, cutting width, price)
+    - Services vs capabilities 
+    - Technologies vs specifications
+    - Vendors vs offerings
+    - Any side-by-side comparison of items and their attributes
+    
+    DYNAMIC SIZING CLASSES (add to <table class="comparison-grid">):
+    - Default (no class): Best for 4-6 rows, 4-6 columns
+    - class="comparison-grid compact": For 7-10 rows
+    - class="comparison-grid dense": For 11+ rows
+    - Add "wide-cols" class for 7+ columns: class="comparison-grid compact wide-cols"
+    
+    Simply update:
+    - Row labels (left column) with items being compared
+    - Column headers with attributes/features being compared
+    - Data cells with relevant values, text, or metrics
+    - Slide title and subtitle to match your comparison topic
+    - Add appropriate sizing class based on your data volume
+    -->
+    <link rel="stylesheet" href="[BASE_CSS_PATH]">
+    <link rel="stylesheet" href="[THEME_CSS_PATH]">
+    <style>
+        /* Simplified grid styles */
+        .comparison-grid {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 22px;
+        }
+        
+        /* Sizing variants */
+        .comparison-grid.compact { font-size: 18px; }
+        .comparison-grid.dense { font-size: 14px; }
+        
+        /* Header cells */
+        .comparison-grid th {
+            padding: 16px;
+            text-align: center;
+            font-weight: 600;
+            color: white;
+            border: 2px solid white;
+        }
+        
+        .comparison-grid th:first-child {
+            background-color: #1e3a5f;
+            text-align: left;
+        }
+        
+        /* Column colors */
+        .revenue-col { background-color: #1e3a5f; }
+        .profit-col { background-color: #87ceeb; }
+        .operating-col { background-color: #d4af37; }
+        .employee-col { background-color: #666666; }
+        .rd-col { background-color: #1e3a5f; }
+        
+        /* Body cells */
+        .comparison-grid td {
+            padding: 14px;
+            border: 2px solid white;
+            text-align: center;
+            font-weight: 500;
+            background-color: #f8f9fa;
+        }
+        
+        .comparison-grid td:first-child {
+            background-color: #1e3a5f;
+            color: white;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        /* Adjust padding for compact/dense modes */
+        .comparison-grid.compact th,
+        .comparison-grid.compact td { padding: 12px; }
+        
+        .comparison-grid.dense th,
+        .comparison-grid.dense td { padding: 8px; }
+        
+        /* Year badge */
+        .year-badge {
+            background-color: #1e3a5f;
+            color: white;
+            padding: 10px 20px;
+            display: inline-block;
+            font-weight: 600;
+            margin-bottom: 15px;
+            font-size: 22px;
+            clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 50%, calc(100% - 15px) 100%, 0 100%);
+        }
+        
+        /* Main content area */
+        .grid-content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            padding-top: 20px;
+        }
+        
+        /* Analysis box */
+        .analysis-box {
+            background: #fffacd;
+            padding: 12px 24px;
+            border: 1px solid #e6d872;
+            margin: 20px auto;
+            display: inline-block;
+        }
+        
+        .analysis-box p {
+            font-size: 22px;
+            color: #333;
+            margin: 0;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+
+<section class="slide bg-grey" style="display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; text-align: left;">
+    <!-- Header with new structure -->
+    <div class="header">
+        <div class="header-left">
+            <div class="slide-title">[TITLE]</div>
+            <div class="slide-subtitle">[SUBTITLE]</div>
+        </div>
+        <div class="header-right">
+            <div class="section-label">[SECTION]</div>
+            <div class="logo" alt="ACME Corp"></div>
+        </div>
+    </div>
+    
+    <!-- Main content area -->
+    <div class="grid-content-area">
+        
+        <div class="year-badge">As of FY2024</div>
+        
+        <!-- Default sizing for 5x5 grid - no extra class needed -->
+        <table class="comparison-grid">
+            <thead>
+                <tr>
+                    <th style="background-color: #1e3a5f;">Company</th>
+                    <th class="revenue-col">Revenue ($B)</th>
+                    <th class="profit-col">Profit Margin</th>
+                    <th class="operating-col">Market Share</th>
+                    <th class="employee-col">Employees</th>
+                    <th class="rd-col">R&D Spend</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>ACME Corp</td>
+                    <td>$125.4B</td>
+                    <td>24.5%</td>
+                    <td>18.2%</td>
+                    <td>145,000</td>
+                    <td>$12.3B</td>
+                </tr>
+                <tr>
+                    <td>TechGiant Inc</td>
+                    <td>$98.7B</td>
+                    <td>19.8%</td>
+                    <td>15.4%</td>
+                    <td>112,000</td>
+                    <td>$9.8B</td>
+                </tr>
+                <tr>
+                    <td>GlobalSoft</td>
+                    <td>$87.3B</td>
+                    <td>22.1%</td>
+                    <td>14.8%</td>
+                    <td>98,500</td>
+                    <td>$8.7B</td>
+                </tr>
+                <tr>
+                    <td>InnovateCo</td>
+                    <td>$76.5B</td>
+                    <td>18.9%</td>
+                    <td>12.7%</td>
+                    <td>87,200</td>
+                    <td>$10.2B</td>
+                </tr>
+                <tr>
+                    <td>FutureTech</td>
+                    <td>$65.2B</td>
+                    <td>21.3%</td>
+                    <td>11.2%</td>
+                    <td>76,400</td>
+                    <td>$7.5B</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Bottom Analysis Box -->
+    <div style="display: flex; justify-content: center;">
+        <div class="analysis-box">
+            <p><strong>Key Insight:</strong> ACME Corp leads across all key performance metrics</p>
+        </div>
+    </div>
+    
+    <!-- Footer with page number and confidentiality notice -->
+    <div class="footer">
+        <div class="footer-text">
+            ACME Corporation | Strictly Confidential
+        </div>
+        <div class="page-number">
+            Page [PAGE_NUMBER]
+        </div>
+    </div>
+</section>
+
+</body>
+</html>

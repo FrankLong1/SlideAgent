@@ -1,0 +1,237 @@
+<!-- TEMPLATE_META
+name: 10_timeline_process_flow
+title: Timeline Process Flow
+description: Horizontal timeline or process flow with connected steps
+use_cases: ['Project timelines', 'Process workflows', 'Roadmaps', 'Sequential steps']
+features: ['Connected markers', 'Time progression', 'Step descriptions', 'Visual flow']
+best_for: Showing temporal or sequential processes
+placeholders: ["TITLE", "SUBTITLE", "SECTION", "PAGE_NUMBER"]
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACME Corp Timeline / Process Flow Template</title>
+    <!-- 
+    TIMELINE / PROCESS FLOW TEMPLATE
+    
+    This template creates a horizontal flow of connected elements.
+    Use for:
+    - Project timelines with milestones
+    - Process flows showing steps
+    - Historical progression of events
+    - Sequential workflows
+    - Roadmaps and phases
+    
+    The template is flexible:
+    - Adjust number of steps (default shows 5)
+    - Customize colors for different phases
+    - Add dates/timeframes above or below
+    - Include descriptions for each step
+    -->
+    <link rel="stylesheet" href="[BASE_CSS_PATH]">
+    <link rel="stylesheet" href="[THEME_CSS_PATH]">
+    <style>
+        .timeline-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            margin: 60px 0;
+            padding: 40px 0;
+        }
+        
+        .timeline-line {
+            position: absolute;
+            top: 35%;
+            /* Center the line between first and last item (10% from each side to align with centers) */
+            left: calc(10% + 25px);  /* Half of marker width (50px/2) */
+            right: calc(10% + 25px); /* Half of marker width (50px/2) */
+            height: 3px;
+            background-color: #1B365D;
+            z-index: 0;
+        }
+        
+        .timeline-item {
+            position: relative;
+            z-index: 1;
+            flex: 1;
+            text-align: center;
+            padding: 0 10px;
+            border: none !important;
+            border-left: none !important;
+            border-right: none !important;
+        }
+        
+        .timeline-item::before,
+        .timeline-item::after {
+            display: none !important;
+        }
+        
+        .timeline-marker {
+            width: 50px;
+            height: 50px;
+            background-color: #1B365D;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-weight: 700;
+            font-size: 18px;
+            border: 3px solid white;
+            outline: 1px solid #ddd;  /* PDF-safe: solid border instead of shadow */
+            position: relative;
+            z-index: 2;
+        }
+        
+        .timeline-marker.completed {
+            background-color: #228B22;
+        }
+        
+        .timeline-marker.current {
+            background-color: #FFD700;
+            color: #333;
+            transform: scale(1.15);
+        }
+        
+        .timeline-marker.future {
+            background-color: #f0f0f0;
+            color: #666;
+        }
+        
+        .timeline-date {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .timeline-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .timeline-description {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.4;
+        }
+        
+        /* Arrow variant for process flows */
+        .process-arrow {
+            position: absolute;
+            top: 50%;
+            right: -25px;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid #1B365D;
+            border-top: 15px solid transparent;
+            border-bottom: 15px solid transparent;
+            z-index: 2;
+        }
+        
+        .timeline-item:last-child .process-arrow {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<section class="slide bg-grey" style="display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; text-align: left;">
+    <!-- Header with new structure -->
+    <div class="header">
+        <div class="header-left">
+            <div class="slide-title">[TITLE]</div>
+            <div class="slide-subtitle">[SUBTITLE]</div>
+        </div>
+        <div class="header-right">
+            <div class="section-label">[SECTION]</div>
+            <div class="logo" alt="ACME Corp"></div>
+        </div>
+    </div>
+    
+    <!-- Main content area -->
+    <div class="content" style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+        
+        <!-- Timeline container -->
+        <div class="timeline-container">
+            <!-- Background line -->
+            <div class="timeline-line"></div>
+            
+            <!-- Timeline items -->
+            <div class="timeline-item">
+                <div class="timeline-date">Q1 2024</div>
+                <div class="timeline-marker completed">1</div>
+                <div class="timeline-title">Discovery</div>
+                <div class="timeline-description">Requirements gathering and stakeholder alignment</div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="timeline-date">Q2 2024</div>
+                <div class="timeline-marker completed">2</div>
+                <div class="timeline-title">Design</div>
+                <div class="timeline-description">Architecture design and prototype development</div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="timeline-date">Q3 2024</div>
+                <div class="timeline-marker current">3</div>
+                <div class="timeline-title">Build</div>
+                <div class="timeline-description">Core platform development and integration</div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="timeline-date">Q4 2024</div>
+                <div class="timeline-marker future">4</div>
+                <div class="timeline-title">Test</div>
+                <div class="timeline-description">UAT, performance testing, and refinements</div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="timeline-date">Q1 2025</div>
+                <div class="timeline-marker future">5</div>
+                <div class="timeline-title">Deploy</div>
+                <div class="timeline-description">Production rollout and change management</div>
+            </div>
+        </div>
+        
+        <!-- Key insight box -->
+        <div style="display: flex; justify-content: center; margin-top: 40px;">
+            <div style="background: #fffacd; padding: 12px 20px; border: 1px solid #e6d872; display: inline-block;">
+                <p style="font-size: 16px; color: #333; margin: 0; text-align: center;">
+                    <strong>Status:</strong> On track for Q1 2025 deployment with 2 phases completed
+                </p>
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- Footer with page number and confidentiality notice -->
+    <div class="footer">
+        <div class="footer-text">
+            ACME Corporation | Strictly Confidential
+        </div>
+        <div class="page-number">
+            Page [PAGE_NUMBER]
+        </div>
+    </div>
+</section>
+
+<!-- Example: Process Flow Variant -->
+<!-- 
+To convert to a process flow:
+1. Remove timeline-date elements
+2. Uncomment the process-arrow divs
+3. Change timeline-marker classes to all be the same color
+4. Update titles to be action-oriented (e.g., "Gather Data" → "Analyze" → "Report")
+5. Consider using icons instead of numbers in the markers
+-->
+
+</body>
+</html>

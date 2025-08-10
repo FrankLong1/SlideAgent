@@ -1,0 +1,91 @@
+<!-- TEMPLATE_META
+name: 02_text_left_image_right
+title: Text Left Image Right
+description: Split layout with text content on left and visual on right
+use_cases: ['Content with supporting visuals', 'Feature explanations', 'Product showcases']
+features: ['60/40 split layout', 'Flexible text area', 'Image or chart placement', 'Balanced design']
+best_for: Combining narrative with visual support
+placeholders: ["TITLE", "SUBTITLE", "SECTION", "PAGE_NUMBER"]
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACME Corp Text Left Image Right Template</title>
+    <link rel="stylesheet" href="[BASE_CSS_PATH]">
+    <link rel="stylesheet" href="[THEME_CSS_PATH]">
+</head>
+<body>
+
+<section class="slide bg-grey" style="display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; text-align: left;">
+    <!-- Header with correct structure per CLAUDE.md -->
+    <div class="header">
+        <div class="header-left">
+            <div class="slide-title">[TITLE]</div>
+            <div class="slide-subtitle">[SUBTITLE]</div>
+        </div>
+        <div class="header-right">
+            <div class="section-label">[SECTION]</div>
+            <div class="logo" alt="ACME Corp"></div>
+        </div>
+    </div>
+    
+    <!-- Main content area -->
+    <div class="content" style="flex: 1; display: flex; gap: 40px;">
+        <!-- Left column with text -->
+        <!-- IMPORTANT: Do NOT use H2 or other large headings in the content area.
+             The slide already has a header with title/subtitle, so additional large headings 
+             create visual redundancy and clutter. Use bullet points, paragraphs, or smaller 
+             text formatting instead. -->
+        <div style="flex: 1.5;">
+            
+            <ul style="font-size: 18px; line-height: 1.6; color: #333; list-style: none; padding: 0;">
+                <li style="margin-bottom: 20px;">
+                    <strong style="color: #1B365D;">Market Leadership:</strong> Dominant in cloud infrastructure with 35% market share and strong partnerships.
+                </li>
+                <li style="margin-bottom: 20px;">
+                    <strong style="color: #1B365D;">Leadership Team:</strong> Executive team with deep industry experience and proven success.
+                </li>
+            </ul>
+        </div>
+        <!-- Right column with image/chart -->
+        <!-- IMPORTANT: Images/charts can be ANY aspect ratio - they will scale to fit.
+             Common formats: 16:9 for charts, square for diagrams, tall for process flows.
+             The container will center the image both horizontally and vertically. -->
+        <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px;">
+            <!-- Replace this placeholder with: <img src="../plots/chart_clean.png" alt="Description" style="max-width: 100%; max-height: 100%; object-fit: contain;"> -->
+            <div style="width: 100%; max-height: 500px; background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%); border: 2px dashed #ced4da; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; color: #6c757d; text-align: center; padding: 40px;">
+                <div style="font-size: 48px; margin-bottom: 10px; opacity: 0.5;">📊</div>
+                <div style="font-weight: 500; margin-bottom: 5px; font-size: 14px;">Image/Chart Placeholder</div>
+                <div style="font-size: 12px; opacity: 0.7; line-height: 1.5;">
+                    Any aspect ratio works: 16:9, 4:3, square, portrait<br>
+                    Replace with: &lt;img src="../plots/chart_clean.png" style="max-width: 100%; max-height: 100%; object-fit: contain;"&gt;
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bottom Content Box -->
+    <div style="display: flex; justify-content: center; margin: 0 0 20px 0;">
+        <div style="background: #fffacd; padding: 12px 20px; border: 1px solid #e6d872; display: inline-block;">
+            <p style="font-size: 16px; color: #333; margin: 0; text-align: center;">
+                <strong>Investment Thesis:</strong> This opportunity represents a compelling value proposition 
+                with significant upside potential driven by operational improvements.
+            </p>
+        </div>
+    </div>
+    
+    <!-- Footer with page number and confidentiality notice -->
+    <div class="footer">
+        <div class="footer-text">
+            ACME Corporation | Strictly Confidential
+        </div>
+        <div class="page-number">
+            Page [PAGE_NUMBER]
+        </div>
+    </div>
+</section>
+
+</body>
+</html>

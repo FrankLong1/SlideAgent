@@ -1,0 +1,51 @@
+<!-- TEMPLATE_META
+name: blank_slide
+title: Blank Slide
+description: Basic template for custom content
+use_cases: ['Custom layouts', 'Starting point', 'Flexible content', 'Special needs']
+features: ['Minimal structure', 'Basic header', 'Open canvas', 'Full customization']
+best_for: Creating custom slide layouts
+placeholders: ["TITLE", "SUBTITLE", "SECTION", "PAGE_NUMBER"]
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blank Slide Template</title>
+    <link rel="stylesheet" href="[BASE_CSS_PATH]">
+    <link rel="stylesheet" href="[THEME_CSS_PATH]">
+</head>
+<body>
+
+<section class="slide bg-grey" style="display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; text-align: left;">
+    <!-- Header with correct structure per CLAUDE.md -->
+    <div class="header">
+        <div class="header-left">
+            <div class="slide-title">[TITLE]</div>
+            <div class="slide-subtitle">[SUBTITLE]</div>
+        </div>
+        <div class="header-right">
+            <div class="section-label">[SECTION]</div>
+            <div class="logo" alt="Company Name"></div>
+        </div>
+    </div>
+    
+    <!-- Main content area -->
+    <div class="content" style="flex: 1; display: flex; flex-direction: column; justify-content: flex-start;">
+        <!-- Content goes here -->
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-text">
+            ACME Corporation | Strictly Confidential
+        </div>
+        <div class="page-number">
+            Page [PAGE_NUMBER]
+        </div>
+    </div>
+</section>
+
+</body>
+</html>

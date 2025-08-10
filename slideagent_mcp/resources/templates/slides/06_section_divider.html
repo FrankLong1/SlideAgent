@@ -1,0 +1,45 @@
+<!-- TEMPLATE_META
+name: 06_section_divider
+title: Section Divider
+description: Full-screen transition slide between major sections
+use_cases: ['Chapter transitions', 'Major topic changes', 'Presentation segments', 'Breaks']
+features: ['Full-screen design', 'Brand colors', 'Large typography', 'Clear hierarchy']
+best_for: Creating clear section boundaries
+placeholders: ["TITLE", "SUBTITLE", "SECTION", "PAGE_NUMBER"]
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACME Corp Section Divider Template</title>
+    <link rel="stylesheet" href="[BASE_CSS_PATH]">
+    <link rel="stylesheet" href="[THEME_CSS_PATH]">
+</head>
+<body>
+
+<!-- 
+    Section divider can use different backgrounds:
+    - Navy blue (#1B365D) - default corporate color
+    - Red accent (var(--accent-color)) - for high-impact sections
+    - Secondary blue (var(--secondary-color)) - for sub-sections
+-->
+<section class="slide" style="background: #1B365D; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+    <div class="content" style="max-width: 900px;">
+        <h1 style="color: white; font-size: 72px; font-weight: 300; margin-bottom: 32px;">[TITLE]</h1>
+        <h3 style="color: white; font-size: 32px; font-weight: 300; opacity: 0.9;">[SUBTITLE]</h3>
+    </div>
+</section>
+
+<!-- Alternative with red accent background -->
+<!--
+<section class="slide" style="background: #DC2626; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+    <div class="content" style="max-width: 900px;">
+        <h1 style="color: white; font-size: 72px; font-weight: 300; margin-bottom: 32px;">[TITLE]</h1>
+        <h3 style="color: white; font-size: 32px; font-weight: 300; opacity: 0.9;">[SUBTITLE]</h3>
+    </div>
+</section>
+-->
+
+</body>
+</html>

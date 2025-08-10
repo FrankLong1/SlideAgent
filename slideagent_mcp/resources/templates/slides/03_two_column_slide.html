@@ -1,0 +1,73 @@
+<!-- TEMPLATE_META
+name: 03_two_column_slide
+title: Two Column Slide
+description: Equal split layout for side-by-side comparisons
+use_cases: ['Before/after comparisons', 'Pros and cons', 'Two related topics', 'Dual perspectives']
+features: ['50/50 split', 'Distinct column headers', 'Parallel content', 'Visual separation']
+best_for: Direct comparisons or contrasting information
+placeholders: ["TITLE", "SUBTITLE", "SECTION", "PAGE_NUMBER"]
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACME Corp Two Column Slide Template</title>
+    <link rel="stylesheet" href="[BASE_CSS_PATH]">
+    <link rel="stylesheet" href="[THEME_CSS_PATH]">
+</head>
+<body>
+
+<section class="slide bg-grey" style="display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; text-align: left;">
+    <!-- Header with correct structure per CLAUDE.md -->
+    <div class="header">
+        <div class="header-left">
+            <div class="slide-title">[TITLE]</div>
+            <div class="slide-subtitle">[SUBTITLE]</div>
+        </div>
+        <div class="header-right">
+            <div class="section-label">[SECTION]</div>
+            <div class="logo" alt="ACME Corp"></div>
+        </div>
+    </div>
+    
+    <!-- Main content area with two columns -->
+    <!-- IMPORTANT: Column headers (H3) are acceptable here since they distinguish between
+         the two comparison columns. However, avoid additional large headings within each column. -->
+    <div class="content" style="flex: 1; display: flex; gap: 20px;">
+        <div class="left-column" style="flex: 1; background: #f8f9fa; padding: 24px; border-radius: 8px;">
+            <h3 style="color: #1B365D; margin-bottom: 24px;">Current State Analysis</h3>
+            <ul style="font-size: 18px; line-height: 1.8; color: #333;">
+                <li style="margin-bottom: 12px;">Market share declining from 28% to 24% over past 2 years</li>
+                <li style="margin-bottom: 12px;">Operating margins compressed by 320 basis points</li>
+                <li style="margin-bottom: 12px;">Customer churn rate increased to 18% annually</li>
+                <li style="margin-bottom: 12px;">Technology infrastructure requires $45M upgrade</li>
+                <li style="margin-bottom: 12px;">Limited presence in high-growth APAC markets</li>
+            </ul>
+        </div>
+        
+        <div class="right-column" style="flex: 1; background: #e8f4f8; padding: 24px; border-radius: 8px;">
+            <h3 style="color: #1B365D; margin-bottom: 24px;">Post-Acquisition Opportunity</h3>
+            <ul style="font-size: 18px; line-height: 1.8; color: #333;">
+                <li style="margin-bottom: 12px;">Projected market share recovery to 32% within 3 years</li>
+                <li style="margin-bottom: 12px;">500+ basis points margin expansion through synergies</li>
+                <li style="margin-bottom: 12px;">Best-in-class retention with <10% churn target</li>
+                <li style="margin-bottom: 12px;">Cloud-native architecture deployment completed</li>
+                <li style="margin-bottom: 12px;">Strategic entry into 5 new APAC markets</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Footer with page number and confidentiality notice -->
+    <div class="footer">
+        <div class="footer-text">
+            ACME Corporation | Strictly Confidential
+        </div>
+        <div class="page-number">
+            Page [PAGE_NUMBER]
+        </div>
+    </div>
+</section>
+
+</body>
+</html>

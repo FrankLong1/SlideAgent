@@ -31,12 +31,74 @@ mcp = FastMCP("slideagent")
 
 # Constants
 BASE_DIR = Path(__file__).parent.parent  # Go up one level from slideagent_mcp/
-PROJECTS_DIR = BASE_DIR / "projects"
-THEMES_DIR = BASE_DIR / "themes"
-SLIDE_TEMPLATES_DIR = BASE_DIR / "src/slides/slide_templates"
-CHART_TEMPLATES_DIR = BASE_DIR / "src/charts/chart_templates"
-MARKDOWN_TEMPLATES_DIR = BASE_DIR / "markdown_templates"
+
+# System resource locations (inside the MCP package)
+SYSTEM_RESOURCES_DIR = Path(__file__).parent / "resources"
+SYSTEM_THEMES_DIR = SYSTEM_RESOURCES_DIR / "themes" / "core"
+SYSTEM_SLIDE_TEMPLATES_DIR = SYSTEM_RESOURCES_DIR / "templates" / "slides"
+SYSTEM_CHART_TEMPLATES_DIR = SYSTEM_RESOURCES_DIR / "templates" / "charts"
+SYSTEM_OUTLINE_TEMPLATES_DIR = SYSTEM_RESOURCES_DIR / "templates" / "outlines"
+
+# User space locations (outside the MCP package, in repo root by default)
+USER_PROJECTS_DIR = BASE_DIR / "user_projects"
+USER_RESOURCES_DIR = BASE_DIR / "user_resources"
+USER_THEMES_DIR = USER_RESOURCES_DIR / "themes"
+USER_TEMPLATES_DIR = USER_RESOURCES_DIR / "templates"
+
+# Legacy locations (for backward compatibility - all removed now)
+LEGACY_PROJECTS_DIR = BASE_DIR / "projects"  # Moved to user_projects
+LEGACY_THEMES_DIR = BASE_DIR / "themes"  # Removed
+LEGACY_SLIDE_TEMPLATES_DIR = BASE_DIR / "src/slides/slide_templates"  # Removed
+LEGACY_CHART_TEMPLATES_DIR = BASE_DIR / "src/charts/chart_templates"  # Removed
+LEGACY_MARKDOWN_TEMPLATES_DIR = BASE_DIR / "markdown_templates"  # Removed
+
 MEMORY_FILE = BASE_DIR / "MEMORY.md"
+
+# Resolvers with precedence: user → legacy → system (for templates/themes),
+# and user → legacy for projects.
+def resolve_projects_dir() -> Path:
+    # Always use user_projects/ directory
+    return USER_PROJECTS_DIR
+
+def resolve_slide_template_dirs() -> List[Path]:
+    candidates = [
+        USER_TEMPLATES_DIR / "slides",
+        LEGACY_SLIDE_TEMPLATES_DIR,
+        SYSTEM_SLIDE_TEMPLATES_DIR,
+    ]
+    return [p for p in candidates if p.exists()]
+
+def resolve_chart_template_dirs() -> List[Path]:
+    candidates = [
+        USER_TEMPLATES_DIR / "charts",
+        LEGACY_CHART_TEMPLATES_DIR,
+        SYSTEM_CHART_TEMPLATES_DIR,
+    ]
+    return [p for p in candidates if p.exists()]
+
+def resolve_theme_dirs() -> List[Path]:
+    # User themes root, legacy examples/private, then system core
+    candidates = []
+    if USER_THEMES_DIR.exists():
+        candidates.append(USER_THEMES_DIR)
+    # Legacy: themes/examples and themes/private
+    examples_dir = LEGACY_THEMES_DIR / "examples"
+    private_dir = LEGACY_THEMES_DIR / "private"
+    if examples_dir.exists():
+        candidates.append(examples_dir)
+    if private_dir.exists():
+        candidates.append(private_dir)
+    if SYSTEM_THEMES_DIR.exists():
+        candidates.append(SYSTEM_THEMES_DIR)
+    return candidates
+
+def resolve_outline_template_paths() -> List[Path]:
+    candidates = [
+        USER_TEMPLATES_DIR / "outlines" / "outline_template.md",
+        LEGACY_MARKDOWN_TEMPLATES_DIR / "outline_template.md",
+        SYSTEM_OUTLINE_TEMPLATES_DIR / "outline_template.md",
+    ]
+    return [p for p in candidates if p.exists()]
 
 # Track live viewer processes
 LIVE_VIEWER_PROCESSES = {}
@@ -60,7 +122,7 @@ def create_project(name: str, theme: str = "acme_corp", description: str = "") -
     """
     # Sanitize project name
     safe_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in name)
-    project_dir = PROJECTS_DIR / safe_name
+    project_dir = resolve_projects_dir() / safe_name
     
     if project_dir.exists():
         return f"Error: Project '{safe_name}' already exists"
@@ -71,11 +133,36 @@ def create_project(name: str, theme: str = "acme_corp", description: str = "") -
         project_dir / "slides",
         project_dir / "validation",
         project_dir / "plots", 
-        project_dir / "input"
+        project_dir / "input",
+        project_dir / "theme"  # Add theme directory
     ]
     
     for dir_path in dirs:
         dir_path.mkdir(parents=True, exist_ok=True)
+    
+    # Copy theme files to project
+    theme_source = None
+    # First check user themes
+    if (USER_THEMES_DIR / theme).exists():
+        theme_source = USER_THEMES_DIR / theme
+    # Then check system themes
+    elif (SYSTEM_THEMES_DIR / theme).exists():
+        theme_source = SYSTEM_THEMES_DIR / theme
+    else:
+        # Default to system acme_corp theme
+        theme_source = SYSTEM_THEMES_DIR / "acme_corp"
+        theme = "acme_corp"
+    
+    if theme_source and theme_source.exists():
+        # Copy all theme files to project/theme/
+        for theme_file in theme_source.glob("*"):
+            if theme_file.is_file():
+                shutil.copy2(theme_file, project_dir / "theme" / theme_file.name)
+    
+    # Also copy base.css to project/theme/ for self-containment
+    base_css_source = SYSTEM_RESOURCES_DIR / "base.css"
+    if base_css_source.exists():
+        shutil.copy2(base_css_source, project_dir / "theme" / "base.css")
     
     # Create config.yaml
     config = {
@@ -91,9 +178,9 @@ def create_project(name: str, theme: str = "acme_corp", description: str = "") -
         yaml.dump(config, f, default_flow_style=False)
     
     # Initialize outline from template
-    outline_template_path = MARKDOWN_TEMPLATES_DIR / "outline_template.md"
-    if outline_template_path.exists():
-        with open(outline_template_path, "r") as f:
+    outline_paths = resolve_outline_template_paths()
+    if outline_paths:
+        with open(outline_paths[0], "r") as f:
             outline_content = f.read()
         
         # Replace placeholders
@@ -132,10 +219,11 @@ def list_projects() -> List[Dict[str, Any]]:
     """
     projects = []
     
-    if not PROJECTS_DIR.exists():
+    projects_root = resolve_projects_dir()
+    if not projects_root.exists():
         return projects
     
-    for project_dir in PROJECTS_DIR.iterdir():
+    for project_dir in projects_root.iterdir():
         if not project_dir.is_dir():
             continue
         
@@ -177,7 +265,7 @@ def get_project_info(project: str) -> Dict[str, Any]:
     Returns:
         Project details dictionary
     """
-    project_dir = PROJECTS_DIR / project
+    project_dir = resolve_projects_dir() / project
     if not project_dir.exists():
         raise ValueError(f"Project '{project}' not found")
     
@@ -213,35 +301,42 @@ def list_themes() -> List[Dict[str, str]]:
     Returns:
         List of theme information with paths
     """
-    themes = []
-    
-    # Check example themes
-    examples_dir = THEMES_DIR / "examples"
-    if examples_dir.exists():
-        for theme_dir in examples_dir.iterdir():
+    themes: List[Dict[str, str]] = []
+
+    def add_theme_entry(root: Path, theme_dir: Path, source_type: str):
+        theme_css = theme_dir / f"{theme_dir.name}_theme.css"
+        if theme_css.exists():
+            # Build a display path relative to BASE_DIR when possible
+            try:
+                rel = theme_dir.relative_to(BASE_DIR)
+                rel_path = str(rel)
+            except Exception:
+                rel_path = str(theme_dir)
+            themes.append({
+                "name": theme_dir.name,
+                "path": rel_path,
+                "type": source_type,
+            })
+
+    for root in resolve_theme_dirs():
+        source_type = (
+            "user" if root == USER_THEMES_DIR else
+            "example" if root.name == "examples" else
+            "private" if root.name == "private" else
+            "system"
+        )
+        for theme_dir in root.iterdir():
             if theme_dir.is_dir():
-                theme_css = theme_dir / f"{theme_dir.name}_theme.css"
-                if theme_css.exists():
-                    themes.append({
-                        "name": theme_dir.name,
-                        "path": f"themes/examples/{theme_dir.name}",
-                        "type": "example"
-                    })
-    
-    # Check private themes
-    private_dir = THEMES_DIR / "private"
-    if private_dir.exists():
-        for theme_dir in private_dir.iterdir():
-            if theme_dir.is_dir():
-                theme_css = theme_dir / f"{theme_dir.name}_theme.css"
-                if theme_css.exists():
-                    themes.append({
-                        "name": theme_dir.name,
-                        "path": f"themes/private/{theme_dir.name}",
-                        "type": "private"
-                    })
-    
-    return themes
+                add_theme_entry(root, theme_dir, source_type)
+
+    # De-duplicate by theme name preferring earlier (user > legacy > system)
+    unique: Dict[str, Dict[str, str]] = {}
+    ordered = []
+    for t in themes:
+        if t["name"] not in unique:
+            unique[t["name"]] = t
+            ordered.append(t)
+    return ordered
 
 @mcp.tool()
 def list_slide_templates() -> List[Dict[str, Any]]:
@@ -251,32 +346,44 @@ def list_slide_templates() -> List[Dict[str, Any]]:
     Returns:
         List of template information with paths and use cases
     """
-    templates = []
-    
-    if not SLIDE_TEMPLATES_DIR.exists():
-        return templates
-    
-    for template_file in sorted(SLIDE_TEMPLATES_DIR.glob("*.html")):
-        # Read template to extract metadata
-        with open(template_file, "r") as f:
-            content = f.read()
-        
-        # Extract title from HTML comment if present
-        use_case = "General purpose slide"
-        if "<!-- Use case:" in content:
-            start = content.find("<!-- Use case:") + len("<!-- Use case:")
-            end = content.find("-->", start)
-            if end > start:
-                use_case = content[start:end].strip()
-        
-        templates.append({
-            "name": template_file.stem,
-            "path": f"src/slides/slide_templates/{template_file.name}",
-            "file": template_file.name,
-            "use_case": use_case
-        })
-    
-    return templates
+    templates: List[Dict[str, Any]] = []
+
+    for root in resolve_slide_template_dirs():
+        source = (
+            "user" if root == USER_TEMPLATES_DIR / "slides" else
+            "legacy" if root == LEGACY_SLIDE_TEMPLATES_DIR else
+            "system"
+        )
+        for template_file in sorted(root.glob("*.html")):
+            with open(template_file, "r") as f:
+                content = f.read()
+            use_case = "General purpose slide"
+            if "<!-- Use case:" in content:
+                start = content.find("<!-- Use case:") + len("<!-- Use case:")
+                end = content.find("-->", start)
+                if end > start:
+                    use_case = content[start:end].strip()
+            try:
+                rel = template_file.relative_to(BASE_DIR)
+                rel_path = str(rel)
+            except Exception:
+                rel_path = str(template_file)
+            templates.append({
+                "name": template_file.stem,
+                "path": rel_path,
+                "file": template_file.name,
+                "use_case": use_case,
+                "source": source,
+            })
+
+    # De-duplicate by name preferring earlier (user > legacy > system)
+    unique: Dict[str, Dict[str, Any]] = {}
+    ordered = []
+    for t in templates:
+        if t["name"] not in unique:
+            unique[t["name"]] = t
+            ordered.append(t)
+    return ordered
 
 @mcp.tool()
 def list_chart_templates() -> List[Dict[str, Any]]:
@@ -286,32 +393,44 @@ def list_chart_templates() -> List[Dict[str, Any]]:
     Returns:
         List of template information with paths and descriptions
     """
-    templates = []
-    
-    if not CHART_TEMPLATES_DIR.exists():
-        return templates
-    
-    for template_file in sorted(CHART_TEMPLATES_DIR.glob("*.py")):
-        # Read template to extract metadata
-        with open(template_file, "r") as f:
-            content = f.read()
-        
-        # Extract description from docstring
-        description = "Chart template"
-        if '"""' in content:
-            start = content.find('"""') + 3
-            end = content.find('"""', start)
-            if end > start:
-                description = content[start:end].strip().split('\n')[0]
-        
-        templates.append({
-            "name": template_file.stem,
-            "path": f"src/charts/chart_templates/{template_file.name}",
-            "file": template_file.name,
-            "description": description
-        })
-    
-    return templates
+    templates: List[Dict[str, Any]] = []
+
+    for root in resolve_chart_template_dirs():
+        source = (
+            "user" if root == USER_TEMPLATES_DIR / "charts" else
+            "legacy" if root == LEGACY_CHART_TEMPLATES_DIR else
+            "system"
+        )
+        for template_file in sorted(root.glob("*.py")):
+            with open(template_file, "r") as f:
+                content = f.read()
+            description = "Chart template"
+            if '"""' in content:
+                start = content.find('"""') + 3
+                end = content.find('"""', start)
+                if end > start:
+                    description = content[start:end].strip().split('\n')[0]
+            try:
+                rel = template_file.relative_to(BASE_DIR)
+                rel_path = str(rel)
+            except Exception:
+                rel_path = str(template_file)
+            templates.append({
+                "name": template_file.stem,
+                "path": rel_path,
+                "file": template_file.name,
+                "description": description,
+                "source": source,
+            })
+
+    # De-duplicate by name preferring earlier (user > legacy > system)
+    unique: Dict[str, Dict[str, Any]] = {}
+    ordered = []
+    for t in templates:
+        if t["name"] not in unique:
+            unique[t["name"]] = t
+            ordered.append(t)
+    return ordered
 
 # =============================================================================
 # INIT TOOLS
@@ -334,18 +453,22 @@ def init_slide(project: str, number: str, template: str = None,
     Returns:
         Path to the created slide file
     """
-    project_dir = PROJECTS_DIR / project
+    project_dir = resolve_projects_dir() / project
     if not project_dir.exists():
         return f"Error: Project '{project}' not found"
     
-    # Handle template path
+    # Handle template path - try to resolve from multiple locations
     if template:
+        # First try as absolute path from BASE_DIR
         template_file = BASE_DIR / template
         if not template_file.exists():
-            return f"Error: Template not found at {template}"
+            # Try relative to system templates
+            template_file = SYSTEM_SLIDE_TEMPLATES_DIR / Path(template).name
+            if not template_file.exists():
+                return f"Error: Template not found at {template}"
     else:
-        # Use default blank_slide template
-        template_file = BASE_DIR / "src/slides/slide_templates/blank_slide.html"
+        # Use default base_slide template from system
+        template_file = SYSTEM_SLIDE_TEMPLATES_DIR / "01_base_slide.html"
         if not template_file.exists():
             return f"Error: Default template not found"
     
@@ -360,24 +483,15 @@ def init_slide(project: str, number: str, template: str = None,
     
     theme = config.get("theme", "acme_corp")
     
-    # Update CSS paths (from slides/ to root)
-    content = content.replace("../core_css/base.css", "../../../src/slides/base.css")
-    content = content.replace("../core_css/print.css", "../../../src/slides/print.css")
-    content = content.replace("../base.css", "../../../src/slides/base.css")
+    # Replace CSS path placeholders
+    # Both CSS files are now local to the project (in project/theme/)
+    # From slides/ to theme/ is ../theme/
+    base_css_path = "../theme/base.css"
+    theme_css_path = f"../theme/{theme}_theme.css"
     
-    # Set theme path
-    if "private" in theme or (THEMES_DIR / "private" / theme).exists():
-        theme_path = f"../../../themes/private/{theme}/{theme}_theme.css"
-    else:
-        theme_path = f"../../../themes/examples/{theme}/{theme}_theme.css"
-    
-    # Replace theme references
-    import re
-    content = re.sub(
-        r'<link rel="stylesheet" href="[^"]*_theme\.css">',
-        f'<link rel="stylesheet" href="{theme_path}">',
-        content
-    )
+    # Replace the placeholders
+    content = content.replace('[BASE_CSS_PATH]', base_css_path)
+    content = content.replace('[THEME_CSS_PATH]', theme_css_path)
     
     # Replace placeholders
     if not number.startswith('slide_'):
@@ -412,7 +526,7 @@ def init_chart(project: str, name: str, template: str = None) -> str:
     Returns:
         Path to the created chart file
     """
-    project_dir = PROJECTS_DIR / project
+    project_dir = resolve_projects_dir() / project
     if not project_dir.exists():
         return f"Error: Project '{project}' not found"
     
@@ -420,11 +534,15 @@ def init_chart(project: str, name: str, template: str = None) -> str:
     if name.endswith('.py'):
         name = name[:-3]
     
-    # Handle template
+    # Handle template - try to resolve from multiple locations
     if template:
+        # First try as absolute path from BASE_DIR
         template_file = BASE_DIR / template
         if not template_file.exists():
-            return f"Error: Template not found at {template}"
+            # Try relative to system templates
+            template_file = SYSTEM_CHART_TEMPLATES_DIR / Path(template).name
+            if not template_file.exists():
+                return f"Error: Template not found at {template}"
         
         with open(template_file, "r") as f:
             content = f.read()
@@ -443,7 +561,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 
-from src.charts.utils.plot_buddy import PlotBuddy
+from slideagent_mcp.utils.plot_buddy import PlotBuddy
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -511,7 +629,7 @@ def swap_theme(project: str, theme: str) -> str:
     Returns:
         Success message
     """
-    project_dir = PROJECTS_DIR / project
+    project_dir = resolve_projects_dir() / project
     if not project_dir.exists():
         return f"Error: Project '{project}' not found"
     
@@ -519,12 +637,26 @@ def swap_theme(project: str, theme: str) -> str:
     theme_found = False
     theme_path = None
     
-    for location in ["examples", "private"]:
-        test_path = THEMES_DIR / location / theme
+    # Search in user themes first
+    if USER_THEMES_DIR.exists():
+        test_path = USER_THEMES_DIR / theme
         if test_path.exists() and (test_path / f"{theme}_theme.css").exists():
             theme_found = True
-            theme_path = f"themes/{location}/{theme}"
-            break
+            theme_path = str(test_path)
+    # Then legacy examples/private
+    if not theme_found:
+        for location in ["examples", "private"]:
+            test_path = LEGACY_THEMES_DIR / location / theme
+            if test_path.exists() and (test_path / f"{theme}_theme.css").exists():
+                theme_found = True
+                theme_path = f"themes/{location}/{theme}"
+                break
+    # Finally system core themes
+    if not theme_found and (SYSTEM_THEMES_DIR / theme).exists():
+        test_path = SYSTEM_THEMES_DIR / theme
+        if (test_path / f"{theme}_theme.css").exists():
+            theme_found = True
+            theme_path = str(test_path)
     
     if not theme_found:
         return f"Error: Theme '{theme}' not found"
@@ -575,7 +707,7 @@ def update_memory(content: str, section: str = "ideas", project: str = None) -> 
     """
     # Determine memory file
     if project:
-        project_dir = PROJECTS_DIR / project
+        project_dir = resolve_projects_dir() / project
         if not project_dir.exists():
             return f"Error: Project '{project}' not found"
         memory_file = project_dir / "memory.md"
@@ -639,7 +771,7 @@ def generate_pdf(project: str, output_path: str = None) -> Dict[str, Any]:
     Returns:
         Result dictionary with path or error
     """
-    project_dir = PROJECTS_DIR / project
+    project_dir = resolve_projects_dir() / project
     if not project_dir.exists():
         return {"success": False, "error": f"Project '{project}' not found"}
     
@@ -647,8 +779,8 @@ def generate_pdf(project: str, output_path: str = None) -> Dict[str, Any]:
     if not slides_dir.exists() or not list(slides_dir.glob("*.html")):
         return {"success": False, "error": f"No slides found in project '{project}'"}
     
-    # Run pdf_generator.js from same slideagent_mcp directory
-    pdf_script = Path(__file__).parent / "pdf_generator.js"
+    # Run pdf_generator.js from utils directory
+    pdf_script = Path(__file__).parent / "utils" / "pdf_generator.js"
     if not pdf_script.exists():
         return {"success": False, "error": "PDF generator script not found"}
     
@@ -694,7 +826,7 @@ def start_live_viewer(project: str, port: int = 8080) -> Dict[str, Any]:
     """
     global LIVE_VIEWER_PROCESSES
     
-    project_dir = PROJECTS_DIR / project
+    project_dir = resolve_projects_dir() / project
     if not project_dir.exists():
         return {"success": False, "error": f"Project '{project}' not found"}
     
@@ -713,7 +845,7 @@ def start_live_viewer(project: str, port: int = 8080) -> Dict[str, Any]:
     subprocess.run(["pkill", "-f", "node.*live_viewer_server"], capture_output=True)
     
     # Start viewer from same slideagent_mcp directory
-    viewer_script = Path(__file__).parent / "live_viewer_server.js"
+    viewer_script = Path(__file__).parent / "utils" / "live_viewer_server.js"
     if not viewer_script.exists():
         return {"success": False, "error": "Live viewer script not found"}
     

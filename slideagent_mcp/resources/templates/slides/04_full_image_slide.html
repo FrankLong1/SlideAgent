@@ -1,0 +1,75 @@
+<!-- TEMPLATE_META
+name: 04_full_image_slide
+title: Full Image Slide
+description: Maximum space for charts, diagrams, or large visuals
+use_cases: ['Large charts', 'Complex diagrams', 'Data visualizations', 'Full-screen images']
+features: ['Minimal header', 'Maximum content area', '16:9 optimized', 'Clean borders']
+best_for: Showcasing detailed visualizations
+placeholders: ["TITLE", "SUBTITLE", "SECTION", "PAGE_NUMBER"]
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACME Corp Full Image Slide Template</title>
+    <link rel="stylesheet" href="[BASE_CSS_PATH]">
+    <link rel="stylesheet" href="[THEME_CSS_PATH]">
+</head>
+<body>
+
+<section class="slide bg-grey" style="display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; text-align: left;">
+    <!-- Header with correct structure per CLAUDE.md -->
+    <div class="header">
+        <div class="header-left">
+            <div class="slide-title">[TITLE]</div>
+        </div>
+        <div class="header-right">
+            <div class="section-label">[SECTION]</div>
+            <div class="logo" alt="ACME Corp"></div>
+        </div>
+    </div>
+
+    <!-- Full-bleed image or chart -->
+    <!-- CRITICAL IMPLEMENTATION NOTES:
+         1. Charts must be generated at 16:9 aspect ratio (e.g., figsize=(14, 7.875))
+         2. Clean versions should have NO titles/subtitles - slide header provides context
+         3. Use the exact img styling below to prevent overflow
+         4. Container height accounts for header (~120px) and footer (~80px)
+         
+         CORRECT IMAGE TAG:
+         <img src="../plots/chart_name_clean.png" 
+              alt="Description" 
+              style="width: 100%; height: 100%; object-fit: contain;">
+    -->
+    <div class="content" style="flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; height: calc(1080px - 200px); padding: 20px;">
+        <!-- When replacing placeholder, use exact styling above -->
+        <div style="width: 100%; height: 100%; max-width: 1600px; background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%); border: 2px dashed #ced4da; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-direction: column; color: #6c757d; text-align: center;">
+            <div style="font-size: 72px; margin-bottom: 20px; opacity: 0.5;">📊</div>
+            <div style="font-weight: 500; margin-bottom: 10px; font-size: 18px;">Full-Screen Chart Placeholder</div>
+            <div style="font-size: 14px; opacity: 0.7; margin-bottom: 5px;">Replace with: plots/chart_name_clean.png</div>
+            <div style="font-size: 12px; opacity: 0.6; line-height: 1.6;">
+                Chart Requirements:<br>
+                • 16:9 aspect ratio (wide format)<br>
+                • No titles in clean version<br>
+                • Legend on right side preferred
+            </div>
+            <div style="font-size: 13px; margin-top: 20px; padding: 10px; background: #d4edda; border: 1px solid #28a745; border-radius: 4px; max-width: 500px;">
+                ✅ Correct: &lt;img src="../plots/chart_clean.png" style="width: 100%; height: 100%; object-fit: contain;"&gt;
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="footer-text">
+            ACME Corporation | Strictly Confidential
+        </div>
+        <div class="page-number">
+            Page [PAGE_NUMBER]
+        </div>
+    </div>
+</section>
+
+</body>
+</html>
