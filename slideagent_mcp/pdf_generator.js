@@ -6,7 +6,103 @@ const path = require('path');
 const fs = require('fs');
 const { PDFDocument: PDFLib } = require('pdf-lib');
 
-// Run async operations with concurrency limit for better performance
+// Common CSS to inject for consistent rendering
+const COMMON_CSS = `
+    body {
+        background: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        display: block !important;
+        min-height: auto !important;
+        transform: none !important;
+    }
+    .slide, section.slide, div.slide {
+        width: 1920px !important;
+        height: 1080px !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        overflow: hidden !important;
+    }
+`;
+
+// Launch browser with optimized settings
+async function launchBrowser() {
+    return puppeteer.launch({
+        headless: 'new',
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--disable-web-security',
+            '--disable-features=IsolateOrigins',
+            '--disable-site-isolation-trials',
+            '--allow-file-access-from-files',
+            '--enable-local-file-accesses'
+        ]
+    });
+}
+
+// Page pool for concurrent processing
+class PagePool {
+    constructor(browser, size = 8) {
+        this.browser = browser;
+        this.size = size;
+        this.pages = [];
+        this.available = [];
+        this.initialized = false;
+    }
+
+    async init() {
+        if (this.initialized) return;
+        this.initialized = true;
+        
+        for (let i = 0; i < this.size; i++) {
+            const page = await this.browser.newPage();
+            await page.setViewport({ width: 1920, height: 1080 });
+            this.pages.push(page);
+            this.available.push(page);
+        }
+    }
+
+    async acquire() {
+        if (!this.initialized) await this.init();
+        
+        while (this.available.length === 0) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        
+        return this.available.pop();
+    }
+
+    async release(page) {
+        try {
+            await page.goto('about:blank', { waitUntil: 'domcontentloaded' });
+        } catch (e) {
+            const newPage = await this.browser.newPage();
+            await newPage.setViewport({ width: 1920, height: 1080 });
+            page = newPage;
+        }
+        
+        this.available.push(page);
+    }
+
+    async destroy() {
+        for (const page of this.pages) {
+            try {
+                await page.close();
+            } catch (e) {
+                // Page already closed
+            }
+        }
+        this.pages = [];
+        this.available = [];
+        this.initialized = false;
+    }
+}
+
+// Run async operations with concurrency limit
 async function processWithConcurrency(items, limit, iteratorFn) {
     const ret = [];
     const executing = [];
@@ -22,21 +118,58 @@ async function processWithConcurrency(items, limit, iteratorFn) {
     return Promise.all(ret);
 }
 
+// Wait for slide to be ready
+async function waitForSlideReady(page, slideUrl) {
+    await page.goto(slideUrl, { 
+        waitUntil: ['domcontentloaded', 'networkidle0'],
+        timeout: 30000 
+    });
+    
+    // Wait for content to be ready
+    try {
+        await page.waitForFunction(() => {
+            if (document.readyState !== 'complete') return false;
+            
+            const images = document.querySelectorAll('img');
+            for (let img of images) {
+                if (!img.complete) return false;
+            }
+            
+            if (document.fonts && document.fonts.status === 'loading') return false;
+            
+            const slide = document.querySelector('.slide, section, div[class*="slide"]');
+            if (!slide) {
+                return document.body !== null;
+            }
+            
+            return true;
+        }, { timeout: 5000 });
+    } catch (e) {
+        console.warn('Warning: Slide readiness check timed out, continuing anyway');
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, 100));
+}
+
+// Inject CSS into page
+async function injectCommonCSS(page) {
+    await page.addStyleTag({ content: COMMON_CSS });
+}
+
+// Main PDF generation function
 async function generatePDF(input, outputPath = null) {
-    // Check if input is a directory (for multiple slides) or single file
     const isDirectory = fs.existsSync(input) && fs.lstatSync(input).isDirectory();
     
     if (isDirectory) {
-        // Handle directory of slides
         return await generatePDFFromSlides(input, outputPath);
     } else {
-        // Handle single HTML file (legacy support)
         return await generatePDFFromSingleFile(input, outputPath);
     }
 }
 
+// Generate PDF from directory of slides
 async function generatePDFFromSlides(slidesDir, outputPath = null) {
-    // Find all slide HTML files in the directory
+    // Find all slide HTML files
     const slideFiles = fs.readdirSync(slidesDir)
         .filter(file => file.match(/^slide_\d+\.html$/))
         .sort((a, b) => {
@@ -50,15 +183,20 @@ async function generatePDFFromSlides(slidesDir, outputPath = null) {
         process.exit(1);
     }
 
+    console.log(`📑 Found ${slideFiles.length} slides to process`);
+
     // Generate output path if not provided
     if (!outputPath) {
-        const projectDir = path.dirname(slidesDir);
-        const projectName = path.basename(projectDir);
-        outputPath = path.join(projectDir, `${projectName}.pdf`);
+        const projectName = path.basename(path.dirname(slidesDir));
+        outputPath = path.join(path.dirname(slidesDir), `${projectName}.pdf`);
     }
 
-    console.log(`📂 Generating PDF from ${slideFiles.length} slides in ${slidesDir}`);
-    console.log(`📝 Output: ${outputPath}`);
+    console.log(`📝 Generating PDF from ${slideFiles.length} slides`);
+    console.log(`📁 Output will be saved to: ${outputPath}`);
+
+    const browser = await launchBrowser();
+    const pagePool = new PagePool(browser, 8);
+    await pagePool.init();
 
     // Create progress bar
     const progressBar = new cliProgress.SingleBar({
@@ -70,48 +208,75 @@ async function generatePDFFromSlides(slidesDir, outputPath = null) {
     
     progressBar.start(slideFiles.length, 0, { slide: 'Starting...' });
 
-    // Launch browser with page pool for parallel processing
-    const browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
-
     try {
-        // Create page pool for parallel processing
-        const POOL_SIZE = 4;
-        const pages = [];
-        for (let i = 0; i < POOL_SIZE; i++) {
-            pages.push(await browser.newPage());
-        }
-        
-        let pageIndex = 0;
-        const getNextPage = () => {
-            const page = pages[pageIndex];
-            pageIndex = (pageIndex + 1) % POOL_SIZE;
-            return page;
-        };
-
-        // Array to store PDF buffers in order
         const pdfBuffers = new Array(slideFiles.length);
         let completed = 0;
 
-        // Process slides in parallel with concurrency limit
-        const CONCURRENCY_LIMIT = 8; // Fast parallel processing
+        // Process slides concurrently
+        const CONCURRENCY_LIMIT = 8;
         await processWithConcurrency(slideFiles, CONCURRENCY_LIMIT, async (slideFile, i) => {
             const slidePath = path.join(slidesDir, slideFile);
-            const page = getNextPage();
+            const page = await pagePool.acquire();
             
             try {
-                const fileUrl = `file://${path.resolve(slidePath)}`;
+                // Read HTML and inject CSS inline
+                let htmlContent = fs.readFileSync(slidePath, 'utf8');
                 
-                // Navigate to the slide
-                await page.goto(fileUrl, {
-                    waitUntil: 'networkidle0',
+                // Get absolute paths for CSS files
+                const projectRoot = path.resolve(slidesDir, '..', '..', '..');
+                const baseCssPath = path.join(projectRoot, 'src', 'slides', 'base.css');
+                const themeCssPath = path.join(projectRoot, 'themes', 'examples', 'acme_corp', 'acme_corp_theme.css');
+                
+                // Read CSS files if they exist
+                let baseCSS = '';
+                let themeCSS = '';
+                
+                if (fs.existsSync(baseCssPath)) {
+                    baseCSS = fs.readFileSync(baseCssPath, 'utf8');
+                }
+                
+                if (fs.existsSync(themeCssPath)) {
+                    themeCSS = fs.readFileSync(themeCssPath, 'utf8');
+                    
+                    // Fix logo paths in theme CSS
+                    const themeDir = path.dirname(themeCssPath);
+                    themeCSS = themeCSS.replace(/url\(['"]?([^'")]+\.png)['"]?\)/g, (match, filename) => {
+                        const logoPath = path.join(themeDir, filename);
+                        return `url('file://${logoPath}')`;
+                    });
+                }
+                
+                // Remove existing CSS links and inject inline
+                htmlContent = htmlContent.replace(/<link rel="stylesheet"[^>]*>/g, '');
+                
+                // Inject CSS into head
+                const cssInjection = `
+                    <style>
+                        /* Base CSS */
+                        ${baseCSS}
+                        
+                        /* Theme CSS */
+                        ${themeCSS}
+                        
+                        /* Override for PDF */
+                        ${COMMON_CSS}
+                    </style>
+                </head>`;
+                
+                htmlContent = htmlContent.replace('</head>', cssInjection);
+                
+                // Fix image paths
+                htmlContent = htmlContent.replace(/src="\.\.\/plots\//g, `src="file://${path.join(path.dirname(slidePath), '..', 'plots')}/`);
+                htmlContent = htmlContent.replace(/src="plots\//g, `src="file://${path.join(path.dirname(slidePath), '..', 'plots')}/`);
+                
+                // Set content
+                await page.setContent(htmlContent, {
+                    waitUntil: ['networkidle0', 'domcontentloaded'],
                     timeout: 30000
                 });
                 
-                // Brief wait for any dynamic content
-                await page.waitForTimeout(300);
+                // Wait for rendering
+                await new Promise(resolve => setTimeout(resolve, 500));
 
                 // Generate PDF for this slide
                 const pdfBuffer = await page.pdf({
@@ -132,21 +297,15 @@ async function generatePDFFromSlides(slidesDir, outputPath = null) {
                 pdfBuffers[i] = pdfBuffer;
                 completed++;
                 progressBar.update(completed, { slide: slideFile });
-            } catch (error) {
-                console.error(`Error processing ${slideFile}:`, error);
-                throw error;
+            } finally {
+                await pagePool.release(page);
             }
         });
         
         progressBar.stop();
 
-        // Close all pages
-        for (const page of pages) {
-            await page.close();
-        }
-
         // Merge all PDFs into one
-        console.log('📚 Merging PDFs...');
+        console.log(`🔀 Merging ${pdfBuffers.length} slides into single PDF...`);
         const mergedPdf = await PDFLib.create();
         
         for (const pdfBuffer of pdfBuffers) {
@@ -157,44 +316,55 @@ async function generatePDFFromSlides(slidesDir, outputPath = null) {
 
         const mergedPdfBytes = await mergedPdf.save();
         fs.writeFileSync(outputPath, mergedPdfBytes);
-        
+
         console.log(`✅ PDF generated successfully: ${outputPath}`);
-        console.log(`📄 Total pages: ${slideFiles.length}`);
+        
+        const stats = fs.statSync(outputPath);
+        const fileSizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
+        console.log(`📄 File size: ${fileSizeInMB} MB`);
+
     } catch (error) {
-        progressBar.stop();
-        console.error('❌ Error generating PDF:', error);
+        console.error('❌ Error generating PDF:', error.message);
         process.exit(1);
     } finally {
+        await pagePool.destroy();
         await browser.close();
     }
 }
 
-async function generatePDFFromSingleFile(htmlPath, outputPath = null) {
-    // Legacy support for single file
-    if (!outputPath) {
-        outputPath = htmlPath.replace(/\.html$/, '.pdf');
+// Generate PDF from single HTML file
+async function generatePDFFromSingleFile(htmlFilePath, outputPath = null) {
+    if (!fs.existsSync(htmlFilePath)) {
+        console.error(`Error: HTML file not found: ${htmlFilePath}`);
+        process.exit(1);
     }
 
-    console.log(`📄 Generating PDF from ${htmlPath}`);
-    console.log(`📝 Output: ${outputPath}`);
+    if (!outputPath) {
+        const dir = path.dirname(htmlFilePath);
+        const filename = path.basename(htmlFilePath, '.html');
+        outputPath = path.join(dir, `${filename}.pdf`);
+    }
 
-    const browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+    console.log(`Generating PDF from: ${htmlFilePath}`);
+    console.log(`Output will be saved to: ${outputPath}`);
+
+    const browser = await launchBrowser();
 
     try {
         const page = await browser.newPage();
-        const fileUrl = `file://${path.resolve(htmlPath)}`;
         
-        await page.goto(fileUrl, {
-            waitUntil: 'networkidle0',
-            timeout: 30000
+        await page.setViewport({
+            width: 1536,
+            height: 864,
+            deviceScaleFactor: 1
         });
-        
-        await page.waitForTimeout(500);
 
-        await page.pdf({
+        const fileUrl = `file://${path.resolve(htmlFilePath)}`;
+        await waitForSlideReady(page, fileUrl);
+
+        await injectCommonCSS(page);
+
+        const pdfBuffer = await page.pdf({
             path: outputPath,
             width: '16in',
             height: '9in',
@@ -211,28 +381,66 @@ async function generatePDFFromSingleFile(htmlPath, outputPath = null) {
         });
 
         console.log(`✅ PDF generated successfully: ${outputPath}`);
+        
+        const stats = fs.statSync(outputPath);
+        const fileSizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
+        console.log(`📄 File size: ${fileSizeInMB} MB`);
+
     } catch (error) {
-        console.error('❌ Error generating PDF:', error);
+        console.error('❌ Error generating PDF:', error.message);
         process.exit(1);
     } finally {
         await browser.close();
     }
 }
 
-// Main execution
-if (require.main === module) {
+// Main function
+async function main() {
     const args = process.argv.slice(2);
     
     if (args.length === 0) {
-        console.error('Usage: node pdf_generator.js <slides-directory-or-html-file> [output.pdf]');
-        process.exit(1);
+        console.log(`
+Usage: 
+  node pdf_generator.js <slides-directory> [output-path]
+  node pdf_generator.js <html-file-path> [output-path]
+
+Examples:
+  node pdf_generator.js projects/myproject/slides/
+  node pdf_generator.js projects/myproject/slides/ output.pdf
+  node pdf_generator.js single-slide.html output.pdf
+
+Features:
+  ✅ Automatically detects and processes all slide_XX.html files in directory
+  ✅ Preserves 16:9 aspect ratio optimized for presentations
+  ✅ Merges multiple slides into single PDF maintaining order
+  ✅ High-quality rendering with proper dimensions
+  ✅ Background colors and images included
+  ✅ No margins for full-page slides
+        `);
+        process.exit(0);
     }
 
     const input = args[0];
-    const outputPath = args[1] || null;
+    const outputFile = args[1];
 
-    generatePDF(input, outputPath).catch(err => {
-        console.error('Error:', err);
+    await generatePDF(input, outputFile);
+}
+
+// Handle process termination
+process.on('SIGINT', () => {
+    console.log('\n⚠️  PDF generation cancelled by user');
+    process.exit(0);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+    process.exit(1);
+});
+
+// Run if called directly
+if (require.main === module) {
+    main().catch(error => {
+        console.error('❌ Fatal error:', error.message);
         process.exit(1);
     });
 }

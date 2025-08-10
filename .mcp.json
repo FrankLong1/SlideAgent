@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "slideagent": {
-      "command": "python3",
+      "command": "./venv/bin/python",
       "args": ["./slideagent_mcp/server.py"],
       "cwd": ".",
       "env": {}
