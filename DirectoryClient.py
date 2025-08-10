@@ -91,7 +91,7 @@ class SlideAgentClient:
         return content
     
     
-    def create_project(self, project_name, theme="acme_corp", with_viewer=False):
+    def create_project(self, project_name, theme="acme_corp"):
         """Create a new SlideAgent project with proper structure."""
         project_path = self.projects_dir / project_name
         
@@ -151,15 +151,9 @@ class SlideAgentClient:
         with open(memory_path, 'w') as f:
             f.write(memory_content)
         
-        # Generate viewer if requested
-        if with_viewer:
-            self.generate_viewer(project_name)
-        
         print(f"✅ Created project '{project_name}' with theme '{theme}'")
         print(f"📁 {project_path}")
         print(f"📝 New structure: slides/, validation/, memory.md")
-        if with_viewer:
-            print(f"👁️  Viewer: {project_path}/viewer.html")
         
         return True
     
@@ -414,107 +408,6 @@ class SlideAgentClient:
         
         return True
     
-    def generate_viewer(self, project_name):
-        """Generate viewer.html for a project."""
-        project_dir = self.projects_dir / project_name
-        
-        if not project_dir.exists():
-            print(f"❌ Project '{project_name}' not found!")
-            return False
-        
-        viewer_template_path = self.src_dir / "slides" / "viewer_template.html"
-        if not viewer_template_path.exists():
-            print(f"❌ Viewer template not found at {viewer_template_path}")
-            return False
-        
-        # Read template
-        with open(viewer_template_path, 'r') as f:
-            viewer_content = f.read()
-        
-        # Replace placeholders
-        viewer_content = viewer_content.replace('[PROJECT_NAME]', project_name.replace('-', ' ').title())
-        
-        # Write viewer.html
-        viewer_path = project_dir / "viewer.html"
-        with open(viewer_path, 'w') as f:
-            f.write(viewer_content)
-        
-        print(f"✅ Generated viewer.html for '{project_name}'")
-        print(f"👁️  {viewer_path}")
-        print(f"💡 Open in browser to view slides in real-time")
-        
-        return True
-    
-    def launch_viewer(self, project_name, use_server=True):
-        """Open viewer in browser - either via server or static file."""
-        import webbrowser
-        import subprocess
-        import time
-        
-        project_dir = self.projects_dir / project_name
-        
-        if not project_dir.exists():
-            print(f"❌ Project '{project_name}' not found!")
-            return False
-        
-        if use_server:
-            # Launch the Node.js server for live updates
-            server_script = Path(__file__).parent / "src" / "utils" / "live_viewer_server.js"
-            
-            if not server_script.exists():
-                print(f"❌ Server script not found at {server_script}")
-                print("Falling back to static viewer...")
-                use_server = False
-            else:
-                try:
-                    # Start the server
-                    print(f"🚀 Starting live viewer server for '{project_name}'...")
-                    subprocess.Popen(
-                        ["node", str(server_script), project_name],
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE
-                    )
-                    
-                    # Give server time to start
-                    time.sleep(1)
-                    
-                    # Server will auto-open browser
-                    print(f"✨ Live viewer running at http://localhost:8080")
-                    print(f"📡 Auto-refresh enabled - slides will update as they're generated!")
-                    print(f"\n⚠️  Keep this terminal open. Press Ctrl+C to stop the viewer.")
-                    
-                    # Keep the process running
-                    try:
-                        while True:
-                            time.sleep(1)
-                    except KeyboardInterrupt:
-                        print("\n👋 Viewer stopped")
-                    
-                    return True
-                    
-                except Exception as e:
-                    print(f"❌ Failed to start server: {e}")
-                    print("Falling back to static viewer...")
-                    use_server = False
-        
-        if not use_server:
-            # Fallback to static viewer
-            viewer_path = project_dir / "viewer.html"
-            
-            # Generate viewer if it doesn't exist
-            if not viewer_path.exists():
-                print(f"📝 Generating viewer.html...")
-                if not self.generate_viewer(project_name):
-                    return False
-            
-            # Open in browser
-            file_url = f"file://{viewer_path.absolute()}"
-            webbrowser.open(file_url)
-            print(f"🚀 Launched static viewer for '{project_name}' in browser")
-            print(f"⚠️  Note: Static viewer requires manual refresh to see new slides")
-        
-        return True
-    
     def init_chart(self, project_name, chart_name, template_path=None):
         """Initialize a chart from a template.
         
@@ -639,11 +532,11 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python DirectoryClient.py new-project quarterly-review --theme acme_corp --with-viewer
+  python DirectoryClient.py new-project quarterly-review --theme acme_corp
   python DirectoryClient.py list-projects
   python DirectoryClient.py list-themes
-  python DirectoryClient.py generate-viewer quarterly-review
-  python DirectoryClient.py launch-viewer quarterly-review
+  python DirectoryClient.py init-slide quarterly-review 01 --template src/slides/slide_templates/00_title_slide.html
+  python DirectoryClient.py init-chart quarterly-review revenue_analysis --template src/charts/chart_templates/bar_chart.py
         """
     )
     
@@ -653,7 +546,6 @@ Examples:
     new_parser = subparsers.add_parser('new-project', help='Create a new project')
     new_parser.add_argument('name', help='Project name (use hyphens for spaces)')
     new_parser.add_argument('--theme', default='acme_corp', help='Theme to use (default: acme_corp)')
-    new_parser.add_argument('--with-viewer', action='store_true', help='Auto-generate viewer.html')
     
     # List projects command
     subparsers.add_parser('list-projects', help='List all projects')
@@ -685,14 +577,6 @@ Examples:
     chart_parser.add_argument('name', help='Chart name (e.g., quarterly_revenue)')
     chart_parser.add_argument('--template', help='Path to template file (e.g., src/charts/chart_templates/bar_chart.py)')
     
-    # Generate viewer command
-    viewer_parser = subparsers.add_parser('generate-viewer', help='Generate viewer.html for a project')
-    viewer_parser.add_argument('project', help='Project name')
-    
-    # Launch viewer command
-    launch_parser = subparsers.add_parser('launch-viewer', help='Open viewer in browser')
-    launch_parser.add_argument('project', help='Project name')
-    
     args = parser.parse_args()
     
     if not args.command:
@@ -702,7 +586,7 @@ Examples:
     client = SlideAgentClient()
     
     if args.command == 'new-project':
-        client.create_project(args.name, args.theme, args.with_viewer)
+        client.create_project(args.name, args.theme)
     elif args.command == 'list-projects':
         client.list_projects()
     elif args.command == 'list-themes':
@@ -715,10 +599,6 @@ Examples:
         client.init_slide(args.project, args.number, args.template, args.title, args.subtitle, args.section)
     elif args.command == 'init-chart':
         client.init_chart(args.project, args.name, args.template)
-    elif args.command == 'generate-viewer':
-        client.generate_viewer(args.project)
-    elif args.command == 'launch-viewer':
-        client.launch_viewer(args.project)
 
 if __name__ == "__main__":
     main()

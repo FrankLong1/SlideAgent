@@ -67,55 +67,6 @@ The system provides 16 professional slide templates in `src/slides/slide_templat
 | `15_split_comparison` | Before/after, A vs B comparisons | Clean 50/50 split with VS badge and metrics |
 | `blank_slide` | Default template | Basic structure for customization |
 
-### New Advanced Templates (14-15)
-
-#### Template 14: Metro Tiles (`14_metro_tiles.html`)
-Modern tile-based layout inspired by Windows Metro design, perfect for creating visual landscapes and portfolio overviews.
-
-**Best for:**
-- Company/competitor landscape mapping
-- Product portfolio displays
-- Feature showcases with categories
-- Team member grids
-- Multi-metric dashboards
-- Logo splash screens
-
-**Features:**
-- 4-column grid system with 140px base row height
-- Four tile sizes: small (1x1), wide (2x1), tall (1x2), large (2x2)
-- Six color schemes: primary, accent, warning, danger, info, dark
-- Flexible content types: icons, values, labels, titles, subtitles
-- Clean flat design with no shadows or animations (PDF-safe)
-
-**Usage example:**
-```bash
-python3 DirectoryClient.py init-slide project-name 01 --template src/slides/slide_templates/14_metro_tiles.html --title "Market Landscape" --subtitle "2024 Key Players"
-```
-
-#### Template 15: Split Comparison (`15_split_comparison.html`)
-Professional side-by-side comparison layout for contrasting two options, solutions, or time periods.
-
-**Best for:**
-- Before/after comparisons
-- Product A vs Product B analysis
-- Old way vs new way presentations
-- Competitor comparisons
-- Pro/con evaluations
-- Current state vs future state
-
-**Features:**
-- True 50/50 split with visual separation
-- Central "VS" badge for emphasis
-- Comparison lists with customizable icons
-- Bottom metrics section for quantitative comparison
-- Color-coded metrics (good/bad/neutral)
-- Subtle background differentiation
-- Clean flat design optimized for PDF export
-
-**Usage example:**
-```bash
-python3 DirectoryClient.py init-slide project-name 02 --template src/slides/slide_templates/15_split_comparison.html --title "Solution Comparison" --subtitle "Traditional vs AI-Powered"
-```
 
 ## Chart Generation Workflow
 
@@ -217,30 +168,6 @@ plt.tight_layout()
 plt.savefig("plots/financial_performance_clean.png", dpi=150, bbox_inches='tight')
 ```
 
-### Alternative: Separate Methods for Slide Charts
-```python
-def generate_slide_chart(data, output_name):
-    """Generate a chart optimized for slide presentation"""
-    buddy = PlotBuddy.from_project_config()
-    
-    # Wide 16:9 format
-    fig, ax = buddy.setup_figure(figsize=(14, 7.875))
-    
-    # Create visualization
-    # ... your plotting code ...
-    
-    # Right-side legend
-    ax.legend(bbox_to_anchor=(1.02, 0.5), loc='center left')
-    
-    # Save WITHOUT titles for slides
-    plt.tight_layout()
-    plt.savefig(f"plots/{output_name}_clean.png", dpi=150, bbox_inches='tight')
-    
-    # Also create branded version with titles if needed
-    buddy.add_titles(ax, "Title", "Subtitle")
-    plt.savefig(f"plots/{output_name}_branded.png", dpi=150, bbox_inches='tight')
-```
-
 ### Dual Chart Output
 - **Branded version** (`chart_branded.png`): Complete with logos, titles, branding
 - **Clean version** (`chart_clean.png`): Optimized for slide inclusion
@@ -329,17 +256,15 @@ title: Your Presentation Title
 
 ## CSS Architecture
 
-### Two-Layer Structure
-Core CSS
-1. **`core_css/base.css`** - Foundation (layout, typography, slide dimensions, PDF optimization)
-2.**`themes/`** - Brand Identity (colors, fonts, brand elements)
+**Two-Layer Structure:**
+1. **`core_css/base.css`** - Foundation (layout, typography, slide dimensions)
+2. **`themes/`** - Brand Identity (colors, fonts, logos)
 
-### Static Slide Design Philosophy
-- **No animations or CSS transitions** - Designed for static presentation and PDF export
-- **Fixed 16:9 presentation dimensions** - Optimized for projector display (1920x1080px)
-- **Print-focused styling** - No visual effects just static stuff for printed/PDF format
-- **PDF-safe CSS only** - No box-shadows, gradients, transparency, or filters that render poorly in PDFs
-- **No emojis** - Professional and institutional appearance
+**Design Philosophy:**
+- Fixed 16:9 dimensions (1920x1080px)
+- PDF-safe CSS only (no shadows, gradients, opacity<1)
+- Static design (no animations or transitions)
+- Professional appearance (no emojis)
 
 ## Memory System
 
@@ -366,31 +291,19 @@ Each memory file contains three key sections:
 
 ### Memory Management
 
-**For AI Assistants**: Memory files are simple markdown documents that should be updated directly using Read/Edit tools:
-- **Global memory**: `/MEMORY.md` - Cross-project learnings
-- **Project memory**: `/projects/[project-name]/memory.md` - Project-specific discoveries
+**Memory Files:**
+- **Global**: `/MEMORY.md` - Cross-project learnings
+- **Project**: `/projects/[project-name]/memory.md` - Project-specific discoveries
 
-Simply read the file, edit the appropriate section (What's Working, What's Not Working, Ideas & Improvements), and update the timestamp at the bottom.
-
-### AI Guidelines for Memory Updates
-- Update project memory after completing significant tasks or encountering issues
-- Update global memory when discovering patterns that apply across projects
-- Be specific and actionable in memory entries
-- Include context about why something works or doesn't work
-- Document creative solutions that might be reusable
-- Track both technical and design-related learnings
+**Update memory when:**
+- Completing significant tasks
+- Discovering patterns
+- Finding creative solutions
+- Learning what works/doesn't work
 
 # Complete Workflow & AI Guidelines
-Always use `init-slide` for creating slides instead of generating HTML from scratch:
 
-```bash
-# Initialize a slide from template
-python3 DirectoryClient.py init-slide [project] [slide-number] --template [template-path] --title "Title" --subtitle "Subtitle" --section "Section"
-
-# Example:
-python3 DirectoryClient.py init-slide quarterly-review 01 --template src/slides/slide_templates/00_title_slide.html --title "Q4 2024 Review" --subtitle "Financial Performance"
-```
-Core Principles for AI Assistants
+## Core Principles for AI Assistants
 1. **ALWAYS use DirectoryClient for project creation** - Never manually create project folders or structure
 2. **ALWAYS use init-slide for slide creation** - Never generate HTML from scratch
 3. **ALWAYS use init-chart for chart creation** - Use templates, don't write charts from scratch
@@ -404,15 +317,10 @@ Core Principles for AI Assistants
 
 ## Complete Workflow with Parallel Generation
 
-SlideAgent uses a parallel section-based generation workflow for dramatically improved speed and quality control.
-
 #### 1. Project Setup
-**IMPORTANT**: Always use DirectoryClient to create new projects:
 ```bash
 python3 DirectoryClient.py new-project [project-name] --theme [theme-name]
 ```
-
-For other commands (list projects, themes, etc.), see the Theme System section above.
 
 #### 2. Content Analysis
 **User Action**: Add source materials to `input/` folder (data files, research, images, references)
@@ -430,19 +338,17 @@ For other commands (list projects, themes, etc.), see the Theme System section a
 
 #### 5. Parallel Slide Generation & Validation
 
-**CRITICAL WORKFLOW - ALWAYS START LIVE VIEWER FIRST**: 
-⚠️ **MANDATORY**: The live viewer server MUST be running BEFORE generating any slides. This is NOT optional- Users can't watch progress without the live viewer. Use the Node.js server.
+**CRITICAL**: Always start the live viewer server FIRST.
 
-
+**Always kill any existing live viewer server before starting a new one**
 ```bash
-# Step 1: ALWAYS START THE LIVE VIEWER FIRST (NON-NEGOTIABLE)
-node src/utils/live_viewer_server.js [project-name]
-# This starts a local server at http://localhost:8080 and opens the browser
-# The viewer shows section rows with slide placeholders waiting to be filled
-
-# Step 2: ONLY AFTER viewer is running, spawn parallel agents to generate slides
-# Users will see slides appear as mini previews in each section row as they're created
+pkill -f "node.*live_viewer_server"  # Stop existing server
+sleep 2
+node src/utils/live_viewer_server.js [project-name]  # Start fresh instance
+open http://localhost:8080  # Open in browser
 ```
+
+Then spawn parallel agents to generate slides — they will appear in real-time as they're created.
 
 **Architecture**: Main agent spawns ALL section agents simultaneously for parallel processing of each section laid out in the outline. If the sections are extremely short (i.e. <3 slides) consolidate mutliple sections into the workload of a single agent.
 
@@ -455,86 +361,20 @@ node src/utils/live_viewer_server.js [project-name]
 
 **Output**: Each section produces slide HTML files, screenshots, and validation report.
 
-**CRITICAL**: Always use the DirectoryClient `init-slide` command to initialize slides from templates. NEVER generate HTML from scratch using Write tool.
+**CRITICAL**: Always use `init-slide` to initialize slides from templates. NEVER generate HTML from scratch.
 
 ```bash
-# Initialize a slide from a template
-python3 DirectoryClient.py init-slide <project> <number> \
-    --template <path-to-template> \
-    --title "Title Text" \
-    --subtitle "Subtitle Text" \
-    --section "Section Label"
-
-# Examples:
-# Title slide
-python3 DirectoryClient.py init-slide my-project 01 \
-    --template src/slides/slide_templates/00_title_slide.html \
-    --title "Q4 2024 Results" \
-    --subtitle "Financial Performance Review"
-
-# Base slide (uses default blank_slide if no template specified)  
-python3 DirectoryClient.py init-slide my-project 02 \
-    --title "Overview" \
-    --subtitle "Key objectives" \
-    --section "Introduction"
-
-# Text with image
-python3 DirectoryClient.py init-slide my-project 03 \
-    --template src/slides/slide_templates/02_text_left_image_right.html \
-    --title "Market Analysis" \
-    --section "Main Content"
+python3 DirectoryClient.py init-slide <project> <number> --template <path> --title "Title" --subtitle "Subtitle" --section "Section"
 ```
-
-**How Templates Work:**
-- All templates use standardized placeholders: `[TITLE]`, `[SUBTITLE]`, `[SECTION]`, `[PAGE_NUMBER]`
-- Templates include `<!-- TEMPLATE_TYPE: standard/title/divider -->` metadata
-- The init-slide command automatically handles all path fixes and replacements
-- Sample content remains in templates - agents edit this directly
 
 **Workflow for Section Agents:**
 1. **Initialize slide** using `init-slide` with appropriate template
-2. **Edit content** using `Edit` or `MultiEdit` to replace sample content with actual data
-3. **Add charts** by replacing image placeholders with actual chart paths
-4. **Validate** with screenshots as usual
+2. **Edit content** using `Edit` or `MultiEdit` to replace sample content  
+3. **Add charts** by replacing image placeholders with chart paths
+4. **Validate** with screenshots
 
-See **Slide Templates Reference** section above for complete template list.
+Templates use placeholders: `[TITLE]`, `[SUBTITLE]`, `[SECTION]`, `[PAGE_NUMBER]`
 
-##### Example Agent Workflow for a Single Slide:
-```python
-# Step 1: Initialize slide from template
-Bash("python3 DirectoryClient.py init-slide my-project 03 --template src/slides/slide_templates/02_text_left_image_right.html --title 'Market Analysis' --subtitle 'Q4 Performance' --section 'FINANCIALS'")
-
-# Step 2: Edit the content area to add actual data
-Edit("projects/my-project/slides/slide_03.html",
-     old_string="""<ul style="font-size: 18px; line-height: 1.6; color: #333; list-style: none; padding: 0;">
-                <li style="margin-bottom: 20px;">
-                    <strong style="color: #1B365D;">Market Leadership:</strong> Dominant in cloud infrastructure with 35% market share and strong partnerships.
-                </li>
-                <li style="margin-bottom: 20px;">
-                    <strong style="color: #1B365D;">Leadership Team:</strong> Executive team with deep industry experience and proven success.
-                </li>
-            </ul>""",
-     new_string="""<ul style="font-size: 18px; line-height: 1.6; color: #333; list-style: none; padding: 0;">
-                <li style="margin-bottom: 20px;">
-                    <strong style="color: #1B365D;">Revenue Growth:</strong> Q4 revenue increased 28% YoY to $4.2B, exceeding guidance.
-                </li>
-                <li style="margin-bottom: 20px;">
-                    <strong style="color: #1B365D;">Market Expansion:</strong> Successfully entered 3 new international markets.
-                </li>
-                <li style="margin-bottom: 20px;">
-                    <strong style="color: #1B365D;">Product Innovation:</strong> Launched 5 new AI-powered features driving adoption.
-                </li>
-            </ul>""")
-
-# Step 3: Replace image placeholder with actual chart
-Edit("projects/my-project/slides/slide_03.html",
-     old_string="""<div style="width: 100%; height: 400px; background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%); border: 2px dashed #ced4da; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; color: #6c757d; text-align: center;">
-                <div style="font-size: 48px; margin-bottom: 10px; opacity: 0.5;">🏢</div>
-                <div style="font-weight: 500; margin-bottom: 5px; font-size: 14px;">Image Placeholder</div>
-                <div style="font-size: 12px; opacity: 0.7;">Replace with: images/datacenter.png</div>
-            </div>""",
-     new_string="""<img src="../plots/q4_revenue_growth_clean.png" alt="Q4 Revenue Growth Chart" style="width: 100%; height: 100%; object-fit: contain;">""")
-```
 
 
 ##### Flexible Outline Format with Agent Distribution
@@ -617,46 +457,28 @@ agent_distribution:
 
 ##### Validation Process:
 
-1. **Screenshot Generation**: Use screenshotter with `--range`, `--slides`, or `--pattern` options
-2. **Visual Review**: Read ALL screenshots, fix any overflow/truncation immediately
-3. **Validation Report**: Write structured report to `validation/section_N_report.txt` with status
-4. **Main Agent Review**: Collect all reports for go/no-go PDF decision
+1. **Screenshot Generation**: Use screenshotter  
+2. **Visual Review**: Check for overflow/truncation
+3. **Validation Report**: Write to `validation/section_N_report.txt`
+4. **Main Agent Review**: Collect reports for PDF decision
 
-**Key**: Screenshots show exact PDF rendering - fix issues immediately.
-
-##### Visual Validation Checklist
-
-**Priority Issues**: Overflow (bottom/right), content cutoff, truncation
-**Layout**: Proper 16:9 aspect ratio, alignment, spacing
-**PDF Rendering**: Avoid box-shadows, gradients, transparency
-**Content**: Logo placement, chart sizing, readability
-
-##### PDF-Safe CSS
-
-**Never use**: box-shadow, gradients, opacity<1, CSS filters, blend modes, 3D transforms
-**Use instead**: Solid borders/colors, fixed dimensions (1920x1080px), simple backgrounds
+**Key Issues to Check:**
+- Overflow (bottom/right edges)
+- Content cutoff or truncation
+- 16:9 aspect ratio maintained
+- Logo placement and chart sizing
 
 ##### Critical HTML vs PDF Rendering Differences
 
-**WARNING**: HTML files may look perfect in browsers but render incorrectly in PDFs. Common issues:
+**WARNING**: Browser rendering ≠ PDF rendering. Screenshots use Puppeteer (same as PDF generator) so they show EXACTLY what the PDF will look like.
 
-###### Layout Differences:
-- **Flexbox/Grid**: Complex flex layouts often break in PDF - use simpler table or absolute positioning for critical layouts
-- **Two-column layouts**: May overlap in PDF even if perfect in browser - ensure adequate spacing and test with screenshots
-- **Image positioning**: Images may shift or scale differently - use fixed dimensions and positioning
-- **Text wrapping**: PDF text wrap differs from browser - leave extra margin for safety
+**Common Issues:**
+- Flexbox/Grid layouts break - use simpler positioning
+- Two-column layouts overlap - ensure adequate spacing
+- Images shift - use fixed dimensions
+- Text wraps differently - leave extra margins
 
-###### Why Screenshots Matter:
-- **Screenshots use Puppeteer**: Same engine that generates PDFs, so screenshots show EXACTLY what PDF will look like
-- **Browser preview lies**: Chrome/Safari/Firefox rendering ≠ PDF rendering
-- **Always validate screenshots**: If it looks wrong in screenshot, it WILL be wrong in PDF
-
-###### Best Practices:
-1. **Test with screenshots first** - Don't trust browser preview
-2. **Use simpler layouts** for PDF-critical content
-3. **Add buffer space** between elements that appear close
-4. **Fixed positioning** over flexible layouts when possible
-5. **Validate EVERY slide** via screenshots before PDF generation
+**Best Practice**: Always validate via screenshots, not browser preview.
 
 #### 6. Review & Iteration
 **Collaborative Process**: Based on validation reports:
@@ -667,33 +489,15 @@ agent_distribution:
 
 #### 7. Final PDF Generation & Verification
 ```bash
-# Generate the PDF
+# Generate PDF
 node src/utils/pdf_generator.js projects/[project-name]/slides/
 
-# CRITICAL: Verify the PDF
-# Check file exists and has correct name
+# Verify and open
 ls -la projects/[project-name]/*.pdf
-
-# Open or distribute as needed
-# Common actions:
-# - Upload to cloud storage
-# - Email to stakeholders  
-# - Convert to other formats
-# - Archive with version control
+open projects/[project-name]/[project-name].pdf
 ```
-
-**Post-Generation Checklist:**
-- [ ] PDF file generated with correct filename
-- [ ] File size is reasonable (typically 2-10MB for 20 slides)
-- [ ] All pages present (match slide count)
-- [ ] No rendering artifacts from validation reports
-- [ ] Ready for distribution, open the PDF file when everything is done!
-
-**Key Principle**: The system leverages parallel processing for generation and validation, while maintaining quality through automated review at each stage. Final PDF must be verified before distribution.
 
 **Key File Paths:**
 - Templates: `src/slides/slide_templates/[NN]_template_name.html`
-- Charts: `plots/[chart]_clean.png` (for slides) or `plots/[chart]_branded.png` (standalone)
+- Charts: `plots/[chart]_clean.png` (slides) or `_branded.png` (standalone)
 - Themes: `themes/[theme]/[theme]_theme.css`
-
-**Design Philosophy**: The system generates HTML slides that reference external stylesheets for maintainability and consistency. Slides can be viewed individually in browsers or collectively compiled into PDFs. Keep templates minimal, use consistent theming via external CSS references, and focus on content over complexity.
