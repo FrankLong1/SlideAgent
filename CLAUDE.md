@@ -200,8 +200,17 @@ Use the `create_project` tool to create a new project. This automatically:
 - Creates outline.md from template with agent distribution YAML
 - Creates memory.md for project-specific learnings
 
-### 2. Content Analysis
-Add source materials to `input/` folder, then analyze comprehensively. 
+### 2. Content Analysis & Input Preparation
+
+**CRITICAL**: Before generating any outline, you MUST:
+1. **Copy/Move source materials** to `projects/[project-name]/input/` folder
+   - For HTML files (like S1 filings): Copy to input folder, and it probably makes sense to write a quick and dirty script within the project folder to strip out the html and have a cleaner version that goes into the outline.
+   - For PDFs, docs, spreadsheets: Copy to input folder
+   - For web content: Save as HTML or text in input folder
+2. **Verify files are in input folder** using LS tool
+3. **Read and analyze ALL files** in input folder comprehensively
+4. **Extract specific data points** (numbers, dates, quotes, facts) for the outline
+
 
 ### 3. Template Discovery & Outline Generation
 
@@ -212,7 +221,7 @@ Add source materials to `input/` folder, then analyze comprehensively.
 # Section 1: Section Name (slides X-Y)    ← Use single # for sections
 ## Slide X: Slide Title                   ← Use double ## for slides
 - Template: src/slides/slide_templates/00_title_slide.html
-- Content: Details...
+- Content: [DETAILED CONTENT - see below for requirements]
 ```
 
 **IMPORTANT FORMAT RULES**:
@@ -220,12 +229,54 @@ Add source materials to `input/` folder, then analyze comprehensively.
 - Use `##` (double hash) for slide headers, NOT `###`
 - Include `(slides X-Y)` in section headers
 
+**CRITICAL CONTENT REQUIREMENTS**:
+The outline should contain **ACTUAL DETAILED CONTENT** for each slide, not placeholders. Since the outline has direct access to the raw source context, it should include:
+
+- **Bias toward verbosity and specificity in the outline**: It's closest to source ingestion, so include exact numbers, quotes, labels, and chart references. Richer outlines produce better slides.
+
+- **For text slides**: Complete bullet points, full sentences, specific data points
+- **For data tables**: Actual numbers, percentages, dollar amounts with proper formatting
+- **For comparison slides**: Specific comparison points, metrics, advantages/disadvantages
+- **For quote slides**: The exact quote text and attribution
+- **For timeline slides**: Specific dates, milestones, and descriptions
+- **For chart slides**: Exact data values, axis labels, legend items
+- **For architecture slides**: Component names, relationships, descriptions
+
+**TEMPLATE SELECTION FLEXIBILITY**:
+- **Use templates that match your content**, generally variety is nice, but please make sure it's actually the right format for the content
+- **Repeat templates as needed** - it's fine to have 10 consecutive base slides
+- **Use ANY slide templates in ANY order and Skip templates that don't fit** - don't force content into inappropriate templates
+
+**Example of GOOD detailed content**:
+```markdown
+## Slide 2: Financial Performance
+- Template: src/slides/slide_templates/07_financial_data_table.html
+- Content:
+  - Revenue FY2024: $1.9B (737% YoY growth)
+  - Revenue FY2023: $229M (1,346% YoY growth)  
+  - Revenue FY2022: $16M
+  - Gross Margin: 42% (up from 38% in FY2023)
+  - Operating Loss: ($863M) in FY2024
+  - Adjusted EBITDA: ($65M) vs ($45M) in FY2023
+  - Cash & Equivalents: $450M
+  - Total Debt: $8.0B
+  - RPO (Remaining Performance Obligations): $15.1B
+```
+
+**Example of BAD placeholder content**:
+```markdown
+## Slide 2: Financial Performance
+- Template: src/slides/slide_templates/07_financial_data_table.html
+- Content: Financial metrics and performance data
+```
+
 **CRITICAL STEPS**:
 1. Call `list_slide_templates` to discover all available templates with paths
 2. Call `list_chart_templates` to see chart options
 3. Review the metadata to understand best use cases
-4. Generate the outline content with sections and slides **using the format above**
-5. **AS THE FINAL STEP**: Add `agent_distribution` YAML for parallel workload balancing
+4. **EXTRACT DETAILED CONTENT** from source materials (input files, S1 filings, etc.)
+5. Generate the outline with **COMPLETE, SPECIFIC CONTENT** for each slide
+6. **AS THE FINAL STEP**: Add `agent_distribution` YAML for parallel workload balancing
 
 **Agent Distribution (Workload Balancing):**
 The `agent_distribution` YAML defines how work is divided among parallel agents. Add this **AFTER** creating your full outline, considering:
@@ -267,7 +318,34 @@ start_live_viewer(project="[project-name]", port=8080)
 # Then open http://localhost:8080 in browser
 ```
 
-**Then spawn parallel agents** based on `agent_distribution` YAML. Each agent handles BOTH slides and charts in their sections:
+**Then spawn parallel agents** based on `agent_distribution` YAML using Claude Code's Task tool. Each agent handles BOTH slides and charts in their assigned sections:
+
+**Example spawning parallel agents:**
+```python
+# After reading the outline's agent_distribution YAML, spawn agents in parallel:
+# Each agent works on their assigned sections/slides independently
+
+# Example for a project with 3 agents defined in agent_distribution:
+Task(
+    subagent_type="general-purpose",
+    description="Generate and review slides 1-5",
+    prompt="[Agent prompt]"
+)
+
+Task(
+    subagent_type="general-purpose", 
+    description="Generate and review slides 6-9",
+    prompt="[Agent prompt]"
+)
+
+Task(
+    subagent_type="general-purpose",
+    description="Generate and review slides 10-15",
+    prompt="[Agent prompt]"
+)
+
+# All three agents run simultaneously, drastically reducing generation time
+```
 
 #### **Agent Workflow:**
 1. **Generate charts first** (if any assigned):
