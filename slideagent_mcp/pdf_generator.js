@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
-const { launchBrowser, injectCommonCSS, PagePool, waitForSlideReady } = require('./puppeteer_helper');
+const puppeteer = require('puppeteer');
 const cliProgress = require('cli-progress');
 const path = require('path');
 const fs = require('fs');
 const { PDFDocument: PDFLib } = require('pdf-lib');
 
-// Run an array of async operations with a concurrency limit
+// Run async operations with concurrency limit for better performance
 async function processWithConcurrency(items, limit, iteratorFn) {
     const ret = [];
     const executing = [];
@@ -50,20 +50,15 @@ async function generatePDFFromSlides(slidesDir, outputPath = null) {
         process.exit(1);
     }
 
-    console.log(`📑 Found ${slideFiles.length} slides to process`);
-
     // Generate output path if not provided
     if (!outputPath) {
-        const projectName = path.basename(path.dirname(slidesDir));
-        outputPath = path.join(path.dirname(slidesDir), `${projectName}.pdf`);
+        const projectDir = path.dirname(slidesDir);
+        const projectName = path.basename(projectDir);
+        outputPath = path.join(projectDir, `${projectName}.pdf`);
     }
 
-    console.log(`📝 Generating PDF from ${slideFiles.length} slides`);
-    console.log(`📁 Output will be saved to: ${outputPath}`);
-
-    const browser = await launchBrowser();
-    const pagePool = new PagePool(browser, 8);
-    await pagePool.init();
+    console.log(`📂 Generating PDF from ${slideFiles.length} slides in ${slidesDir}`);
+    console.log(`📝 Output: ${outputPath}`);
 
     // Create progress bar
     const progressBar = new cliProgress.SingleBar({
@@ -75,22 +70,50 @@ async function generatePDFFromSlides(slidesDir, outputPath = null) {
     
     progressBar.start(slideFiles.length, 0, { slide: 'Starting...' });
 
+    // Launch browser with page pool for parallel processing
+    const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+
     try {
-        // Create array to store individual PDF buffers
+        // Create page pool for parallel processing
+        const POOL_SIZE = 4;
+        const pages = [];
+        for (let i = 0; i < POOL_SIZE; i++) {
+            pages.push(await browser.newPage());
+        }
+        
+        let pageIndex = 0;
+        const getNextPage = () => {
+            const page = pages[pageIndex];
+            pageIndex = (pageIndex + 1) % POOL_SIZE;
+            return page;
+        };
+
+        // Array to store PDF buffers in order
         const pdfBuffers = new Array(slideFiles.length);
         let completed = 0;
 
-        // Process slides concurrently with a limit
-        const CONCURRENCY_LIMIT = 8; // Increased for modern CPUs
+        // Process slides in parallel with concurrency limit
+        const CONCURRENCY_LIMIT = 8; // Fast parallel processing
         await processWithConcurrency(slideFiles, CONCURRENCY_LIMIT, async (slideFile, i) => {
             const slidePath = path.join(slidesDir, slideFile);
-            const page = await pagePool.acquire();
+            const page = getNextPage();
+            
             try {
                 const fileUrl = `file://${path.resolve(slidePath)}`;
-                await waitForSlideReady(page, fileUrl);
+                
+                // Navigate to the slide
+                await page.goto(fileUrl, {
+                    waitUntil: 'networkidle0',
+                    timeout: 30000
+                });
+                
+                // Brief wait for any dynamic content
+                await page.waitForTimeout(300);
 
-                await injectCommonCSS(page);
-
+                // Generate PDF for this slide
                 const pdfBuffer = await page.pdf({
                     width: '16in',
                     height: '9in',
@@ -109,15 +132,21 @@ async function generatePDFFromSlides(slidesDir, outputPath = null) {
                 pdfBuffers[i] = pdfBuffer;
                 completed++;
                 progressBar.update(completed, { slide: slideFile });
-            } finally {
-                await pagePool.release(page);
+            } catch (error) {
+                console.error(`Error processing ${slideFile}:`, error);
+                throw error;
             }
         });
         
         progressBar.stop();
 
+        // Close all pages
+        for (const page of pages) {
+            await page.close();
+        }
+
         // Merge all PDFs into one
-        console.log(`🔀 Merging ${pdfBuffers.length} slides into single PDF...`);
+        console.log('📚 Merging PDFs...');
         const mergedPdf = await PDFLib.create();
         
         for (const pdfBuffer of pdfBuffers) {
@@ -128,68 +157,44 @@ async function generatePDFFromSlides(slidesDir, outputPath = null) {
 
         const mergedPdfBytes = await mergedPdf.save();
         fs.writeFileSync(outputPath, mergedPdfBytes);
-
-        console.log(`✅ PDF generated successfully: ${outputPath}`);
         
-        // Get file size for confirmation
-        const stats = fs.statSync(outputPath);
-        const fileSizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
-        console.log(`📄 File size: ${fileSizeInMB} MB`);
-
+        console.log(`✅ PDF generated successfully: ${outputPath}`);
+        console.log(`📄 Total pages: ${slideFiles.length}`);
     } catch (error) {
-        console.error('❌ Error generating PDF:', error.message);
+        progressBar.stop();
+        console.error('❌ Error generating PDF:', error);
         process.exit(1);
     } finally {
-        await pagePool.destroy();
         await browser.close();
     }
 }
 
-async function generatePDFFromSingleFile(htmlFilePath, outputPath = null) {
-    // Validate input file exists
-    if (!fs.existsSync(htmlFilePath)) {
-        console.error(`Error: HTML file not found: ${htmlFilePath}`);
-        process.exit(1);
-    }
-
-    // Generate output path if not provided
+async function generatePDFFromSingleFile(htmlPath, outputPath = null) {
+    // Legacy support for single file
     if (!outputPath) {
-        const dir = path.dirname(htmlFilePath);
-        const filename = path.basename(htmlFilePath, '.html');
-        outputPath = path.join(dir, `${filename}.pdf`);
+        outputPath = htmlPath.replace(/\.html$/, '.pdf');
     }
 
-    console.log(`Generating PDF from: ${htmlFilePath}`);
-    console.log(`Output will be saved to: ${outputPath}`);
+    console.log(`📄 Generating PDF from ${htmlPath}`);
+    console.log(`📝 Output: ${outputPath}`);
 
-    const browser = await launchBrowser();
+    const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
 
     try {
         const page = await browser.newPage();
+        const fileUrl = `file://${path.resolve(htmlPath)}`;
         
-        // Set viewport to match slide dimensions (16in x 9in at 96 DPI)
-        // 16in x 9in = 1536px x 864px at 96 DPI
-        await page.setViewport({
-            width: 1536,
-            height: 864,
-            deviceScaleFactor: 1
-        });
-
-        // Load the HTML file
-        const fileUrl = `file://${path.resolve(htmlFilePath)}`;
         await page.goto(fileUrl, {
             waitUntil: 'networkidle0',
             timeout: 30000
         });
+        
+        await page.waitForTimeout(500);
 
-        // Wait for any dynamic content to load
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Inject common slide CSS
-        await injectCommonCSS(page);
-
-        // Generate PDF with settings that respect CSS dimensions
-        const pdfBuffer = await page.pdf({
+        await page.pdf({
             path: outputPath,
             width: '16in',
             height: '9in',
@@ -201,73 +206,33 @@ async function generatePDFFromSingleFile(htmlFilePath, outputPath = null) {
                 bottom: 0,
                 left: 0
             },
-            pageRanges: '',
             displayHeaderFooter: false,
             scale: 1.0
         });
 
         console.log(`✅ PDF generated successfully: ${outputPath}`);
-        
-        // Get file size for confirmation
-        const stats = fs.statSync(outputPath);
-        const fileSizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
-        console.log(`📄 File size: ${fileSizeInMB} MB`);
-
     } catch (error) {
-        console.error('❌ Error generating PDF:', error.message);
+        console.error('❌ Error generating PDF:', error);
         process.exit(1);
     } finally {
         await browser.close();
     }
 }
 
-// Command line interface
-async function main() {
+// Main execution
+if (require.main === module) {
     const args = process.argv.slice(2);
     
     if (args.length === 0) {
-        console.log(`
-Usage: 
-  node pdf_generator.js <slides-directory> [output-path]
-  node pdf_generator.js <html-file-path> [output-path]
-
-Examples:
-  node pdf_generator.js projects/myproject/slides/
-  node pdf_generator.js projects/myproject/slides/ output.pdf
-  node pdf_generator.js single-slide.html output.pdf
-
-Features:
-  ✅ Automatically detects and processes all slide_XX.html files in directory
-  ✅ Preserves 16:9 aspect ratio optimized for presentations
-  ✅ Merges multiple slides into single PDF maintaining order
-  ✅ High-quality rendering with proper dimensions
-  ✅ Background colors and images included
-  ✅ No margins for full-page slides
-        `);
-        process.exit(0);
+        console.error('Usage: node pdf_generator.js <slides-directory-or-html-file> [output.pdf]');
+        process.exit(1);
     }
 
     const input = args[0];
-    const outputFile = args[1];
+    const outputPath = args[1] || null;
 
-    await generatePDF(input, outputFile);
-}
-
-// Handle process termination gracefully
-process.on('SIGINT', () => {
-    console.log('\n⚠️  PDF generation cancelled by user');
-    process.exit(0);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
-    process.exit(1);
-});
-
-// Run the script
-if (require.main === module) {
-    main().catch(error => {
-        console.error('❌ Fatal error:', error.message);
+    generatePDF(input, outputPath).catch(err => {
+        console.error('Error:', err);
         process.exit(1);
     });
 }
