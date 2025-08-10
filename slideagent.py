@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 """
-SlideAgent DirectoryClient - Project Management for SlideAgent
+SlideAgent - Project Management for SlideAgent with MCP Server Support
 
-A simple CLI tool for managing SlideAgent presentation projects.
+A unified tool for managing SlideAgent presentation projects.
 Handles project creation, configuration, and workflow coordination.
+Provides MCP server mode for Claude Code integration.
 
 Usage:
-    python DirectoryClient.py new-project <project-name> [--theme <theme>]
-    python DirectoryClient.py list-projects
-    python DirectoryClient.py list-themes
-    python DirectoryClient.py init-slide <project> <number> [--template <path>] [--title "Title"] [--subtitle "Subtitle"] [--section "Section"]
+    python slideagent.py new-project <project-name> [--theme <theme>]
+    python slideagent.py list-projects
+    python slideagent.py list-themes
+    python slideagent.py init-slide <project> <number> [--template <path>]
+    python slideagent.py mcp serve  # Run as MCP server for Claude Code
 """
 
 import os
@@ -18,7 +20,9 @@ import yaml
 import argparse
 import shutil
 import re
+import json
 from pathlib import Path
+from typing import Dict, Any, List, Optional
 
 DEFAULT_BLANK_SLIDE_PATH = "src/slides/slide_templates/blank_slide.html"
 
@@ -344,8 +348,8 @@ class SlideAgentClient:
                 html_content = f.read()
             
             # Fix CSS paths (from template location to project slide location)
-            # Templates use ../core_css/, we need ../../../src/slides/core_css/
-            html_content = html_content.replace('../core_css/', '../../../src/slides/core_css/')
+            # Templates use ../base.css, we need ../../../src/slides/base.css
+            html_content = html_content.replace('../base.css', '../../../src/slides/base.css')
             
             # Fix theme CSS path
             # Replace any existing theme CSS link with the correct one
@@ -525,18 +529,486 @@ print("   - Clean version: plots/{chart_name}_clean.png")
         
         return True
 
+
+class SlideAgentMCPServer:
+    """MCP Server implementation for SlideAgent"""
+    
+    def __init__(self, base_dir=None):
+        """Initialize MCP server with SlideAgent client"""
+        self.client = SlideAgentClient(base_dir)
+        self.base_dir = self.client.base_dir
+        
+    def parse_template_metadata(self, filepath: Path, is_chart: bool = False) -> Dict[str, Any]:
+        """Extract TEMPLATE_META from HTML or Python files"""
+        try:
+            with open(filepath, 'r') as f:
+                content = f.read()
+            
+            metadata = {
+                "path": str(filepath.relative_to(self.base_dir)),
+                "name": filepath.stem
+            }
+            
+            if is_chart:
+                # Parse Python docstring format
+                if "TEMPLATE_META:" in content:
+                    meta_section = content.split("TEMPLATE_META:")[1].split("---")[0]
+                    for line in meta_section.split('\n'):
+                        if ':' in line:
+                            key, value = line.split(':', 1)
+                            key = key.strip()
+                            value = value.strip()
+                            # Parse lists in brackets
+                            if value.startswith('[') and value.endswith(']'):
+                                value = [v.strip().strip('"\'') for v in value[1:-1].split(',')]
+                            metadata[key] = value
+            else:
+                # Parse HTML comment format
+                if "TEMPLATE_META" in content:
+                    meta_section = content.split("TEMPLATE_META")[1].split("-->")[0]
+                    for line in meta_section.split('\n'):
+                        if ':' in line:
+                            key, value = line.split(':', 1)
+                            key = key.strip()
+                            value = value.strip()
+                            # Parse lists
+                            if value.startswith('[') and value.endswith(']'):
+                                value = [v.strip().strip('"\'') for v in value[1:-1].split(',')]
+                            metadata[key] = value
+                            
+            return metadata
+        except Exception as e:
+            return {
+                "path": str(filepath.relative_to(self.base_dir)),
+                "name": filepath.stem,
+                "error": str(e)
+            }
+    
+    def handle_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle incoming MCP request"""
+        method = request.get("method")
+        params = request.get("params", {})
+        request_id = request.get("id")
+        
+        try:
+            # Route to appropriate handler
+            if method == "tools/list":
+                result = self.list_tools()
+            elif method == "tools/call":
+                tool_name = params.get("name")
+                tool_params = params.get("arguments", {})
+                result = self.call_tool(tool_name, tool_params)
+            else:
+                raise ValueError(f"Unknown method: {method}")
+            
+            return {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "result": result
+            }
+        except Exception as e:
+            return {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "error": {
+                    "code": -32603,
+                    "message": str(e)
+                }
+            }
+    
+    def list_tools(self) -> Dict[str, Any]:
+        """Return list of available tools"""
+        return {
+            "tools": [
+                {
+                    "name": "create_project",
+                    "description": "Create a new SlideAgent project with proper structure",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "name": {"type": "string", "description": "Project name (use hyphens for spaces)"},
+                            "theme": {"type": "string", "description": "Theme name", "default": "acme_corp"}
+                        },
+                        "required": ["name"]
+                    }
+                },
+                {
+                    "name": "list_projects",
+                    "description": "List all existing SlideAgent projects",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {}
+                    }
+                },
+                {
+                    "name": "get_project_info",
+                    "description": "Get detailed information about a specific project",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "project": {"type": "string", "description": "Project name"}
+                        },
+                        "required": ["project"]
+                    }
+                },
+                {
+                    "name": "list_themes",
+                    "description": "List all available themes",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {}
+                    }
+                },
+                {
+                    "name": "swap_theme",
+                    "description": "Change theme for all slides in a project",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "project": {"type": "string", "description": "Project name"},
+                            "theme": {"type": "string", "description": "New theme name"}
+                        },
+                        "required": ["project", "theme"]
+                    }
+                },
+                {
+                    "name": "init_slide",
+                    "description": "Initialize a slide from a template",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "project": {"type": "string", "description": "Project name"},
+                            "number": {"type": "string", "description": "Slide number (e.g., '01' or 'slide_01')"},
+                            "template": {"type": "string", "description": "Template path from list_slide_templates"},
+                            "title": {"type": "string", "description": "Main title for the slide", "default": ""},
+                            "subtitle": {"type": "string", "description": "Subtitle for the slide", "default": ""},
+                            "section": {"type": "string", "description": "Section label for the slide", "default": ""}
+                        },
+                        "required": ["project", "number"]
+                    }
+                },
+                {
+                    "name": "init_chart",
+                    "description": "Initialize a chart from a template",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "project": {"type": "string", "description": "Project name"},
+                            "name": {"type": "string", "description": "Chart name (without .py extension)"},
+                            "template": {"type": "string", "description": "Template path from list_chart_templates"}
+                        },
+                        "required": ["project", "name"]
+                    }
+                },
+                {
+                    "name": "list_slide_templates",
+                    "description": "List all available slide templates with metadata and paths",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "verbose": {"type": "boolean", "description": "Include full metadata", "default": False}
+                        }
+                    }
+                },
+                {
+                    "name": "list_chart_templates",
+                    "description": "List all available chart templates with metadata and paths",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "verbose": {"type": "boolean", "description": "Include full metadata", "default": False}
+                        }
+                    }
+                },
+                {
+                    "name": "get_outline",
+                    "description": "Read the outline.md file for a project",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "project": {"type": "string", "description": "Project name"}
+                        },
+                        "required": ["project"]
+                    }
+                },
+                {
+                    "name": "update_memory",
+                    "description": "Update project or global memory file",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "project": {"type": "string", "description": "Project name (omit for global memory)"},
+                            "content": {"type": "string", "description": "New memory content to append"},
+                            "section": {"type": "string", "description": "Section to update", 
+                                      "enum": ["working", "not_working", "ideas"]}
+                        },
+                        "required": ["content", "section"]
+                    }
+                }
+            ]
+        }
+    
+    def call_tool(self, tool_name: str, params: Dict[str, Any]) -> Any:
+        """Execute a specific tool"""
+        
+        # Project management tools
+        if tool_name == "create_project":
+            success = self.client.create_project(params["name"], params.get("theme", "acme_corp"))
+            return {
+                "success": success,
+                "message": f"Created project '{params['name']}'" if success else "Failed to create project",
+                "path": str(self.client.projects_dir / params["name"]) if success else None
+            }
+            
+        elif tool_name == "list_projects":
+            projects = []
+            for project_dir in self.client.projects_dir.iterdir():
+                if project_dir.is_dir():
+                    config_path = project_dir / "config.yaml"
+                    if config_path.exists():
+                        with open(config_path) as f:
+                            config = yaml.safe_load(f)
+                        projects.append({
+                            "name": project_dir.name,
+                            "theme": config.get("theme", "unknown"),
+                            "title": config.get("title", project_dir.name),
+                            "path": str(project_dir)
+                        })
+            return {"projects": projects}
+            
+        elif tool_name == "get_project_info":
+            project_path = self.client.projects_dir / params["project"]
+            if not project_path.exists():
+                raise ValueError(f"Project '{params['project']}' not found")
+            
+            config_path = project_path / "config.yaml"
+            with open(config_path) as f:
+                config = yaml.safe_load(f)
+            
+            # Count files
+            slides = list((project_path / "slides").glob("slide_*.html")) if (project_path / "slides").exists() else []
+            charts = list((project_path / "plots").glob("*_clean.png")) if (project_path / "plots").exists() else []
+            inputs = list((project_path / "input").glob("*")) if (project_path / "input").exists() else []
+            
+            return {
+                "name": params["project"],
+                "theme": config.get("theme"),
+                "title": config.get("title"),
+                "slides_count": len(slides),
+                "charts_count": len(charts),
+                "inputs_count": len(inputs),
+                "has_pdf": (project_path / f"{params['project']}.pdf").exists(),
+                "path": str(project_path)
+            }
+            
+        # Theme tools
+        elif tool_name == "list_themes":
+            themes = []
+            for root, dirs, files in os.walk(self.client.themes_dir):
+                root_path = Path(root)
+                dir_name = root_path.name
+                theme_css = root_path / f"{dir_name}_theme.css"
+                if theme_css.exists():
+                    themes.append({
+                        "name": dir_name,
+                        "path": str(root_path.relative_to(self.client.themes_dir))
+                    })
+            return {"themes": sorted(themes, key=lambda x: x["name"])}
+            
+        elif tool_name == "swap_theme":
+            success = self.client.swap_theme(params["project"], params["theme"])
+            return {
+                "success": success,
+                "message": f"Swapped theme to '{params['theme']}'" if success else "Failed to swap theme"
+            }
+            
+        # Slide tools
+        elif tool_name == "init_slide":
+            success = self.client.init_slide(
+                params["project"],
+                params["number"],
+                params.get("template"),
+                params.get("title", ""),
+                params.get("subtitle", ""),
+                params.get("section", "")
+            )
+            slide_num = params["number"] if params["number"].startswith("slide_") else f"slide_{params['number'].zfill(2)}"
+            return {
+                "success": success,
+                "message": f"Initialized {slide_num}.html" if success else "Failed to initialize slide",
+                "path": str(self.client.projects_dir / params["project"] / "slides" / f"{slide_num}.html") if success else None
+            }
+            
+        # Chart tools
+        elif tool_name == "init_chart":
+            success = self.client.init_chart(
+                params["project"],
+                params["name"],
+                params.get("template")
+            )
+            return {
+                "success": success,
+                "message": f"Initialized {params['name']}.py" if success else "Failed to initialize chart",
+                "path": str(self.client.projects_dir / params["project"] / "plots" / f"{params['name']}.py") if success else None
+            }
+            
+        # Template listing tools
+        elif tool_name == "list_slide_templates":
+            templates = []
+            template_dir = self.client.src_dir / "slides" / "slide_templates"
+            
+            for template_file in sorted(template_dir.glob("*.html")):
+                metadata = self.parse_template_metadata(template_file, is_chart=False)
+                
+                if params.get("verbose"):
+                    templates.append(metadata)
+                else:
+                    templates.append({
+                        "path": metadata["path"],
+                        "name": metadata["name"],
+                        "title": metadata.get("title", metadata["name"]),
+                        "description": metadata.get("description", ""),
+                        "best_for": metadata.get("best_for", "")
+                    })
+            
+            return {"templates": templates}
+            
+        elif tool_name == "list_chart_templates":
+            templates = []
+            template_dir = self.client.src_dir / "charts" / "chart_templates"
+            
+            for template_file in sorted(template_dir.glob("*.py")):
+                metadata = self.parse_template_metadata(template_file, is_chart=True)
+                
+                if params.get("verbose"):
+                    templates.append(metadata)
+                else:
+                    templates.append({
+                        "path": metadata["path"],
+                        "name": metadata["name"],
+                        "title": metadata.get("title", metadata["name"]),
+                        "description": metadata.get("description", ""),
+                        "best_for": metadata.get("best_for", "")
+                    })
+            
+            return {"templates": templates}
+            
+        # Utility tools
+        elif tool_name == "get_outline":
+            project_path = self.client.projects_dir / params["project"]
+            outline_path = project_path / "outline.md"
+            
+            if not outline_path.exists():
+                raise ValueError(f"No outline.md found for project '{params['project']}'")
+            
+            with open(outline_path, 'r') as f:
+                content = f.read()
+            
+            return {
+                "project": params["project"],
+                "content": content,
+                "path": str(outline_path)
+            }
+            
+        elif tool_name == "update_memory":
+            if params.get("project"):
+                memory_path = self.client.projects_dir / params["project"] / "memory.md"
+            else:
+                memory_path = self.client.base_dir / "MEMORY.md"
+            
+            if not memory_path.exists():
+                # Create with template
+                content = f"# Memory: {params.get('project', 'Global')}\n\n"
+                content += "## What's Working\n\n## What's Not Working\n\n## Ideas & Improvements\n\n"
+                with open(memory_path, 'w') as f:
+                    f.write(content)
+            
+            # Read current content
+            with open(memory_path, 'r') as f:
+                content = f.read()
+            
+            # Add to appropriate section
+            section_map = {
+                "working": "## What's Working",
+                "not_working": "## What's Not Working",
+                "ideas": "## Ideas & Improvements"
+            }
+            
+            section_header = section_map[params["section"]]
+            new_item = f"- {params['content']}\n"
+            
+            # Find section and add item
+            lines = content.split('\n')
+            for i, line in enumerate(lines):
+                if line.strip() == section_header:
+                    # Find next section or end
+                    j = i + 1
+                    while j < len(lines) and not lines[j].startswith('##'):
+                        j += 1
+                    # Insert before next section
+                    lines.insert(j - 1, new_item)
+                    break
+            
+            # Write back
+            with open(memory_path, 'w') as f:
+                f.write('\n'.join(lines))
+            
+            return {
+                "success": True,
+                "message": f"Updated {params.get('project', 'global')} memory",
+                "path": str(memory_path)
+            }
+            
+        else:
+            raise ValueError(f"Unknown tool: {tool_name}")
+    
+    def serve(self):
+        """Run the MCP server in stdio mode"""
+        while True:
+            try:
+                # Read line from stdin
+                line = sys.stdin.readline()
+                if not line:
+                    break
+                
+                # Parse JSON-RPC request
+                request = json.loads(line)
+                
+                # Handle request
+                response = self.handle_request(request)
+                
+                # Send response
+                sys.stdout.write(json.dumps(response) + '\n')
+                sys.stdout.flush()
+                
+            except KeyboardInterrupt:
+                break
+            except Exception as e:
+                # Send error response
+                error_response = {
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32700,
+                        "message": f"Parse error: {str(e)}"
+                    }
+                }
+                sys.stdout.write(json.dumps(error_response) + '\n')
+                sys.stdout.flush()
+
+
 def main():
     """Main CLI interface."""
     parser = argparse.ArgumentParser(
-        description="SlideAgent DirectoryClient - Project Management for SlideAgent",
+        description="SlideAgent - Project Management for SlideAgent",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python DirectoryClient.py new-project quarterly-review --theme acme_corp
-  python DirectoryClient.py list-projects
-  python DirectoryClient.py list-themes
-  python DirectoryClient.py init-slide quarterly-review 01 --template src/slides/slide_templates/00_title_slide.html
-  python DirectoryClient.py init-chart quarterly-review revenue_analysis --template src/charts/chart_templates/bar_chart.py
+  python slideagent.py new-project quarterly-review --theme acme_corp
+  python slideagent.py list-projects
+  python slideagent.py list-themes
+  python slideagent.py init-slide quarterly-review 01 --template src/slides/slide_templates/00_title_slide.html
+  python slideagent.py init-chart quarterly-review revenue_analysis --template src/charts/chart_templates/bar_chart.py
+  python slideagent.py mcp serve  # Run as MCP server
         """
     )
     
@@ -577,6 +1049,11 @@ Examples:
     chart_parser.add_argument('name', help='Chart name (e.g., quarterly_revenue)')
     chart_parser.add_argument('--template', help='Path to template file (e.g., src/charts/chart_templates/bar_chart.py)')
     
+    # MCP server command
+    mcp_parser = subparsers.add_parser('mcp', help='MCP server operations')
+    mcp_subparsers = mcp_parser.add_subparsers(dest='mcp_command', help='MCP commands')
+    mcp_serve_parser = mcp_subparsers.add_parser('serve', help='Run as MCP server')
+    
     args = parser.parse_args()
     
     if not args.command:
@@ -599,6 +1076,10 @@ Examples:
         client.init_slide(args.project, args.number, args.template, args.title, args.subtitle, args.section)
     elif args.command == 'init-chart':
         client.init_chart(args.project, args.name, args.template)
+    elif args.command == 'mcp' and args.mcp_command == 'serve':
+        # Run as MCP server
+        server = SlideAgentMCPServer()
+        server.serve()
 
 if __name__ == "__main__":
     main()
