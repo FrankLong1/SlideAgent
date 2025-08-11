@@ -1,6 +1,6 @@
 matplotlib>=3.7.0
 pandas>=2.0.0
-pvlib-python>=0.10.0
+pvlib>=0.10.0
 pyyaml>=6.0
 jinja2>=3.1.0
 mcp>=0.1.0

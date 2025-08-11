@@ -445,9 +445,12 @@ class PlotBuddy:
         """
         Save chart with option for branded or clean output.
         
+        IMPORTANT: This should be called BEFORE adding titles, logos, or footnotes.
+        It will save the clean version first, then return so you can add branding.
+        
         Args:
             filepath (str): Path to save the chart
-            branded (bool): If True, includes logos and titles. If False, clean chart only.
+            branded (bool): If True, saves both clean and branded. If False, clean only.
             **kwargs: Additional arguments passed to matplotlib savefig
         """
         # Extract base filename and extension
@@ -456,26 +459,34 @@ class PlotBuddy:
         # Get current figure
         fig = plt.gcf()
         
+        # Default save kwargs
+        default_kwargs = {'dpi': 300, 'bbox_inches': 'tight', 'facecolor': 'white'}
+        save_kwargs = {**default_kwargs, **kwargs}
+        
+        # Always save clean version first (current state without branding)
+        clean_path = f"{base_path}_clean{ext}"
+        fig.savefig(clean_path, **save_kwargs)
+        
         if branded:
-            # Save with full branding
+            # Branded path for later
             branded_path = f"{base_path}_branded{ext}"
-            default_kwargs = {'dpi': 300, 'bbox_inches': 'tight', 'facecolor': 'white'}
-            save_kwargs = {**default_kwargs, **kwargs}
-            fig.savefig(branded_path, **save_kwargs)
-            
-            # Also save clean version by temporarily hiding branded elements
-            clean_path = f"{base_path}_clean{ext}"
-            self._save_clean_version(fig, clean_path, **save_kwargs)
-            
             return branded_path, clean_path
         else:
-            # Save only clean version
-            clean_path = f"{base_path}_clean{ext}"
-            default_kwargs = {'dpi': 300, 'bbox_inches': 'tight', 'facecolor': 'white'}
-            save_kwargs = {**default_kwargs, **kwargs}
-            self._save_clean_version(fig, clean_path, **save_kwargs)
-            
             return clean_path
+    
+    def save_branded(self, filepath, **kwargs):
+        """
+        Save the branded version after titles, logos, and footnotes have been added.
+        This should be called AFTER adding all branding elements.
+        
+        Args:
+            filepath (str): Path to save the branded chart
+            **kwargs: Additional arguments passed to matplotlib savefig
+        """
+        fig = plt.gcf()
+        default_kwargs = {'dpi': 300, 'bbox_inches': 'tight', 'facecolor': 'white'}
+        save_kwargs = {**default_kwargs, **kwargs}
+        fig.savefig(filepath, **save_kwargs)
     
     def _save_clean_version(self, fig, filepath, **kwargs):
         """
@@ -498,11 +509,33 @@ class PlotBuddy:
                 original_states[ax] = ax.get_visible()
                 ax.set_visible(False)
         
-        # Hide figure text elements (source citations, etc.)
+        # Hide ALL figure text elements for clean version
+        # This includes source citations, footnotes, and any other text added to the figure
         for text in fig.texts:
-            if 'source:' in text.get_text().lower():
-                original_states[text] = text.get_visible()
-                text.set_visible(False)
+            # Hide all figure-level text (these are typically titles, footers, sources, etc.)
+            # We want clean charts to only have axis labels and data
+            original_states[text] = text.get_visible()
+            text.set_visible(False)
+        
+        # Hide axis text elements (titles and subtitles added via ax.text)
+        for ax in fig.get_axes():
+            # Skip logo axes that we already handled
+            if ax in original_states:
+                continue
+                
+            # Go through all text objects in the axis
+            for text in ax.texts:
+                text_str = text.get_text()
+                # Hide titles and subtitles based on position
+                # Titles are at y=1.12, subtitles at y=1.06 and y=1.02 in axis coords
+                transform = text.get_transform()
+                if transform == ax.transAxes:
+                    _, y = text.get_position()
+                    # Hide text positioned at the top of the plot (titles/subtitles)
+                    # This captures titles at y=1.12, subtitles at y=1.06 and y=1.02
+                    if y >= 1.0:
+                        original_states[text] = text.get_visible()
+                        text.set_visible(False)
         
         # Save clean version
         fig.savefig(filepath, **kwargs)

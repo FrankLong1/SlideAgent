@@ -1,6 +1,6 @@
 # SlideAgent
 
-Minimal presentation framework for AI agents. This README is intentionally short: two sections (System Prompt, MCP) and a Quick Start you can copy-paste into Claude Code.
+Minimal presentation framework for AI agents. This README is intentionally short: two sections (System Prompt, MCP) and a Quick Start you can copy-paste into Claude Code. 
 
 ## Quick Start
 
@@ -36,7 +36,7 @@ Create a new theme called xyz_corp based on this input and color palette <INSERT
 
 ## All the Logic: CLAUDE.md + slideagent_mcp folder
 
- `CLAUDE.md` is the system prompt and authoritative source of process and written to maximally depend on the decision making of the model, and keep actual programming logic minimal. Read `CLAUDE.md` for detailed guidance when you need more than the quick start, as the system prompt gives much more detail about how all this works.
+ `CLAUDE.md` is the system prompt and authoritative source of process and is written to maximally depend on the decision making of the model, keeping actual programming logic minimal in alignment with [The Bitter Lesson](http://www.incompleteideas.net/IncIdeas/BitterLesson.html). Read `CLAUDE.md` for detailed guidance when you need more than the quick start, as the system prompt gives much more detail about how all this works.
 
 The MCP layer exposes a small set of tools that let models operate SlideAgent safely and consistently. Think of it as a context management and orchestration layer, not an application: it lists templates and themes, initializes slides/charts, swaps themes, starts the live preview, and exports PDFs. It contains almost no business logic—the model provides the content; MCP ensures correct file structure, paths, and repeatable operations.
 
@@ -46,3 +46,22 @@ Typical capabilities provided by the MCP server(s):
 - Manage preview/export: start live viewer, generate PDF (simple utility logic only)
 - Optional browsing/validation: navigate and screenshot via a Puppeteer MCP
 
+## What does the system struggle with?
+
+### Dynamic Layout Adaptation
+The system faces challenges with responsive content placement, particularly:
+
+- **Chart aspect ratios**: Charts need different dimensions depending on context:
+  - Single-chart slides: 16:9 aspect ratio (14x7.875 figsize)
+  - 4-chart dashboards: 2:1 aspect ratio (7x3.5 figsize) 
+  - 6-chart grids: Even more square ratios needed
+  - The same chart can't work well in both contexts without regeneration
+
+- **Overflow management**: Content frequently overflows slide boundaries because:
+  - Fixed 1920x1080px dimensions don't account for headers/footers
+  - Chart images don't automatically resize to fit containers
+  - CSS `object-fit: contain` helps but isn't perfect
+  - Multi-chart layouts compound the spacing challenges
+- **Container sizing**: The interplay between padding, margins, and actual content area
+
+There are things that could be implemented that would improve these things, but if you believe the bitter lesson you would do none of these things and ride the curve of model improvement, rather than building point-in-time optimizations that will become legacy.

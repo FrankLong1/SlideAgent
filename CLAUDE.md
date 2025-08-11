@@ -126,6 +126,29 @@ When generating charts for slides:
 4. **Run the script**: `cd user_projects/[project] && python plots/[chart_name].py`
 5. **Get both versions**: Automatically generates `_branded.png` and `_clean.png`
 
+### Clean vs Branded Chart Usage
+**CRITICAL**: Understanding when to use each chart version:
+
+#### Clean Versions (`_clean.png`)
+- **ALWAYS use for slides** - slides already have headers/titles
+- No chart titles or subtitles (removed by PlotBuddy)
+- No logos or branding elements
+- No source citations at bottom
+- Preserves only essential data elements (axes, labels, data)
+
+#### Branded Versions (`_branded.png`)
+- Use for standalone documents or reports
+- Includes full titles and subtitles
+- Has logo placement
+- Shows source citations
+- Complete self-contained chart
+
+#### Why This Matters
+- Slides have their own header structure with titles
+- Using branded charts in slides creates **redundant titles**
+- Clean versions integrate seamlessly into slide layouts
+- Prevents overflow and maintains professional appearance
+
 ## Theme System
 
 Each theme contains 4 files:
@@ -360,9 +383,15 @@ Task(
    - Replace placeholders with detailed content from outline
    - Insert chart paths (use `_clean.png` versions)
 
-3. **Continuous validation from each sub-agent on their dedicated slides**
-   - Use Puppeteer MCP (navigate + screenshot) as you build
-   - No separate review step; screenshots match the final PDF (Chromium parity)
+3. **Visual validation by agents**
+   - Use Puppeteer MCP (navigate + screenshot) after creating each slide
+   - Visually inspect screenshots for quality issues:
+     * Professional appearance and layout
+     * No text overflow or cutoff
+     * Proper spacing and alignment
+     * No redundant titles (especially in chart slides)
+   - Trust AI visual judgment rather than complex programmatic checks
+   - Fix issues immediately if something looks wrong
 
 ### 5. PDF Generation
 Use the PDF tool from the SlideAgent MCP to generate the project PDF (saved to `user_projects/[project-name]/[project-name].pdf`).
