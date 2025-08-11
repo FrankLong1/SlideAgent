@@ -37,6 +37,17 @@ claude mcp add puppeteer
 - Test SlideAgent tools: Try calling `list_projects()` or `list_themes()`
 - Test Puppeteer tools: Check for `mcp__puppeteer__puppeteer_navigate` availability
 - If tools are missing, restart Claude Code or check MCP server logs
+ 
+5. **Initialize user directory structure**:
+```bash
+mkdir -p user_projects \
+         user_resources/themes \
+         user_resources/templates/slides \
+         user_resources/templates/charts \
+         user_resources/templates/outlines
+```
+
+Anytime that the user is making themes or asking to save templates for slides / charts / outlines, do it all in here. By default we should treat slideagent_mcp as system space so it should not be touched unless you are extremely explicitly asked.
 
 ## Project Management via MCP
 
@@ -112,7 +123,7 @@ When generating charts for slides:
 1. **Discover templates**: Call `list_chart_templates` to see available options
 2. **Initialize from template**: Use `init_chart` with the template path
 3. **Edit the EDIT SECTION**: Modify only the data and configuration
-4. **Run the script**: `cd projects/[project] && python plots/[chart_name].py`
+4. **Run the script**: `cd user_projects/[project] && python plots/[chart_name].py`
 5. **Get both versions**: Automatically generates `_branded.png` and `_clean.png`
 
 ## Theme System
@@ -128,7 +139,7 @@ Each theme contains 4 files:
 - **DO NOT create custom SVG logos** - trademark violations
 - **USE PNG format** for logos
 - **RESPECT brand guidelines**
-- For private/corporate themes, store in `themes/private/`
+ - For private/corporate themes, store in `user_resources/themes/[theme]/`
 
 ### CSS Path Management
 **IMPORTANT**: Projects are self-contained with their own theme folder.
@@ -197,7 +208,7 @@ Use the `create_project` MCP tool to create a new project. This automatically:
 ### 2. Content Analysis & Input Preparation
 
 **CRITICAL**: Before generating any outline, you MUST:
-1. **Copy/Move source materials** to `projects/[project-name]/input/` folder
+1. **Copy/Move source materials** to `user_projects/[project-name]/input/` folder
    - For HTML files (like S1 filings): Copy to input folder, and it probably makes sense to write a quick and dirty script within the project folder to strip out the html and have a cleaner version that goes into the outline.
    - For PDFs, docs, spreadsheets: Copy to input folder
    - For web content: Save as HTML or text in input folder
@@ -354,7 +365,7 @@ Task(
    - No separate review step; screenshots match the final PDF (Chromium parity)
 
 ### 5. PDF Generation
-Use the PDF tool from the SlideAgent MCP to generate the project PDF (saved to `projects/[project-name]/[project-name].pdf`).
+Use the PDF tool from the SlideAgent MCP to generate the project PDF (saved to `user_projects/[project-name]/[project-name].pdf`).
 
 
 ## Troubleshooting

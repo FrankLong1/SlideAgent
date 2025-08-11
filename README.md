@@ -1,107 +1,48 @@
 # SlideAgent
 
-*A minimal presentation framework designed for AI agents*
+Minimal presentation framework for AI agents. This README is intentionally short: two sections (System Prompt, MCP) and a Quick Start you can copy-paste into Claude Code.
 
-## What is SlideAgent?
+## Quick Start
 
-SlideAgent is a presentation generation system built specifically for AI coding agents like Claude Code. Instead of complex UIs and human-centric abstractions, it provides simple HTML/CSS templates that AI agents can efficiently populate with content.
+Honestly Claude Code should be able to do just about all of the environment setup, just ask it to "get my environment setup and make sure the mcp is working". After that is taken care of you can put in things like..
 
-The system follows Richard Sutton's bitter lesson: rather than encoding human presentation design principles, we provide minimal structure and let computational scaling drive quality. 
-
-## Core Architecture
-
-SlideAgent consists of just the essential components needed for professional slide generation:
-
-- **Slide Templates**: Minimal HTML structures covering all presentation needs
-- **Theme System**: CSS-based branding (colors, fonts, logos)  
-- **Chart Integration**: Python matplotlib with consistent styling via PlotBuddy
-- **MCP Integration**: Model Context Protocol for seamless AI agent interaction
-
-## Workflow
-
-1. **Setup**: Activate Python environment and install dependencies
-2. **Create Project**: Use MCP tool to initialize project with theme
-3. **Add Input**: Place source materials in project's input folder
-4. **Generate Outline**: AI analyzes inputs and creates slide structure
-5. **Build Slides**: Parallel agents populate templates with content
-6. **Preview**: Live viewer shows slides during generation
-7. **Export**: Generate PDF for final presentation
-
-## Why It Works
-
-AI agents excel at:
-- Selecting appropriate templates for content types
-- Extracting key insights from raw materials  
-- Populating HTML structures consistently
-- Maintaining theme coherence across slides
-- Generating slides in parallel for speed
-
-The system avoids human-centric complexity (drag-and-drop UIs, WYSIWYG editors) in favor of simple, scalable template population.
-
-## Quick Start with MCP
-
-### 1. Environment Setup
-```bash
-# Activate environment
-source venv/bin/activate
-pip install -r requirements.txt
-npm install
-
-# Install Puppeteer MCP globally (one-time setup)
-npm install -g @modelcontextprotocol/server-puppeteer
-claude mcp add puppeteer
+```text
+Create a new project called "demo" using the "acme_corp" theme. Start the live viewer. Then scan everything in projects/demo/input/ and draft a crisp, section-based outline that maps each section to a specific slide template. Call out which template you plan to use per section and why.
 ```
 
-### 2. Create Project via MCP
-```python
-# SlideAgent MCP tools are auto-configured via .mcp.json
-create_project("my-presentation", theme="acme_corp")
+```text
+Read these links and build a slide deck with the acme_corp theme. 
+- https://www.example.com/industry-trends-2025
+- https://news.example.org/company-q2-results
+- https://analyst.example.net/sector-outlook
+Also include one risks/mitigations slide and a next-steps slide.
 ```
 
-### 3. Project Structure
-```
-user_projects/my-presentation/
-├── theme/                  # Self-contained theme files
-│   ├── base.css           # Core styling
-│   ├── acme_corp_theme.css
-│   └── *.png              # Logo files
-├── slides/                # Individual HTML slides
-├── plots/                 # Generated charts (_clean.png for slides)
-├── input/                 # Source materials
-├── validation/            # Screenshot validation
-├── outline.md             # Detailed content outline
-└── my-presentation.pdf    # Final output
+```text
+Make me a presentation based on the content I paste here, use the pokemon theme
+<<< BEGIN CONTENT >>>
+[ Paste long-form notes, meeting transcript, PDF text, or bullets here ]
+<<< END CONTENT >>>
 ```
 
-## MCP Architecture 
+```text
+Make a pie chart based on <INSERT CSV> using <INSERT THEME>
+```
 
-SlideAgent uses Model Context Protocol (MCP) to expose all functionality as tools that AI agents can directly call:
 
-**Project Tools:**
-- `create_project` - Initialize new presentation with theme
-- `list_projects` - Show existing projects
-- `list_slide_templates` - Discover available slide templates
-- `list_chart_templates` - Discover chart templates
-- `list_themes` - Show available themes
+```text
+Create a new theme called xyz_corp based on this input and color palette <INSERT SOME DIRECTION ON COLORS AND VIBE>
+```
 
-**Generation Tools:**
-- `init_slide` - Create slide from template
-- `init_chart` - Create chart from template  
-- `swap_theme` - Change project theme
+## All the Logic: CLAUDE.md + slideagent_mcp folder
 
-**Preview & Export:**
-- `start_live_viewer` - Launch real-time preview
-- `generate_pdf` - Export final presentation
+ `CLAUDE.md` is the system prompt and authoritative source of process and written to maximally depend on the decision making of the model, and keep actual programming logic minimal. Read `CLAUDE.md` for detailed guidance when you need more than the quick start, as the system prompt gives much more detail about how all this works.
 
-## Key Features
+The MCP layer exposes a small set of tools that let models operate SlideAgent safely and consistently. Think of it as a context management and orchestration layer, not an application: it lists templates and themes, initializes slides/charts, swaps themes, starts the live preview, and exports PDFs. It contains almost no business logic—the model provides the content; MCP ensures correct file structure, paths, and repeatable operations.
 
-- **Template Library**: 12+ slide templates for different content types
-- **Chart System**: PlotBuddy generates both branded and clean chart versions
-- **Theme Support**: Consistent branding across slides and charts
-- **Live Preview**: Real-time feedback during development
-- **PDF Export**: Professional presentation output
-- **MCP Integration**: All functionality exposed as callable tools
+Typical capabilities provided by the MCP server(s):
+- Discover and read context: list projects, themes, slide/chart templates
+- Initialize from templates: create slides and charts with correct paths and CSS
+- Manage preview/export: start live viewer, generate PDF (simple utility logic only)
+- Optional browsing/validation: navigate and screenshot via a Puppeteer MCP
 
-## Documentation
-
-See `CLAUDE.md` for detailed AI agent instructions and workflow guidance.
