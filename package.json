@@ -4,6 +4,7 @@
   "description": "SlideAgent - AI-powered presentation generation framework",
   "dependencies": {
     "cli-progress": "^3.12.0",
+    "express": "^5.1.0",
     "pdf-lib": "^1.17.1",
     "puppeteer": "^24.15.0"
   },

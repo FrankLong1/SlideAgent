@@ -5,6 +5,8 @@ const cliProgress = require('cli-progress');
 const path = require('path');
 const fs = require('fs');
 const { PDFDocument: PDFLib } = require('pdf-lib');
+const http = require('http');
+const express = require('express');
 
 // Common CSS to inject for consistent rendering
 const COMMON_CSS = `
@@ -37,10 +39,56 @@ async function launchBrowser() {
             '--disable-gpu',
             '--disable-web-security',
             '--disable-features=IsolateOrigins',
-            '--disable-site-isolation-trials',
-            '--allow-file-access-from-files',
-            '--enable-local-file-accesses'
+            '--disable-site-isolation-trials'
         ]
+    });
+}
+
+// Start a local Express server to serve the project files
+async function startLocalServer(projectDir) {
+    const app = express();
+    const port = await getAvailablePort(9000);
+    
+    // Serve static files from project directory
+    app.use(express.static(projectDir, {
+        setHeaders: (res, path) => {
+            // Set proper MIME types
+            if (path.endsWith('.css')) {
+                res.setHeader('Content-Type', 'text/css');
+            } else if (path.endsWith('.js')) {
+                res.setHeader('Content-Type', 'application/javascript');
+            } else if (path.endsWith('.png')) {
+                res.setHeader('Content-Type', 'image/png');
+            } else if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+                res.setHeader('Content-Type', 'image/jpeg');
+            } else if (path.endsWith('.svg')) {
+                res.setHeader('Content-Type', 'image/svg+xml');
+            }
+        }
+    }));
+    
+    // Also serve theme files from parent directory
+    app.use('/theme', express.static(path.join(projectDir, 'theme')));
+    
+    return new Promise((resolve) => {
+        const server = app.listen(port, () => {
+            console.log(`🌐 Local server started on port ${port}`);
+            resolve({ server, port });
+        });
+    });
+}
+
+// Get an available port
+async function getAvailablePort(startPort = 9000) {
+    return new Promise((resolve) => {
+        const server = http.createServer();
+        server.listen(startPort, () => {
+            const port = server.address().port;
+            server.close(() => resolve(port));
+        });
+        server.on('error', () => {
+            resolve(getAvailablePort(startPort + 1));
+        });
     });
 }
 
@@ -135,6 +183,17 @@ async function waitForSlideReady(page, slideUrl) {
                 if (!img.complete) return false;
             }
             
+            // Check for background images in CSS
+            const elements = document.querySelectorAll('*');
+            for (let el of elements) {
+                const style = window.getComputedStyle(el);
+                const bgImage = style.backgroundImage;
+                if (bgImage && bgImage !== 'none' && bgImage.includes('url')) {
+                    // Give background images time to load
+                    return true; // We'll rely on networkidle0 for these
+                }
+            }
+            
             if (document.fonts && document.fonts.status === 'loading') return false;
             
             const slide = document.querySelector('.slide, section, div[class*="slide"]');
@@ -148,27 +207,12 @@ async function waitForSlideReady(page, slideUrl) {
         console.warn('Warning: Slide readiness check timed out, continuing anyway');
     }
     
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Extra wait for background images to fully render
+    await new Promise(resolve => setTimeout(resolve, 500));
 }
 
-// Inject CSS into page
-async function injectCommonCSS(page) {
-    await page.addStyleTag({ content: COMMON_CSS });
-}
-
-// Main PDF generation function
-async function generatePDF(input, outputPath = null) {
-    const isDirectory = fs.existsSync(input) && fs.lstatSync(input).isDirectory();
-    
-    if (isDirectory) {
-        return await generatePDFFromSlides(input, outputPath);
-    } else {
-        return await generatePDFFromSingleFile(input, outputPath);
-    }
-}
-
-// Generate PDF from directory of slides
-async function generatePDFFromSlides(slidesDir, outputPath = null) {
+// Main PDF generation function using HTTP server
+async function generatePDFWithServer(slidesDir, outputPath = null) {
     // Find all slide HTML files
     const slideFiles = fs.readdirSync(slidesDir)
         .filter(file => file.match(/^slide_\d+\.html$/))
@@ -194,13 +238,17 @@ async function generatePDFFromSlides(slidesDir, outputPath = null) {
     console.log(`📝 Generating PDF from ${slideFiles.length} slides`);
     console.log(`📁 Output will be saved to: ${outputPath}`);
 
+    // Start local server for the project
+    const projectDir = path.dirname(slidesDir);
+    const { server, port } = await startLocalServer(projectDir);
+
     const browser = await launchBrowser();
     const pagePool = new PagePool(browser, 8);
     await pagePool.init();
 
     // Create progress bar
     const progressBar = new cliProgress.SingleBar({
-        format: '🗝 PDF Generation |{bar}| {percentage}% | {value}/{total} | {slide}',
+        format: '🔑 PDF Generation |{bar}| {percentage}% | {value}/{total} | {slide}',
         barCompleteChar: '█',
         barIncompleteChar: '░',
         hideCursor: true
@@ -215,84 +263,15 @@ async function generatePDFFromSlides(slidesDir, outputPath = null) {
         // Process slides concurrently
         const CONCURRENCY_LIMIT = 8;
         await processWithConcurrency(slideFiles, CONCURRENCY_LIMIT, async (slideFile, i) => {
-            const slidePath = path.join(slidesDir, slideFile);
             const page = await pagePool.acquire();
             
             try {
-                // Read HTML and inject CSS inline
-                let htmlContent = fs.readFileSync(slidePath, 'utf8');
+                // Navigate to slide via HTTP server
+                const slideUrl = `http://localhost:${port}/slides/${slideFile}`;
+                await waitForSlideReady(page, slideUrl);
                 
-                // Extract CSS paths from the HTML itself
-                const cssLinkRegex = /<link\s+rel="stylesheet"\s+href="([^"]+)"/g;
-                const cssLinks = [];
-                let match;
-                while ((match = cssLinkRegex.exec(htmlContent)) !== null) {
-                    cssLinks.push(match[1]);
-                }
-                
-                // Read and inline all CSS files found
-                let combinedCSS = '';
-                
-                for (const cssLink of cssLinks) {
-                    // Resolve relative path to absolute
-                    const cssPath = path.resolve(path.dirname(slidePath), cssLink);
-                    
-                    if (fs.existsSync(cssPath)) {
-                        let cssContent = fs.readFileSync(cssPath, 'utf8');
-                        
-                        // Fix relative URLs in CSS (for images, fonts, etc.)
-                        const cssDir = path.dirname(cssPath);
-                        cssContent = cssContent.replace(/url\(['"]?([^'")]+)['"]?\)/g, (match, url) => {
-                            // Skip data URLs and absolute URLs
-                            if (url.startsWith('data:') || url.startsWith('http') || url.startsWith('file:')) {
-                                return match;
-                            }
-                            // Convert relative URL to absolute file:// URL
-                            const absolutePath = path.resolve(cssDir, url);
-                            return `url('file://${absolutePath}')`;
-                        });
-                        
-                        combinedCSS += `\n/* From ${cssLink} */\n${cssContent}\n`;
-                    } else {
-                        console.warn(`Warning: CSS file not found: ${cssPath}`);
-                    }
-                }
-                
-                // Remove existing CSS links and inject inline
-                htmlContent = htmlContent.replace(/<link rel="stylesheet"[^>]*>/g, '');
-                
-                // Inject CSS into head
-                const cssInjection = `
-                    <style>
-                        /* Combined CSS from all linked stylesheets */
-                        ${combinedCSS}
-                        
-                        /* Override for PDF */
-                        ${COMMON_CSS}
-                    </style>
-                </head>`;
-                
-                htmlContent = htmlContent.replace('</head>', cssInjection);
-                
-                // Fix all relative image paths to absolute file:// URLs
-                htmlContent = htmlContent.replace(/src="([^"]+)"/g, (match, src) => {
-                    // Skip data URLs, absolute URLs, and file:// URLs
-                    if (src.startsWith('data:') || src.startsWith('http') || src.startsWith('file:')) {
-                        return match;
-                    }
-                    // Convert relative path to absolute file:// URL
-                    const absolutePath = path.resolve(path.dirname(slidePath), src);
-                    return `src="file://${absolutePath}"`;
-                });
-                
-                // Set content
-                await page.setContent(htmlContent, {
-                    waitUntil: ['networkidle0', 'domcontentloaded'],
-                    timeout: 30000
-                });
-                
-                // Wait for rendering
-                await new Promise(resolve => setTimeout(resolve, 500));
+                // Inject override CSS for PDF
+                await page.addStyleTag({ content: COMMON_CSS });
 
                 // Generate PDF for this slide
                 const pdfBuffer = await page.pdf({
@@ -345,68 +324,8 @@ async function generatePDFFromSlides(slidesDir, outputPath = null) {
     } finally {
         await pagePool.destroy();
         await browser.close();
-    }
-}
-
-// Generate PDF from single HTML file
-async function generatePDFFromSingleFile(htmlFilePath, outputPath = null) {
-    if (!fs.existsSync(htmlFilePath)) {
-        console.error(`Error: HTML file not found: ${htmlFilePath}`);
-        process.exit(1);
-    }
-
-    if (!outputPath) {
-        const dir = path.dirname(htmlFilePath);
-        const filename = path.basename(htmlFilePath, '.html');
-        outputPath = path.join(dir, `${filename}.pdf`);
-    }
-
-    console.log(`Generating PDF from: ${htmlFilePath}`);
-    console.log(`Output will be saved to: ${outputPath}`);
-
-    const browser = await launchBrowser();
-
-    try {
-        const page = await browser.newPage();
-        
-        await page.setViewport({
-            width: 1536,
-            height: 864,
-            deviceScaleFactor: 1
-        });
-
-        const fileUrl = `file://${path.resolve(htmlFilePath)}`;
-        await waitForSlideReady(page, fileUrl);
-
-        await injectCommonCSS(page);
-
-        const pdfBuffer = await page.pdf({
-            path: outputPath,
-            width: '16in',
-            height: '9in',
-            printBackground: true,
-            preferCSSPageSize: false,
-            margin: {
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 0
-            },
-            displayHeaderFooter: false,
-            scale: 1.0
-        });
-
-        console.log(`✅ PDF generated successfully: ${outputPath}`);
-        
-        const stats = fs.statSync(outputPath);
-        const fileSizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
-        console.log(`📄 File size: ${fileSizeInMB} MB`);
-
-    } catch (error) {
-        console.error('❌ Error generating PDF:', error.message);
-        process.exit(1);
-    } finally {
-        await browser.close();
+        server.close();
+        console.log('🛑 Local server stopped');
     }
 }
 
@@ -417,29 +336,31 @@ async function main() {
     if (args.length === 0) {
         console.log(`
 Usage: 
-  node pdf_generator.js <slides-directory> [output-path]
-  node pdf_generator.js <html-file-path> [output-path]
+  node pdf_generator_http.js <slides-directory> [output-path]
 
 Examples:
-  node pdf_generator.js projects/myproject/slides/
-  node pdf_generator.js projects/myproject/slides/ output.pdf
-  node pdf_generator.js single-slide.html output.pdf
+  node pdf_generator_http.js projects/myproject/slides/
+  node pdf_generator_http.js projects/myproject/slides/ output.pdf
 
 Features:
-  ✅ Automatically detects and processes all slide_XX.html files in directory
-  ✅ Preserves 16:9 aspect ratio optimized for presentations
-  ✅ Merges multiple slides into single PDF maintaining order
+  ✅ Uses HTTP server for proper asset loading
+  ✅ Ensures parity with live viewer
+  ✅ Handles all relative paths correctly
+  ✅ Preserves 16:9 aspect ratio
   ✅ High-quality rendering with proper dimensions
-  ✅ Background colors and images included
-  ✅ No margins for full-page slides
         `);
         process.exit(0);
     }
 
-    const input = args[0];
+    const slidesDir = args[0];
     const outputFile = args[1];
 
-    await generatePDF(input, outputFile);
+    if (!fs.existsSync(slidesDir)) {
+        console.error(`Error: Directory not found: ${slidesDir}`);
+        process.exit(1);
+    }
+
+    await generatePDFWithServer(slidesDir, outputFile);
 }
 
 // Handle process termination
@@ -461,4 +382,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { generatePDF };
+module.exports = { generatePDFWithServer };
