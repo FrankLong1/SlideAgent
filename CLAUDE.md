@@ -77,11 +77,8 @@ SlideAgent/
 │       ├── validation/          # Screenshots for quality control
 │       ├── plots/               # Chart files (_clean.png for slides)
 │       ├── input/               # Source materials
-│       ├── config.yaml          # Project configuration
 │       ├── outline.md           # Section-based outline
-│       ├── memory.md            # Project-specific memory
 │       └── [project-name].pdf   # Generated PDF
-├── MEMORY.md                    # Global memory across all projects
 ├── .mcp.json                    # MCP server configuration
 ├── package.json                 # Node.js dependencies
 └── requirements.txt             # Python dependencies
@@ -165,19 +162,6 @@ When you use `init_slide` MCP tool, these paths are automatically set correctly.
 
 **Note**: Title slides use a different structure - they display `[TITLE]` and `[SUBTITLE]` prominently in the center, not in the header.
 
-## Memory System
-
-SlideAgent tracks learnings and improvements:
-- **`MEMORY.md`** - Global memory across all projects
-- **`projects/[project]/memory.md`** - Project-specific discoveries
-
-Use the `update_memory` tool to track:
-- What's working (section: "working")
-- What's not working (section: "not_working")  
-- Ideas & improvements (section: "ideas")
-- Project-specific memory: include `project` parameter
-- Global memory: omit `project` parameter (updates MEMORY.md)
-
 # Complete Workflow
 
 ## Core Principles
@@ -207,9 +191,8 @@ Use the `create_project` MCP tool to create a new project. This automatically:
 - Creates directory structure (slides/, plots/, input/, validation/, theme/)
 - Copies base.css and all theme files to project's theme/ folder
 - Makes project self-contained with all necessary CSS and assets
-- Initializes config.yaml with theme settings
+- Copies theme files to project-local theme/ folder
 - Creates outline.md template
-- Creates memory.md for project-specific learnings
 
 ### 2. Content Analysis & Input Preparation
 

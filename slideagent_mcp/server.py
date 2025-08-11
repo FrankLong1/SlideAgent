@@ -52,7 +52,6 @@ LEGACY_SLIDE_TEMPLATES_DIR = BASE_DIR / "src/slides/slide_templates"  # Removed
 LEGACY_CHART_TEMPLATES_DIR = BASE_DIR / "src/charts/chart_templates"  # Removed
 LEGACY_MARKDOWN_TEMPLATES_DIR = BASE_DIR / "markdown_templates"  # Removed
 
-MEMORY_FILE = BASE_DIR / "MEMORY.md"
 
 # Resolvers with precedence: user → legacy → system (for templates/themes),
 # and user → legacy for projects.
@@ -102,6 +101,28 @@ def resolve_outline_template_paths() -> List[Path]:
 
 # Track live viewer processes
 LIVE_VIEWER_PROCESSES = {}
+
+# =============================================================================
+# HELPER FUNCTIONS
+# =============================================================================
+
+def get_project_theme(project_dir: Path) -> str:
+    """
+    Derive theme name from theme folder files.
+    Looks for *_theme.css file and extracts the theme name.
+    Raises error if no theme found.
+    """
+    theme_dir = project_dir / "theme"
+    if not theme_dir.exists():
+        raise ValueError(f"No theme folder found in project {project_dir.name}")
+    
+    # Look for *_theme.css file
+    for css_file in theme_dir.glob("*_theme.css"):
+        # Extract theme name from filename
+        theme_name = css_file.stem.replace("_theme", "")
+        return theme_name
+    
+    raise ValueError(f"No theme CSS file found in {theme_dir}")
 
 # =============================================================================
 # PROJECT MANAGEMENT TOOLS
@@ -164,18 +185,7 @@ def create_project(name: str, theme: str = "acme_corp", description: str = "") -
     if base_css_source.exists():
         shutil.copy2(base_css_source, project_dir / "theme" / "base.css")
     
-    # Create config.yaml
-    config = {
-        "project_name": safe_name,
-        "theme": theme,
-        "description": description,
-        "created_date": datetime.now().strftime("%Y-%m-%d"),
-        "slides_count": 0,
-        "charts_count": 0
-    }
-    
-    with open(project_dir / "config.yaml", "w") as f:
-        yaml.dump(config, f, default_flow_style=False)
+    # No longer creating config.yaml - theme is derived from theme folder files
     
     # Initialize outline from template
     outline_paths = resolve_outline_template_paths()
@@ -191,21 +201,6 @@ def create_project(name: str, theme: str = "acme_corp", description: str = "") -
         with open(project_dir / "outline.md", "w") as f:
             f.write(outline_content)
     
-    # Create memory.md
-    memory_content = f"""# Project Memory: {safe_name}
-
-## Working
-- Project initialized successfully
-
-## Not Working
-- None yet
-
-## Ideas
-- None yet
-"""
-    
-    with open(project_dir / "memory.md", "w") as f:
-        f.write(memory_content)
     
     return f"Created project '{safe_name}' at {project_dir}"
 
@@ -227,12 +222,11 @@ def list_projects() -> List[Dict[str, Any]]:
         if not project_dir.is_dir():
             continue
         
-        config_file = project_dir / "config.yaml"
-        if not config_file.exists():
-            continue
-        
-        with open(config_file, "r") as f:
-            config = yaml.safe_load(f)
+        # Get theme from theme folder
+        try:
+            theme = get_project_theme(project_dir)
+        except ValueError:
+            theme = "unknown"  # Handle projects without proper theme
         
         # Count slides
         slides_dir = project_dir / "slides"
@@ -245,8 +239,8 @@ def list_projects() -> List[Dict[str, Any]]:
         projects.append({
             "name": project_dir.name,
             "path": str(project_dir),
-            "theme": config.get("theme", "unknown"),
-            "created_date": config.get("created_date", "unknown"),
+            "theme": theme,
+            "created_date": project_dir.stat().st_ctime,  # Use folder creation time
             "slides_count": slide_count,
             "charts_count": chart_count,
             "has_pdf": (project_dir / f"{project_dir.name}.pdf").exists()
@@ -269,9 +263,11 @@ def get_project_info(project: str) -> Dict[str, Any]:
     if not project_dir.exists():
         raise ValueError(f"Project '{project}' not found")
     
-    config_file = project_dir / "config.yaml"
-    with open(config_file) as f:
-        config = yaml.safe_load(f)
+    # Get theme from theme folder
+    try:
+        theme = get_project_theme(project_dir)
+    except ValueError:
+        theme = "unknown"
     
     # Count files
     slides = list((project_dir / "slides").glob("slide_*.html")) if (project_dir / "slides").exists() else []
@@ -280,8 +276,8 @@ def get_project_info(project: str) -> Dict[str, Any]:
     
     return {
         "name": project,
-        "theme": config.get("theme"),
-        "title": config.get("title", project),
+        "theme": theme,
+        "title": project,  # No config, so use project name
         "slides_count": len(slides),
         "charts_count": len(charts),
         "inputs_count": len(inputs),
@@ -476,12 +472,11 @@ def init_slide(project: str, number: str, template: str = None,
     with open(template_file, "r") as f:
         content = f.read()
     
-    # Read project config for theme
-    config_file = project_dir / "config.yaml"
-    with open(config_file, "r") as f:
-        config = yaml.safe_load(f)
-    
-    theme = config.get("theme", "acme_corp")
+    # Get theme from theme folder
+    try:
+        theme = get_project_theme(project_dir)
+    except ValueError as e:
+        return f"Error: {e}"
     
     # Replace CSS path placeholders
     # Both CSS files are now local to the project (in project/theme/)
@@ -661,18 +656,27 @@ def swap_theme(project: str, theme: str) -> str:
     if not theme_found:
         return f"Error: Theme '{theme}' not found"
     
-    # Update config
-    config_file = project_dir / "config.yaml"
-    with open(config_file, "r") as f:
-        config = yaml.safe_load(f)
+    # Get current theme from theme folder
+    try:
+        old_theme = get_project_theme(project_dir)
+    except ValueError:
+        old_theme = "unknown"
     
-    old_theme = config.get("theme", "acme_corp")
-    config["theme"] = theme
+    # Clear old theme files from project/theme/
+    theme_dir = project_dir / "theme"
+    if theme_dir.exists():
+        for file in theme_dir.glob("*"):
+            if file.name != "base.css":  # Keep base.css
+                file.unlink()
     
-    with open(config_file, "w") as f:
-        yaml.dump(config, f, default_flow_style=False)
+    # Copy new theme files to project/theme/
+    theme_source = Path(theme_path) if Path(theme_path).is_absolute() else BASE_DIR / theme_path
+    if theme_source.exists():
+        for theme_file in theme_source.glob("*"):
+            if theme_file.is_file():
+                shutil.copy2(theme_file, theme_dir / theme_file.name)
     
-    # Update existing slides
+    # Update existing slides to use new theme
     slides_dir = project_dir / "slides"
     if slides_dir.exists():
         import re
@@ -680,80 +684,18 @@ def swap_theme(project: str, theme: str) -> str:
             with open(slide_file, "r") as f:
                 content = f.read()
             
-            # Replace theme references
-            content = re.sub(
-                rf'themes/(examples|private)/{old_theme}/',
-                f'{theme_path}/',
-                content
-            )
+            # Replace theme CSS references
+            if old_theme != "unknown":
+                content = re.sub(
+                    rf'{old_theme}_theme\.css',
+                    f'{theme}_theme.css',
+                    content
+                )
             
             with open(slide_file, "w") as f:
                 f.write(content)
     
     return f"Updated project '{project}' to use theme '{theme}'"
-
-@mcp.tool()
-def update_memory(content: str, section: str = "ideas", project: str = None) -> str:
-    """
-    Update memory (learnings/issues/ideas) for global or project scope.
-    
-    Args:
-        content: The content to add to memory
-        section: Section to update (working/not_working/ideas)
-        project: Project name (omit for global MEMORY.md)
-    
-    Returns:
-        Success message
-    """
-    # Determine memory file
-    if project:
-        project_dir = resolve_projects_dir() / project
-        if not project_dir.exists():
-            return f"Error: Project '{project}' not found"
-        memory_file = project_dir / "memory.md"
-    else:
-        memory_file = MEMORY_FILE
-    
-    # Read existing memory or create new
-    if memory_file.exists():
-        with open(memory_file, "r") as f:
-            memory_content = f.read()
-    else:
-        title = f"Project Memory: {project}" if project else "Global Memory"
-        memory_content = f"# {title}\n\n## Working\n\n## Not Working\n\n## Ideas\n"
-    
-    # Find section and append
-    section_map = {
-        "working": "## Working",
-        "not_working": "## Not Working", 
-        "ideas": "## Ideas"
-    }
-    
-    section_header = section_map.get(section, "## Ideas")
-    
-    if section_header in memory_content:
-        # Find the section
-        lines = memory_content.split('\n')
-        for i, line in enumerate(lines):
-            if line.strip() == section_header:
-                # Find next section or end
-                j = i + 1
-                while j < len(lines) and not lines[j].startswith('##'):
-                    j += 1
-                # Insert before next section
-                lines.insert(j, f"- {content}")
-                break
-        memory_content = '\n'.join(lines)
-    else:
-        # Add new section
-        memory_content += f"\n{section_header}\n- {content}\n"
-    
-    # Write back
-    with open(memory_file, "w") as f:
-        f.write(memory_content)
-    
-    scope_desc = f"project '{project}'" if project else "global"
-    return f"Updated {scope_desc} memory in section '{section}'"
 
 # =============================================================================
 # GENERATION TOOLS

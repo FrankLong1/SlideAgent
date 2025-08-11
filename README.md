@@ -1,19 +1,12 @@
 # SlideAgent
 
-*A minimal, AI-first presentation framework inspired by Richard Sutton's Bitter Lesson*
+*A minimal presentation framework designed for AI agents*
 
-> "The biggest lesson from 70 years of AI research is that general methods that leverage computation are ultimately the most effective, and by a large margin."  
-> — Richard Sutton, *The Bitter Lesson*
+## What is SlideAgent?
 
-## Philosophy
+SlideAgent is a presentation generation system built specifically for AI coding agents like Claude Code. Instead of complex UIs and human-centric abstractions, it provides simple HTML/CSS templates that AI agents can efficiently populate with content.
 
-SlideAgent embodies the core principle of Sutton's bitter lesson: **computation trumps human-crafted specialization**. Rather than building complex presentation frameworks optimized for human authoring, SlideAgent provides a minimal, template-driven system designed specifically for AI agents to leverage their scaling computational abilities.
-
-> "We have to learn the bitter lesson that building in how we think we think does not work in the long run."
-
-### Machine Editability First as a Design
-
-Traditional presentation tools are built around human cognitive limitations—complex UIs, WYSIWYG editors, and intricate feature sets that feel satisfying to human users but add abstractions between the model and raw context. SlideAgent takes the opposite approach: a deliberately minimal HTML/CSS micro-library as a foundation that is almost useless for humans, but becomes powerful only when paired with increasingly capable AI models The system is intentionally more verbose than any human would want to write directly with very few shared components. 
+The system follows Richard Sutton's bitter lesson: rather than encoding human presentation design principles, we provide minimal structure and let computational scaling drive quality. 
 
 ## Core Architecture
 
@@ -22,75 +15,93 @@ SlideAgent consists of just the essential components needed for professional sli
 - **Slide Templates**: Minimal HTML structures covering all presentation needs
 - **Theme System**: CSS-based branding (colors, fonts, logos)  
 - **Chart Integration**: Python matplotlib with consistent styling via PlotBuddy
-- **PDF Generation**: Single-command export to presentation format
+- **MCP Integration**: Model Context Protocol for seamless AI agent interaction
 
-### The Workflow
+## Workflow
 
-1. **Dump Input**: Raw data files, documents, research materials
-2. **AI Outline**: Model analyzes inputs and proposes slide structure  
-3. **Iterate Outline**: Human feedback and refinement
-4. **Generate Charts**: Automated data visualization with theme consistency
-5. **Build Slides**: Template-driven HTML generation
-6. **Export PDF**: Professional presentation output
+1. **Setup**: Activate Python environment and install dependencies
+2. **Create Project**: Use MCP tool to initialize project with theme
+3. **Add Input**: Place source materials in project's input folder
+4. **Generate Outline**: AI analyzes inputs and creates slide structure
+5. **Build Slides**: Parallel agents populate templates with content
+6. **Preview**: Live viewer shows slides during generation
+7. **Export**: Generate PDF for final presentation
 
-## Why This Approach Works
+## Why It Works
 
-> "The two methods that seem to scale arbitrarily with computation are search and learning."
+AI agents excel at:
+- Selecting appropriate templates for content types
+- Extracting key insights from raw materials  
+- Populating HTML structures consistently
+- Maintaining theme coherence across slides
+- Generating slides in parallel for speed
 
-Modern coding agents excel at:
-- **Pattern Recognition**: Identifying optimal slide templates for content types
-- **Data Analysis**: Extracting insights from complex input materials  
-- **Template Population**: Generating verbose, structured HTML efficiently
-- **Consistency Management**: Maintaining theme coherence across slides and charts
-- **Iterative Refinement**: Incorporating feedback through computational cycles
+The system avoids human-centric complexity (drag-and-drop UIs, WYSIWYG editors) in favor of simple, scalable template population.
 
-What they struggle with are the human-centric complexities that traditional frameworks prioritize: drag-and-drop interfaces, real-time collaboration, and interactive authoring experiences.
+## Quick Start with MCP
 
-## Quick Start
-
-### 1. Setup Dependencies
+### 1. Environment Setup
 ```bash
-# Setup
+# Activate environment
 source venv/bin/activate
 pip install -r requirements.txt
 npm install
 
-# Create new presentation
-python3 DirectoryClient.py new-project my-presentation --theme acme_corp
-
-# Generate PDF
-node src/utils/pdf_generator.js projects/my-presentation/slides/
+# Install Puppeteer MCP globally (one-time setup)
+npm install -g @modelcontextprotocol/server-puppeteer
+claude mcp add puppeteer
 ```
 
-### Project Structure
-```
-projects/my-presentation/
-├── config.yaml         # Theme and metadata
-├── input/              # Source materials (dump everything here)
-├── plots/              # Generated charts  
-├── outline.md          # AI-generated content outline
-├── slides/             # Individual HTML slide files
-└── my-presentation.pdf # Export output
-```
-
-## Template System
-
-SlideAgent provides 12 fundamental slide templates. Each template is deliberately minimal—just enough structure for consistent styling while remaining flexible for AI content generation. This is probably one of the key areas of development where contributions from others would be awesome!
-
-## Chart Integration
-
-The PlotBuddy system generates dual-output charts:
-- **Branded versions**: Complete with logos and corporate styling
-- **Clean versions**: Optimized for slide integration
-
+### 2. Create Project via MCP
 ```python
-from src.charts.utils.plot_buddy import PlotBuddy
-
-buddy = PlotBuddy.from_project_config()
-fig, ax = buddy.setup_figure()
-# ... plotting code ...
-branded_path, clean_path = buddy.save("plots/analysis.png", branded=True)
+# SlideAgent MCP tools are auto-configured via .mcp.json
+create_project("my-presentation", theme="acme_corp")
 ```
 
+### 3. Project Structure
+```
+user_projects/my-presentation/
+├── theme/                  # Self-contained theme files
+│   ├── base.css           # Core styling
+│   ├── acme_corp_theme.css
+│   └── *.png              # Logo files
+├── slides/                # Individual HTML slides
+├── plots/                 # Generated charts (_clean.png for slides)
+├── input/                 # Source materials
+├── validation/            # Screenshot validation
+├── outline.md             # Detailed content outline
+└── my-presentation.pdf    # Final output
+```
 
-CLAUDE.md provides more context on how the system works (written for Claude Code, but easily adaptable to other coding agents as well.)
+## MCP Architecture 
+
+SlideAgent uses Model Context Protocol (MCP) to expose all functionality as tools that AI agents can directly call:
+
+**Project Tools:**
+- `create_project` - Initialize new presentation with theme
+- `list_projects` - Show existing projects
+- `list_slide_templates` - Discover available slide templates
+- `list_chart_templates` - Discover chart templates
+- `list_themes` - Show available themes
+
+**Generation Tools:**
+- `init_slide` - Create slide from template
+- `init_chart` - Create chart from template  
+- `swap_theme` - Change project theme
+
+**Preview & Export:**
+- `start_live_viewer` - Launch real-time preview
+- `generate_pdf` - Export final presentation
+
+## Key Features
+
+- **Template Library**: 12+ slide templates for different content types
+- **Chart System**: PlotBuddy generates both branded and clean chart versions
+- **Theme Support**: Consistent branding across slides and charts
+- **Live Preview**: Real-time feedback during development
+- **PDF Export**: Professional presentation output
+- **MCP Integration**: All functionality exposed as callable tools
+
+## Documentation
+
+See `CLAUDE.md` for detailed AI agent instructions and workflow guidance.

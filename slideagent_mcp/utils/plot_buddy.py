@@ -8,7 +8,7 @@ Design principle: "All my context is handled by the buddy"
 """
 
 import os
-import yaml
+from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import matplotlib.patches as mpatches
@@ -111,47 +111,41 @@ class PlotBuddy:
     @classmethod
     def from_project_config(cls, config_path=None):
         """
-        Create PlotBuddy instance from project config.yaml file.
+        Create PlotBuddy instance from project's theme folder.
+        Automatically detects theme from theme/*_theme.css file.
         
         Args:
-            config_path (str): Path to config.yaml file. If None, looks for config.yaml in current directory.
+            config_path (str): Ignored - kept for backward compatibility
         
         Returns:
-            PlotBuddy: Configured instance with theme from config
+            PlotBuddy: Configured instance with theme from project
         """
-        if config_path is None:
-            config_path = "config.yaml"
+        # Look for theme folder in current directory
+        theme_dir = Path("theme")
+        if not theme_dir.exists():
+            # Try parent directory (in case we're in plots/)
+            theme_dir = Path("../theme")
         
-        if not os.path.exists(config_path):
-            print(f"Warning: Config file not found at {config_path}, using default theme")
+        if not theme_dir.exists():
+            print(f"Warning: Theme folder not found, using default theme")
             return cls.from_theme("acme_corp")
         
-        try:
-            with open(config_path, 'r') as f:
-                config = yaml.safe_load(f)
-            
-            # Get theme path from config, fallback to constructing from theme name
-            theme_path = config.get('theme_path')
-            if theme_path:
-                # Use explicit theme path from config
-                config_dir = os.path.dirname(os.path.abspath(config_path))
-                if not os.path.isabs(theme_path):
-                    # Resolve relative path from config directory
-                    theme_path = os.path.join(config_dir, theme_path)
-                
-                buddy = cls(style_dir_path=theme_path)
-                theme_name = config.get('theme', 'acme_corp')
-                style_name = f"{theme_name}_style"
-                buddy.load_style_from_file(style_name)
-                return buddy
-            else:
-                # Fallback to old method using theme name
-                theme_name = config.get('theme', 'acme_corp')
-                return cls.from_theme(theme_name)
-            
-        except Exception as e:
-            print(f"Warning: Could not read config file {config_path}: {e}")
+        # Detect theme name from theme folder
+        theme_name = None
+        for css_file in theme_dir.glob("*_theme.css"):
+            # Extract theme name from filename
+            theme_name = css_file.stem.replace("_theme", "")
+            break
+        
+        if not theme_name:
+            print(f"Warning: No theme CSS file found in {theme_dir}")
             return cls.from_theme("acme_corp")
+        
+        # Create PlotBuddy using the theme folder
+        buddy = cls(style_dir_path=str(theme_dir.resolve()))
+        style_name = f"{theme_name}_style"
+        buddy.load_style_from_file(style_name)
+        return buddy
     
     def load_style_from_file(self, style_name):
         """
