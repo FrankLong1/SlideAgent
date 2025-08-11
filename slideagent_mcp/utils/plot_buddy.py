@@ -37,25 +37,55 @@ class PlotBuddy:
     DEFAULT_TITLE_Y_POSITION = 1.12
     DEFAULT_SUBTITLE_Y_POSITION = 1.06
     
-    def __init__(self, style_dir_path=None):
+    def __init__(self, theme_folder=None):
         """
-        Initialize PlotBuddy with style directory path.
+        Initialize PlotBuddy with a theme folder.
+        The theme folder should contain:
+        - {theme}_style.mplstyle - matplotlib style
+        - {theme}_icon_logo.png - icon logo
+        - {theme}_text_logo.png - text logo
+        - {theme}_theme.css - CSS (not used by PlotBuddy but indicates theme name)
         
         Args:
-            style_dir_path (str): Path to directory containing .mplstyle files
-                                 If None, uses current directory
+            theme_folder (str): Path to theme folder. If None, looks for 'theme' or '../theme'
         """
-        self.style_dir_path = style_dir_path or os.getcwd()
+        # Find theme folder
+        if theme_folder:
+            self.theme_folder = Path(theme_folder)
+        else:
+            # Try to auto-detect theme folder
+            if Path("theme").exists():
+                self.theme_folder = Path("theme")
+            elif Path("../theme").exists():
+                self.theme_folder = Path("../theme")
+            else:
+                raise ValueError("No theme folder found. Please specify theme_folder path.")
+        
+        # Detect theme name from CSS file
+        self.theme_name = None
+        for css_file in self.theme_folder.glob("*_theme.css"):
+            self.theme_name = css_file.stem.replace("_theme", "")
+            break
+        
+        if not self.theme_name:
+            raise ValueError(f"No theme CSS file found in {self.theme_folder}")
+        
+        # Set paths
+        self.style_dir_path = str(self.theme_folder)
         self.current_style = None
         
-        # Auto-detect logo paths from theme directory
-        theme_name = os.path.basename(self.style_dir_path)
-        icon_logo = os.path.join(self.style_dir_path, f"{theme_name}_icon_logo.png")
-        text_logo = os.path.join(self.style_dir_path, f"{theme_name}_text_logo.png")
+        # Logo paths
+        self.icon_logo_path = self.theme_folder / f"{self.theme_name}_icon_logo.png"
+        self.text_logo_path = self.theme_folder / f"{self.theme_name}_text_logo.png"
         
-        # Store logo paths if they exist
-        self.icon_logo_path = icon_logo if os.path.exists(icon_logo) else None
-        self.text_logo_path = text_logo if os.path.exists(text_logo) else None
+        # Convert to string and check existence
+        self.icon_logo_path = str(self.icon_logo_path) if self.icon_logo_path.exists() else None
+        self.text_logo_path = str(self.text_logo_path) if self.text_logo_path.exists() else None
+        
+        # Auto-load the theme's matplotlib style
+        style_file = self.theme_folder / f"{self.theme_name}_style.mplstyle"
+        if style_file.exists():
+            self.load_style_from_file(self.theme_name + "_style")
         
         # Layout and styling constants
         self.tight_layout_rect = self.DEFAULT_TIGHT_LAYOUT_RECT
@@ -98,7 +128,8 @@ class PlotBuddy:
                 else:
                     # Default to old location for backward compatibility
                     theme_path = os.path.join("themes", theme_name)
-        buddy = cls(style_dir_path=theme_path)
+        # Use the new constructor that takes theme_folder
+        buddy = cls(theme_folder=theme_path)
         
         # Try to load the style file
         style_name = f"{theme_name}_style"
@@ -112,40 +143,16 @@ class PlotBuddy:
     def from_project_config(cls, config_path=None):
         """
         Create PlotBuddy instance from project's theme folder.
-        Automatically detects theme from theme/*_theme.css file.
+        Just a convenience wrapper around the main constructor.
         
         Args:
-            config_path (str): Ignored - kept for backward compatibility
+            config_path: Ignored - kept for backward compatibility
         
         Returns:
-            PlotBuddy: Configured instance with theme from project
+            PlotBuddy: Configured instance
         """
-        # Look for theme folder in current directory
-        theme_dir = Path("theme")
-        if not theme_dir.exists():
-            # Try parent directory (in case we're in plots/)
-            theme_dir = Path("../theme")
-        
-        if not theme_dir.exists():
-            print(f"Warning: Theme folder not found, using default theme")
-            return cls.from_theme("acme_corp")
-        
-        # Detect theme name from theme folder
-        theme_name = None
-        for css_file in theme_dir.glob("*_theme.css"):
-            # Extract theme name from filename
-            theme_name = css_file.stem.replace("_theme", "")
-            break
-        
-        if not theme_name:
-            print(f"Warning: No theme CSS file found in {theme_dir}")
-            return cls.from_theme("acme_corp")
-        
-        # Create PlotBuddy using the theme folder
-        buddy = cls(style_dir_path=str(theme_dir.resolve()))
-        style_name = f"{theme_name}_style"
-        buddy.load_style_from_file(style_name)
-        return buddy
+        # Just use the default constructor which auto-detects theme folder
+        return cls()
     
     def load_style_from_file(self, style_name):
         """

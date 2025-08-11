@@ -42,7 +42,6 @@ import sys
 
 import os
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 
 
 
@@ -56,11 +55,9 @@ import matplotlib.pyplot as plt
 
 # When running from templates, use the example theme directly
 
-buddy = PlotBuddy.from_theme('acme_corp', themes_dir=os.path.join(
+buddy = PlotBuddy.from_project_config()
 
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), 
 
-    'themes', 'examples'))
 
 
 

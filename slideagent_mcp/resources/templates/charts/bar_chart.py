@@ -42,7 +42,6 @@ import sys
 
 import os
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 
 
 
@@ -54,15 +53,8 @@ import numpy as np
 
 
 
-# Initialize PlotBuddy for theme consistency
-
-# When running from templates, use the example theme directly
-
-buddy = PlotBuddy.from_theme('acme_corp', themes_dir=os.path.join(
-
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), 
-
-    'themes', 'examples'))
+# Initialize PlotBuddy - automatically detects theme from project's theme folder
+buddy = PlotBuddy.from_project_config()
 
 
 
