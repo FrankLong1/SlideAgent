@@ -4,7 +4,13 @@ Minimal presentation framework for AI agents. This README is intentionally short
 
 ## Quick Start
 
-Honestly Claude Code should be able to do just about all of the environment setup, just ask it to "get my environment setup and make sure the mcp is working". After that is taken care of you can put in things like..
+Honestly Claude Code should be able to do just about all of the environment setup, just ask it to 
+
+```text
+"get my environment setup and make sure the mcp is working". and check out the README for the initial setup stuff.
+```
+
+After that is taken care everything should work. You can submit prompts like..
 
 ```text
 Create a new project called "demo" using the "acme_corp" theme. Start the live viewer. Then scan everything in projects/demo/input/ and draft a crisp, section-based outline that maps each section to a specific slide template. Call out which template you plan to use per section and why.
@@ -86,6 +92,12 @@ uv sync
 npm install
 ```
 
+This repo uses uv for Python dependency management. Use `uv sync` and `uv run`; avoid pip/`requirements.txt` unless explicitly required. 
+
+```bash
+uv run python ./slideagent_mcp/server.py
+```
+
 ### Daily Usage
 ```bash
 # Run any Python command in the virtual environment
@@ -116,3 +128,14 @@ When working with this project:
 - **Reliable**: Lock file ensures reproducible installs
 - **Simple**: No manual venv activation needed
 - **Modern**: Replaces pip, pip-tools, pipenv, poetry, virtualenv
+
+## Use with Goose
+
+You can drive SlideAgent end-to-end from Goose if you'd like a GUI [`https://block.github.io/goose/`](https://block.github.io/goose/).
+
+### Connect Goose to SlideAgent MCP
+- If Goose does not auto-detect it, add an MCP server in Goose "Extensions" settings pointing to the command:
+  - `uv run python ./slideagent_mcp/server.py`
+- If you installed the Puppeteer MCP globally, add it in Goose as well so you can navigate and screenshot slides during generation.
+
+Also make sure to copy CLAUDE.md to .goosehints which is their system prompt management system.

@@ -1,0 +1,224 @@
+<!-- Percentage Circles Template -->
+<!-- Usage: For displaying KPI metrics with circular progress indicators -->
+<!-- Best for: Performance metrics, completion rates, achievement percentages -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>[TITLE]</title>
+    <link rel="stylesheet" href="../base.css">
+    <link rel="stylesheet" href="../../../themes/examples/[THEME]/[THEME]_theme.css">
+    <style>
+        .slide {
+            height: 1080px;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+        
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 40px 80px;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .metrics-container {
+            display: flex;
+            gap: 80px;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 1200px;
+        }
+        
+        .metric-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .circle-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin-bottom: 30px;
+        }
+        
+        .circle-svg {
+            width: 200px;
+            height: 200px;
+            transform: rotate(-90deg);
+        }
+        
+        .circle-bg {
+            fill: none;
+            stroke: #e5e7eb;
+            stroke-width: 15;
+        }
+        
+        .circle-progress {
+            fill: none;
+            stroke-width: 15;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s ease;
+        }
+        
+        /* Different colors for each percentage */
+        .progress-1 {
+            stroke: #fca5a5;
+        }
+        
+        .progress-2 {
+            stroke: #f87171;
+        }
+        
+        .progress-3 {
+            stroke: #ef4444;
+        }
+        
+        .progress-4 {
+            stroke: #dc2626;
+        }
+        
+        .circle-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        .circle-percent {
+            font-size: 32px;
+        }
+        
+        .metric-label {
+            font-size: 20px;
+            font-weight: 600;
+            color: #dc2626;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .metric-description {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+            max-width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <div class="header">
+            <div class="header-left">
+                <div class="slide-title">[SLIDE_TITLE]</div>
+                <div class="slide-subtitle">[SLIDE_SUBTITLE]</div>
+            </div>
+            <div class="header-right">
+                <div class="section-label">[SECTION]</div>
+                <div class="logo" alt="[COMPANY]"></div>
+            </div>
+        </div>
+        
+        <div class="content-wrapper">
+            <div class="metrics-container">
+                <!-- Metric 1 -->
+                <div class="metric-item">
+                    <div class="circle-container">
+                        <svg class="circle-svg">
+                            <circle class="circle-bg" cx="100" cy="100" r="85"></circle>
+                            <circle class="circle-progress progress-1" 
+                                    cx="100" cy="100" r="85"
+                                    stroke-dasharray="534"
+                                    stroke-dashoffset="[METRIC_1_OFFSET]">
+                            </circle>
+                        </svg>
+                        <div class="circle-text">[METRIC_1_VALUE]<span class="circle-percent">%</span></div>
+                    </div>
+                    <div class="metric-label">[METRIC_1_LABEL]</div>
+                    <div class="metric-description">[METRIC_1_DESCRIPTION]</div>
+                </div>
+                
+                <!-- Metric 2 -->
+                <div class="metric-item">
+                    <div class="circle-container">
+                        <svg class="circle-svg">
+                            <circle class="circle-bg" cx="100" cy="100" r="85"></circle>
+                            <circle class="circle-progress progress-2" 
+                                    cx="100" cy="100" r="85"
+                                    stroke-dasharray="534"
+                                    stroke-dashoffset="[METRIC_2_OFFSET]">
+                            </circle>
+                        </svg>
+                        <div class="circle-text">[METRIC_2_VALUE]<span class="circle-percent">%</span></div>
+                    </div>
+                    <div class="metric-label">[METRIC_2_LABEL]</div>
+                    <div class="metric-description">[METRIC_2_DESCRIPTION]</div>
+                </div>
+                
+                <!-- Metric 3 -->
+                <div class="metric-item">
+                    <div class="circle-container">
+                        <svg class="circle-svg">
+                            <circle class="circle-bg" cx="100" cy="100" r="85"></circle>
+                            <circle class="circle-progress progress-3" 
+                                    cx="100" cy="100" r="85"
+                                    stroke-dasharray="534"
+                                    stroke-dashoffset="[METRIC_3_OFFSET]">
+                            </circle>
+                        </svg>
+                        <div class="circle-text">[METRIC_3_VALUE]<span class="circle-percent">%</span></div>
+                    </div>
+                    <div class="metric-label">[METRIC_3_LABEL]</div>
+                    <div class="metric-description">[METRIC_3_DESCRIPTION]</div>
+                </div>
+                
+                <!-- Metric 4 -->
+                <div class="metric-item">
+                    <div class="circle-container">
+                        <svg class="circle-svg">
+                            <circle class="circle-bg" cx="100" cy="100" r="85"></circle>
+                            <circle class="circle-progress progress-4" 
+                                    cx="100" cy="100" r="85"
+                                    stroke-dasharray="534"
+                                    stroke-dashoffset="[METRIC_4_OFFSET]">
+                            </circle>
+                        </svg>
+                        <div class="circle-text">[METRIC_4_VALUE]<span class="circle-percent">%</span></div>
+                    </div>
+                    <div class="metric-label">[METRIC_4_LABEL]</div>
+                    <div class="metric-description">[METRIC_4_DESCRIPTION]</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <div class="footer-left">[FOOTER_LEFT]</div>
+            <div class="footer-center">[FOOTER_CENTER]</div>
+            <div class="footer-right">[FOOTER_RIGHT]</div>
+        </div>
+    </div>
+</body>
+</html>
+
+<!-- 
+USAGE NOTES:
+- Replace [METRIC_X_VALUE] with the percentage number (e.g., "24", "50", "82", "98")
+- Replace [METRIC_X_LABEL] with the metric name
+- Replace [METRIC_X_DESCRIPTION] with the metric description
+- Calculate [METRIC_X_OFFSET] using: 534 - (534 * percentage / 100)
+  Examples:
+  - 24% = 534 - (534 * 0.24) = 406
+  - 50% = 534 - (534 * 0.50) = 267
+  - 82% = 534 - (534 * 0.82) = 96
+  - 98% = 534 - (534 * 0.98) = 11
+-->

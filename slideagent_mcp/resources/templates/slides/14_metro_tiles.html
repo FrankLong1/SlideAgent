@@ -29,14 +29,23 @@ placeholders: ["TITLE", "SUBTITLE", "SECTION", "PAGE_NUMBER"]
     <link rel="stylesheet" href="[BASE_CSS_PATH]">
     <link rel="stylesheet" href="../themes/examples/acme_corp/acme_corp_theme.css">
     <style>
+        .content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 60px;
+        }
+        
         .metro-container {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            grid-auto-rows: 140px;
+            grid-auto-rows: 155px;
             gap: 15px;
-            padding: 20px;
-            max-width: 1400px;
-            margin: 0 auto;
+            width: 100%;
+            max-width: 1600px;
+            height: 100%;
+            max-height: 800px;
         }
         
         .metro-tile {
@@ -157,7 +166,7 @@ placeholders: ["TITLE", "SUBTITLE", "SECTION", "PAGE_NUMBER"]
     </div>
     
     <!-- Main content area -->
-    <div class="content" style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+    <div class="content">
         
         <!-- Metro tiles grid -->
         <div class="metro-container">
@@ -223,6 +232,12 @@ placeholders: ["TITLE", "SUBTITLE", "SECTION", "PAGE_NUMBER"]
             <div class="metro-tile tile-small tile-info tile-center">
                 <div class="tile-icon">🚀</div>
                 <div class="tile-title">Innovation</div>
+            </div>
+            
+            <!-- Bottom right tile to complete the grid -->
+            <div class="metro-tile tile-small tile-dark tile-center">
+                <div class="tile-icon">📈</div>
+                <div class="tile-title">Trending</div>
             </div>
             
         </div>

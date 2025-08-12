@@ -93,7 +93,9 @@ SlideAgent/
 │       └── [project-name].pdf   # Generated PDF
 ├── .mcp.json                    # MCP server configuration
 ├── package.json                 # Node.js dependencies
-└── requirements.txt             # Python dependencies
+├── pyproject.toml               # Project config and dependencies (managed by uv)
+├── uv.lock                      # Exact, reproducible dependency lockfile (commit this)
+└── requirements.txt             # Optional legacy compatibility; not used by uv
 ```
 
 ## Template Discovery
@@ -124,7 +126,7 @@ When generating charts for slides:
 1. **Discover templates**: Call `list_chart_templates` to see available options
 2. **Initialize from template**: Use `init_chart` with the template path
 3. **Edit the EDIT SECTION**: Modify only the data and configuration
-4. **Run the script**: `cd user_projects/[project] && python plots/[chart_name].py`
+4. **Run the script**: `cd user_projects/[project] && uv run python plots/[chart_name].py`
 5. **Get both versions**: Automatically generates `_branded.png` and `_clean.png`
 
 ### Clean vs Branded Chart Usage
@@ -200,7 +202,7 @@ When you use `init_slide` MCP tool, these paths are automatically set correctly.
 # Complete Workflow
 
 ## Core Principles
-1. **Ensure environment is ready** - venv activated, MCPs available
+1. **Ensure environment is ready** - run `uv sync` (no manual venv activation); use `uv run`. Ensure MCPs are available
 2. **Discover templates first** - Always call `list_slide_templates` and `list_chart_templates`
 3. **Use exact template paths** - Use paths returned by list tools, don't construct them
 4. **Analyze input/ folder comprehensively** before generating outlines
