@@ -65,3 +65,54 @@ The system faces challenges with responsive content placement, particularly:
 - **Container sizing**: The interplay between padding, margins, and actual content area
 
 There are things that could be implemented that would improve these things, but if you believe the bitter lesson you would do none of these things and ride the curve of model improvement, rather than building point-in-time optimizations that will become legacy.
+
+## Dependency Management with uv
+
+SlideAgent uses [uv](https://github.com/astral-sh/uv) for fast, reliable Python dependency management. Here's everything you (or Claude) need to get started:
+
+### Initial Setup (One-time)
+```bash
+# Install uv if not already installed
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Clone the repo
+git clone https://github.com/yourusername/SlideAgent.git
+cd SlideAgent
+
+# Install all dependencies (creates .venv automatically)
+uv sync
+
+# Install Node dependencies for PDF generation
+npm install
+```
+
+### Daily Usage
+```bash
+# Run any Python command in the virtual environment
+uv run python slideagent_mcp/server.py
+
+# Run tests
+uv run pytest tests/
+
+# Add a new dependency
+uv add package-name
+
+# Add a dev dependency
+uv add --dev package-name
+
+# Update all dependencies
+uv sync --upgrade
+```
+
+### For Claude Code
+When working with this project:
+1. First run: `uv sync` to ensure all dependencies are installed
+2. Then run: `npm install` for Node.js dependencies  
+3. Use `uv run` prefix for any Python commands
+4. The virtual environment is managed automatically in `.venv/`
+
+### Why uv?
+- **Fast**: 10-100x faster than pip
+- **Reliable**: Lock file ensures reproducible installs
+- **Simple**: No manual venv activation needed
+- **Modern**: Replaces pip, pip-tools, pipenv, poetry, virtualenv

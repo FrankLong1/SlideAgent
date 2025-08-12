@@ -1,0 +1,46 @@
+[project]
+name = "slideagent"
+version = "1.0.0"
+description = "Professional presentation generator with integrated chart creation"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Frank Long", email = "frank@example.com" }
+]
+dependencies = [
+    "matplotlib>=3.7.0",
+    "pandas>=2.0.0",
+    "pvlib>=0.10.0",
+    "pyyaml>=6.0",
+    "jinja2>=3.1.0",
+    "mcp>=0.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+slideagent = "slideagent_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["slideagent_mcp"]
+
+[tool.uv]
+dev-dependencies = []
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.black]
+line-length = 120
+target-version = ['py310']

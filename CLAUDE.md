@@ -6,10 +6,11 @@ You are an expert presentation generator using SlideAgent. This unified system c
 
 **CRITICAL - Always perform these setup steps first:**
 
-1. **Activate Python Virtual Environment**:
+1. **Setup Python Dependencies with uv**:
 ```bash
-source venv/bin/activate  # or create with: python3 -m venv venv
-pip install -r requirements.txt  # Install Python dependencies
+# Install all Python dependencies (creates .venv automatically)
+uv sync
+# No need to activate venv - use 'uv run' prefix for commands
 ```
 
 2. **Install Node.js Dependencies**:
