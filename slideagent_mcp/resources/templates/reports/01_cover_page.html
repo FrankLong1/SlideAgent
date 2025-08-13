@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>[REPORT_TITLE]</title>
-    <link rel="stylesheet" href="../reports/report_base.css">
-    <link rel="stylesheet" href="../../../themes/[THEME]/[THEME]_theme.css">
+    <title>Annual Business Report 2024</title>
+    <link rel="stylesheet" href="../theme/report_base.css">
+    <link rel="stylesheet" href="../theme/acme_corp_theme.css">
     <style>
         .cover-page {
             height: 100%;
@@ -17,18 +17,33 @@
         
         .cover-background {
             position: absolute;
+            top: -5%;
+            left: -5%;
+            right: -5%;
+            bottom: -5%;
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            opacity: 0.9;
+            z-index: 0;
+        }
+        
+        .cover-overlay {
+            position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background-size: cover;
-            background-position: center;
-            opacity: 0.8;
-            z-index: -1;
+            background: linear-gradient(135deg, 
+                rgba(26, 77, 143, 0.85) 0%, 
+                rgba(74, 144, 226, 0.75) 100%);
+            z-index: 1;
         }
         
         .cover-header {
             padding: 1in 1in 0.5in 1in;
+            position: relative;
+            z-index: 2;
         }
         
         .cover-logo {
@@ -42,6 +57,8 @@
             flex-direction: column;
             justify-content: center;
             padding: 0 1in;
+            position: relative;
+            z-index: 2;
         }
         
         .cover-title {
@@ -49,26 +66,28 @@
             font-weight: 300;
             line-height: 1.1;
             margin-bottom: 0.3in;
-            color: var(--primary-color);
+            color: white;
         }
         
         .cover-subtitle {
             font-size: 24pt;
             font-weight: 300;
-            color: var(--text-secondary);
+            color: rgba(255, 255, 255, 0.9);
             margin-bottom: 0.5in;
         }
         
         .cover-tagline {
             font-size: 14pt;
-            color: var(--text-secondary);
+            color: rgba(255, 255, 255, 0.8);
             font-style: italic;
         }
         
         .cover-footer {
             padding: 0.5in 1in 1in 1in;
             font-size: 11pt;
-            color: var(--text-secondary);
+            color: rgba(255, 255, 255, 0.8);
+            position: relative;
+            z-index: 2;
         }
         
         .cover-date {
@@ -83,22 +102,22 @@
 <body>
     <div class="report-page">
         <div class="cover-page">
-            <div class="cover-background" style="background-image: url('[BACKGROUND_IMAGE]');"></div>
+            <div class="cover-background" style="background-image: url('../input/dark_background_example.png');"></div>
             
             <div class="cover-header">
-                <img src="../../../themes/[THEME]/[THEME]_text_logo.png" alt="[COMPANY_NAME]" class="cover-logo">
+                <img src="../theme/acme_corp_text_logo.png" alt="[COMPANY_NAME]" class="cover-logo">
             </div>
             
             <div class="cover-content">
-                <h1 class="cover-title">[REPORT_TITLE]</h1>
-                <h2 class="cover-subtitle">[REPORT_SUBTITLE]</h2>
-                <p class="cover-tagline">[TAGLINE]</p>
+                <h1 class="cover-title">Annual Business Report 2024</h1>
+                <h2 class="cover-subtitle">Strategic Insights and Performance Metrics</h2>
+                <p class="cover-tagline">Driving Innovation Through Data-Driven Excellence</p>
             </div>
             
             <div class="cover-footer">
-                <div class="cover-date">[PUBLICATION_DATE]</div>
-                <div class="cover-authors">[AUTHORS]</div>
-                <div class="cover-department">[DEPARTMENT]</div>
+                <div class="cover-date">December 2024</div>
+                <div class="cover-authors">Corporate Strategy Team</div>
+                <div class="cover-department">Executive Office</div>
             </div>
         </div>
     </div>

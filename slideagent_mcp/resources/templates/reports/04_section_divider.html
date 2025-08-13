@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Section Divider</title>
-    <link rel="stylesheet" href="../reports/report_base.css">
-    <link rel="stylesheet" href="../../../themes/[THEME]/[THEME]_theme.css">
+    <link rel="stylesheet" href="../theme/report_base.css">
+    <link rel="stylesheet" href="../theme/acme_corp_theme.css">
     <style>
         .divider-page {
             height: 100%;
@@ -15,24 +15,13 @@
         
         .divider-background {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: -5%;
+            left: -5%;
+            right: -5%;
+            bottom: -5%;
             background-size: cover;
-            background-position: center;
-            opacity: 0.9;
-        }
-        
-        .divider-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, 
-                rgba(26, 77, 143, 0.95) 0%, 
-                rgba(74, 144, 226, 0.85) 100%);
+            background-position: center center;
+            background-repeat: no-repeat;
         }
         
         .divider-content {
@@ -41,90 +30,48 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            align-items: flex-start;
-            padding: 1.5in;
-            color: white;
+            align-items: center;
             z-index: 1;
         }
         
-        .section-label {
-            font-size: 14pt;
-            font-weight: 300;
-            text-transform: uppercase;
-            letter-spacing: 3pt;
-            margin-bottom: 0.3in;
-            opacity: 0.9;
+        .section-box {
+            background: var(--accent-color);
+            width: 5.5in;
+            height: 5.5in;
+            padding: 0.5in;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
         }
         
-        .section-number {
-            font-size: 72pt;
-            font-weight: 200;
-            line-height: 1;
-            margin-bottom: 0.2in;
-            opacity: 0.3;
+        .section-content {
+            text-align: left;
+        }
+        
+        .section-label {
+            font-size: 11pt;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1.5pt;
+            margin-bottom: 0.08in;
+            color: var(--text-primary);
         }
         
         .section-title {
-            font-size: 42pt;
+            font-size: 32pt;
             font-weight: 300;
-            line-height: 1.2;
-            margin-bottom: 0.3in;
-            max-width: 80%;
+            line-height: 1.1;
+            padding-bottom: 0.1in;
+            border-bottom: 2px solid var(--text-primary);
+            margin-bottom: 0.15in;
+            color: var(--text-primary);
         }
         
         .section-subtitle {
-            font-size: 18pt;
+            font-size: 13pt;
             font-weight: 300;
             line-height: 1.4;
-            opacity: 0.9;
-            max-width: 70%;
-        }
-        
-        .section-highlights {
-            position: absolute;
-            bottom: 1.5in;
-            left: 1.5in;
-            right: 1.5in;
-            display: flex;
-            gap: 0.5in;
-        }
-        
-        .highlight-box {
-            flex: 1;
-            padding: 0.2in;
-            background: rgba(255, 255, 255, 0.1);
-            border-left: 3px solid rgba(255, 255, 255, 0.5);
-        }
-        
-        .highlight-value {
-            font-size: 24pt;
-            font-weight: 300;
-            margin-bottom: 0.05in;
-        }
-        
-        .highlight-label {
-            font-size: 9pt;
-            text-transform: uppercase;
-            letter-spacing: 1pt;
-            opacity: 0.8;
-        }
-        
-        /* Alternative minimal style */
-        .divider-minimal {
-            background: white;
-        }
-        
-        .divider-minimal .divider-content {
-            color: var(--primary-color);
-        }
-        
-        .divider-minimal .section-number {
-            color: var(--bg-light);
-        }
-        
-        .divider-minimal .highlight-box {
-            background: var(--bg-light);
-            border-left-color: var(--primary-color);
             color: var(--text-primary);
         }
     </style>
@@ -132,28 +79,15 @@
 <body>
     <div class="report-page">
         <div class="divider-page">
-            <div class="divider-background" style="background-image: url('[SECTION_IMAGE]');"></div>
-            <div class="divider-overlay"></div>
+            <div class="divider-background" style="background-image: url('../input/dark_background_example.png');"></div>
             
             <div class="divider-content">
-                <div class="section-label">SECTION</div>
-                <div class="section-number">[SECTION_NUMBER]</div>
-                <h1 class="section-title">[SECTION_TITLE]</h1>
-                <p class="section-subtitle">[SECTION_SUBTITLE]</p>
-            </div>
-            
-            <div class="section-highlights">
-                <div class="highlight-box">
-                    <div class="highlight-value">[HIGHLIGHT_1_VALUE]</div>
-                    <div class="highlight-label">[HIGHLIGHT_1_LABEL]</div>
-                </div>
-                <div class="highlight-box">
-                    <div class="highlight-value">[HIGHLIGHT_2_VALUE]</div>
-                    <div class="highlight-label">[HIGHLIGHT_2_LABEL]</div>
-                </div>
-                <div class="highlight-box">
-                    <div class="highlight-value">[HIGHLIGHT_3_VALUE]</div>
-                    <div class="highlight-label">[HIGHLIGHT_3_LABEL]</div>
+                <div class="section-box">
+                    <div class="section-content">
+                        <div class="section-label">Section 01</div>
+                        <h1 class="section-title">Financial Performance</h1>
+                        <p class="section-subtitle">Breaking records with sustainable growth strategies across all business segments</p>
+                    </div>
                 </div>
             </div>
         </div>

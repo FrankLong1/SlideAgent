@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision Quote</title>
+    <link rel="stylesheet" href="../theme/report_base.css">
+    <link rel="stylesheet" href="../theme/acme_corp_theme.css">
+    <style>
+        .quote-page {
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Full bleed background with image */
+        .quote-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('../input/dark_background_example.png');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            filter: blur(1px);
+        }
+        
+        /* Dark overlay for text readability */
+        .quote-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(27, 54, 93, 0.75);
+        }
+        
+        /* Quote content */
+        .quote-content {
+            position: relative;
+            height: 100%;
+            padding: 1.5in 1.5in;
+            z-index: 1;
+            color: white;
+        }
+        
+        /* Main quote text */
+        .quote-text {
+            font-size: 24pt;
+            font-weight: 300;
+            line-height: 1.5;
+            text-align: left;
+            margin-bottom: 0.4in;
+            max-width: 100%;
+            font-style: normal;
+        }
+        
+        /* Attribution */
+        .quote-attribution {
+            display: flex;
+            align-items: center;
+            gap: 0.3in;
+        }
+        
+        .attribution-line {
+            width: 1in;
+            height: 2px;
+            background: white;
+            opacity: 0.5;
+        }
+        
+        .attribution-text {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .attribution-name {
+            font-size: 16pt;
+            font-weight: 600;
+            margin-bottom: 0.05in;
+        }
+        
+        .attribution-title {
+            font-size: 12pt;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="report-page">
+        <div class="quote-page">
+            <div class="quote-background"></div>
+            <div class="quote-overlay"></div>
+            
+            <div class="quote-content">
+                <blockquote class="quote-text">
+                    When we think about the scale of what's happening with AI, the cloud era offers one of the closest parallels. Cloud required an enormous buildout of computational and physical infrastructure.</blockquote>
+                
+                <div class="quote-attribution">
+                    <div class="attribution-line"></div>
+                    <div class="attribution-text">
+                        <div class="attribution-name">Michael Chen</div>
+                        <div class="attribution-title">Chief Technology Officer</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
