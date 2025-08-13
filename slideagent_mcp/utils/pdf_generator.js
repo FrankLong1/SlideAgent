@@ -325,7 +325,7 @@ async function generatePDFWithServer(slidesDir, outputPath = null, format = 'sli
                 const pdfOptions = format === 'report' ? {
                     format: 'Letter',  // 8.5x11 inches
                     printBackground: true,
-                    preferCSSPageSize: true,
+                    preferCSSPageSize: false,  // Don't use CSS page size, use exact Letter dimensions
                     margin: {
                         top: 0,
                         right: 0,
