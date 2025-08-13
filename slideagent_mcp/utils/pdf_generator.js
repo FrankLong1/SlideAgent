@@ -44,12 +44,14 @@ const REPORT_CSS = `
         transform: none !important;
     }
     .report-page {
-        width: 8.5in !important;
-        height: 11in !important;
+        width: 1275px !important;
+        height: 1650px !important;
         margin: 0 !important;
+        padding: 0 !important;
         box-shadow: none !important;
         border: none !important;
         overflow: hidden !important;
+        position: relative !important;
     }
 `;
 
@@ -119,9 +121,10 @@ async function getAvailablePort(startPort = 9000) {
 
 // Page pool for concurrent processing
 class PagePool {
-    constructor(browser, size = 8) {
+    constructor(browser, size = 8, format = 'slides') {
         this.browser = browser;
         this.size = size;
+        this.format = format;
         this.pages = [];
         this.available = [];
         this.initialized = false;
@@ -131,9 +134,13 @@ class PagePool {
         if (this.initialized) return;
         this.initialized = true;
         
+        const viewport = this.format === 'report' 
+            ? { width: 1275, height: 1650, deviceScaleFactor: 1 }  // 8.5x11 at 150 DPI
+            : { width: 1920, height: 1080 };  // 16:9 for slides
+        
         for (let i = 0; i < this.size; i++) {
             const page = await this.browser.newPage();
-            await page.setViewport({ width: 1920, height: 1080 });
+            await page.setViewport(viewport);
             this.pages.push(page);
             this.available.push(page);
         }
@@ -153,8 +160,12 @@ class PagePool {
         try {
             await page.goto('about:blank', { waitUntil: 'domcontentloaded' });
         } catch (e) {
+            const viewport = this.format === 'report' 
+                ? { width: 1275, height: 1650, deviceScaleFactor: 1 }  // 8.5x11 at 150 DPI
+                : { width: 1920, height: 1080 };  // 16:9 for slides
+            
             const newPage = await this.browser.newPage();
-            await newPage.setViewport({ width: 1920, height: 1080 });
+            await newPage.setViewport(viewport);
             page = newPage;
         }
         
@@ -284,15 +295,8 @@ async function generatePDFWithServer(slidesDir, outputPath = null, format = 'sli
     const { server, port } = await startLocalServer(projectDir);
 
     const browser = await launchBrowser();
-    const pagePool = new PagePool(browser, 8);
+    const pagePool = new PagePool(browser, 8, format);
     await pagePool.init();
-    
-    // Adjust viewport for report format
-    if (format === 'report') {
-        for (const page of pagePool.pages) {
-            await page.setViewport({ width: 816, height: 1056 });  // 8.5x11 at 96 DPI
-        }
-    }
 
     // Create progress bar
     const progressBar = new cliProgress.SingleBar({
@@ -323,9 +327,10 @@ async function generatePDFWithServer(slidesDir, outputPath = null, format = 'sli
 
                 // Generate PDF with appropriate dimensions
                 const pdfOptions = format === 'report' ? {
-                    format: 'Letter',  // 8.5x11 inches
+                    width: '8.5in',
+                    height: '11in',
                     printBackground: true,
-                    preferCSSPageSize: false,  // Don't use CSS page size, use exact Letter dimensions
+                    preferCSSPageSize: false,  // Don't use CSS page size, use exact dimensions
                     margin: {
                         top: 0,
                         right: 0,
