@@ -35,6 +35,10 @@ const SLIDE_CSS = `
 `;
 
 const REPORT_CSS = `
+    @page {
+        size: 8.5in 11in !important;
+        margin: 0 !important;
+    }
     body {
         background: white !important;
         padding: 0 !important;
@@ -44,8 +48,8 @@ const REPORT_CSS = `
         transform: none !important;
     }
     .report-page {
-        width: 1275px !important;
-        height: 1650px !important;
+        width: 8.5in !important;
+        height: 11in !important;
         margin: 0 !important;
         padding: 0 !important;
         box-shadow: none !important;

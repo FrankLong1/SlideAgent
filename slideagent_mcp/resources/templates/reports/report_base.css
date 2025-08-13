@@ -26,8 +26,8 @@
 
 /* Core Page Container */
 .report-page {
-    width: 1275px;
-    height: 1650px;
+    width: 8.5in;
+    height: 11in;
     margin: 0 auto;
     background: white;
     position: relative;
@@ -380,10 +380,36 @@ tr:last-child td {
 
 /* Print Optimization */
 @media print {
+    /* Set exact page size for PDF - critical for report dimensions */
+    @page {
+        size: 8.5in 11in;              /* Force Letter size pages */
+        margin: 0;                     /* No page margins - reports fill entire page */
+    }
+    
+    /* Remove browser viewing styles that interfere with PDF */
+    body {
+        background: none !important;   /* No gray background in PDF */
+        padding: 0 !important;         /* No spacing around pages in PDF */
+        margin: 0 !important;          /* No margins in PDF */
+        transform: none !important;    /* Reset browser zoom for PDF */
+        transform-origin: initial !important;
+    }
+    
+    /* Ensure each report page prints perfectly on its own page */
     .report-page {
-        margin: 0;
-        box-shadow: none;
-        page-break-after: always;
+        width: 8.5in !important;       /* Exact page width */
+        height: 11in !important;       /* Exact page height */
+        margin: 0 !important;          /* No spacing between pages in PDF */
+        box-shadow: none !important;   /* No shadows in PDF */
+        page-break-after: always !important;  /* Each page = new page */
+        page-break-inside: avoid !important;  /* Never break page content across pages */
+        break-after: page !important;         /* Modern page break syntax */
+        break-inside: avoid !important;       /* Modern break avoidance */
+    }
+    
+    /* Don't add a page break after the last page */
+    .report-page:last-child {
+        page-break-after: avoid !important;
     }
     
     .no-print {
