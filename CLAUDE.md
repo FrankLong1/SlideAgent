@@ -65,15 +65,18 @@ SlideAgent/
 ├── slideagent_mcp/              # SlideAgent MCP helper server
 │   ├── server.py                # FastMCP server implementation
 │   ├── pdf_generator.js         # PDF generation utility
-│   └── live_viewer_server.js    # Live preview server
+│   ├── live_viewer_server.js    # Live preview server
+│   └── resources/
+│       └── templates/
+│           ├── slides/          # Self-documenting slide templates
+│           └── charts/          # Self-documenting chart templates
 ├── src/
 │   ├── charts/
 │   │   ├── chart_templates/     # Self-documenting chart templates
 │   │   └── utils/
 │   │       └── plot_buddy.py    # Main chart generation class
 │   └── slides/
-│       ├── base.css             # Core slide styling & PDF optimization
-│       └── slide_templates/     # Self-documenting slide templates
+│       └── base.css             # Core slide styling & PDF optimization
 ├── themes/
 │   ├── examples/                # Example themes for reference
 │   │   └── acme_corp/           # Default professional theme
@@ -101,10 +104,11 @@ SlideAgent/
 ## Template Discovery
 
 **CRITICAL**: Always call these tools before creating outlines or content:
-- Use `list_slide_templates` to discover all available slide templates with their paths
-- Use `list_chart_templates` to discover all chart templates with their paths
+- Use `list_slide_templates` to discover all available slide templates
+- Use `list_chart_templates` to discover all chart templates
 - Templates are self-documenting with metadata about use cases and best practices
-- Use the EXACT paths returned by these tools in your outline and when calling init tools
+- In outlines, use just the template FILENAME (e.g., '00_title_slide.html', '07_financial_data_table.html')
+- The `init_slide` MCP tool automatically resolves the template location
 
 ## Chart Generation
 
@@ -251,7 +255,7 @@ Use the `create_project` MCP tool to create a new project. This automatically:
 
 # Section 1: Section Name (slides X-Y)    ← Use single # for sections
 ## Slide X: Slide Title                   ← Use double ## for slides
-- Template: src/slides/slide_templates/00_title_slide.html
+- Template: 00_title_slide.html  # Just use template filename
 - Content: [DETAILED CONTENT - see below for requirements]
 ```
 
@@ -281,7 +285,7 @@ The outline should contain **ACTUAL DETAILED CONTENT** for each slide, not place
 **Example of GOOD detailed content**:
 ```markdown
 ## Slide 2: Financial Performance
-- Template: src/slides/slide_templates/07_financial_data_table.html
+- Template: slideagent_mcp/resources/templates/slides/07_financial_data_table.html
 - Content:
   - Revenue FY2024: $1.9B (737% YoY growth)
   - Revenue FY2023: $229M (1,346% YoY growth)  
@@ -297,12 +301,12 @@ The outline should contain **ACTUAL DETAILED CONTENT** for each slide, not place
 **Example of BAD placeholder content**:
 ```markdown
 ## Slide 2: Financial Performance
-- Template: src/slides/slide_templates/07_financial_data_table.html
+- Template: slideagent_mcp/resources/templates/slides/07_financial_data_table.html
 - Content: Financial metrics and performance data
 ```
 
 **CRITICAL STEPS**:
-1. Call `list_slide_templates` to discover all available templates with paths
+1. Call `list_slide_templates` to discover all available templates
 2. Call `list_chart_templates` to see chart options
 3. Review the metadata to understand best use cases
 4. **EXTRACT DETAILED CONTENT** from source materials (input files, S1 filings, etc.)
@@ -335,8 +339,8 @@ agent_distribution:
 
 ```markdown
 # Section 1: Introduction (slides 1-2)
-## Slide 1: Title Slide
-- Template: src/slides/slide_templates/00_title_slide.html  # Use exact path from list_templates
+## Slide 1: Title Slide  
+- Template: slideagent_mcp/resources/templates/slides/00_title_slide.html  # Use exact path from list_templates
 - Content: Project Title, Author, Date
 ```
 
@@ -375,13 +379,13 @@ Task(
 
 #### **Agent Workflow**
 1. **Charts first**
-   - Use `init_chart` MCP tool with the exact template path from `list_chart_templates`
+   - Use `init_chart` MCP tool with just the template filename (e.g., 'bar_chart.py')
    - Edit data/config only (EDIT SECTION)
    - Run → outputs `_branded.png` and `_clean.png`
    - Verify files exist
 
 2. **Slides next**
-   - Use `init_slide` MCP tool with the exact template path from `list_slide_templates`
+   - Use `init_slide` MCP tool with just the template filename (e.g., '01_base_slide.html')
    - The MCP tool automatically sets correct CSS paths to ../theme/
    - Replace placeholders with detailed content from outline
    - Insert chart paths (use `_clean.png` versions)
