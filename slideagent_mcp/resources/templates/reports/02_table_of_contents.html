@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table of Contents</title>
+    <link rel="stylesheet" href="../reports/report_base.css">
+    <link rel="stylesheet" href="../../../themes/[THEME]/[THEME]_theme.css">
+    <style>
+        .toc-page {
+            padding: 1in;
+        }
+        
+        .toc-header {
+            margin-bottom: 0.5in;
+            padding-bottom: 0.2in;
+            border-bottom: 3px solid var(--primary-color);
+        }
+        
+        .toc-title {
+            font-size: 36pt;
+            font-weight: 300;
+            color: var(--primary-color);
+        }
+        
+        .toc-sections {
+            margin-top: 0.3in;
+        }
+        
+        .toc-section {
+            margin-bottom: 0.3in;
+        }
+        
+        .toc-main-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.15in;
+            position: relative;
+        }
+        
+        .toc-main-entry::after {
+            content: "";
+            position: absolute;
+            bottom: 0.05in;
+            left: 0;
+            right: 0;
+            border-bottom: 2px dotted #999;
+            z-index: -1;
+        }
+        
+        .toc-main-title {
+            background: white;
+            padding-right: 0.1in;
+            font-size: 14pt;
+            font-weight: 600;
+            color: var(--primary-color);
+            z-index: 1;
+        }
+        
+        .toc-main-page {
+            background: white;
+            padding-left: 0.1in;
+            font-size: 14pt;
+            font-weight: 600;
+            color: var(--primary-color);
+            z-index: 1;
+        }
+        
+        .toc-sub-entries {
+            margin-left: 0.3in;
+            margin-bottom: 0.2in;
+        }
+        
+        .toc-sub-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.08in;
+            position: relative;
+        }
+        
+        .toc-sub-entry::after {
+            content: "";
+            position: absolute;
+            bottom: 0.03in;
+            left: 0;
+            right: 0;
+            border-bottom: 1px dotted #ccc;
+            z-index: -1;
+        }
+        
+        .toc-sub-title {
+            background: white;
+            padding-right: 0.1in;
+            font-size: 11pt;
+            color: var(--text-primary);
+            z-index: 1;
+        }
+        
+        .toc-sub-page {
+            background: white;
+            padding-left: 0.1in;
+            font-size: 11pt;
+            color: var(--text-primary);
+            z-index: 1;
+        }
+        
+        .toc-visual-elements {
+            display: flex;
+            gap: 0.3in;
+            margin-top: 0.5in;
+        }
+        
+        .toc-visual-element {
+            flex: 1;
+            height: 2in;
+            background: var(--bg-light);
+            border-radius: 0.05in;
+            overflow: hidden;
+        }
+        
+        .toc-visual-element img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+    <div class="report-page">
+        <div class="page-content toc-page">
+            <div class="toc-header">
+                <h1 class="toc-title">Contents</h1>
+            </div>
+            
+            <div class="toc-sections">
+                <!-- Section 1 -->
+                <div class="toc-section">
+                    <div class="toc-main-entry">
+                        <span class="toc-main-title">[SECTION_1_TITLE]</span>
+                        <span class="toc-main-page">[PAGE_NUMBER]</span>
+                    </div>
+                    <div class="toc-sub-entries">
+                        <div class="toc-sub-entry">
+                            <span class="toc-sub-title">[SUBSECTION_1_1]</span>
+                            <span class="toc-sub-page">[PAGE_NUMBER]</span>
+                        </div>
+                        <div class="toc-sub-entry">
+                            <span class="toc-sub-title">[SUBSECTION_1_2]</span>
+                            <span class="toc-sub-page">[PAGE_NUMBER]</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Section 2 -->
+                <div class="toc-section">
+                    <div class="toc-main-entry">
+                        <span class="toc-main-title">[SECTION_2_TITLE]</span>
+                        <span class="toc-main-page">[PAGE_NUMBER]</span>
+                    </div>
+                    <div class="toc-sub-entries">
+                        <div class="toc-sub-entry">
+                            <span class="toc-sub-title">[SUBSECTION_2_1]</span>
+                            <span class="toc-sub-page">[PAGE_NUMBER]</span>
+                        </div>
+                        <div class="toc-sub-entry">
+                            <span class="toc-sub-title">[SUBSECTION_2_2]</span>
+                            <span class="toc-sub-page">[PAGE_NUMBER]</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Section 3 -->
+                <div class="toc-section">
+                    <div class="toc-main-entry">
+                        <span class="toc-main-title">[SECTION_3_TITLE]</span>
+                        <span class="toc-main-page">[PAGE_NUMBER]</span>
+                    </div>
+                </div>
+                
+                <!-- Section 4 -->
+                <div class="toc-section">
+                    <div class="toc-main-entry">
+                        <span class="toc-main-title">[SECTION_4_TITLE]</span>
+                        <span class="toc-main-page">[PAGE_NUMBER]</span>
+                    </div>
+                </div>
+                
+                <!-- Section 5 -->
+                <div class="toc-section">
+                    <div class="toc-main-entry">
+                        <span class="toc-main-title">[SECTION_5_TITLE]</span>
+                        <span class="toc-main-page">[PAGE_NUMBER]</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Optional visual elements preview -->
+            <div class="toc-visual-elements">
+                <div class="toc-visual-element">
+                    <img src="[PREVIEW_IMAGE_1]" alt="">
+                </div>
+                <div class="toc-visual-element">
+                    <img src="[PREVIEW_IMAGE_2]" alt="">
+                </div>
+                <div class="toc-visual-element">
+                    <img src="[PREVIEW_IMAGE_3]" alt="">
+                </div>
+                <div class="toc-visual-element">
+                    <img src="[PREVIEW_IMAGE_4]" alt="">
+                </div>
+            </div>
+        </div>
+        
+        <div class="page-number">2</div>
+    </div>
+</body>
+</html>

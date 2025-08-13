@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[REPORT_TITLE]</title>
+    <link rel="stylesheet" href="../reports/report_base.css">
+    <link rel="stylesheet" href="../../../themes/[THEME]/[THEME]_theme.css">
+    <style>
+        .cover-page {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+        
+        .cover-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: 0.8;
+            z-index: -1;
+        }
+        
+        .cover-header {
+            padding: 1in 1in 0.5in 1in;
+        }
+        
+        .cover-logo {
+            height: 60px;
+            margin-bottom: 0.5in;
+        }
+        
+        .cover-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 1in;
+        }
+        
+        .cover-title {
+            font-size: 48pt;
+            font-weight: 300;
+            line-height: 1.1;
+            margin-bottom: 0.3in;
+            color: var(--primary-color);
+        }
+        
+        .cover-subtitle {
+            font-size: 24pt;
+            font-weight: 300;
+            color: var(--text-secondary);
+            margin-bottom: 0.5in;
+        }
+        
+        .cover-tagline {
+            font-size: 14pt;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        
+        .cover-footer {
+            padding: 0.5in 1in 1in 1in;
+            font-size: 11pt;
+            color: var(--text-secondary);
+        }
+        
+        .cover-date {
+            margin-bottom: 0.1in;
+        }
+        
+        .cover-authors {
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="report-page">
+        <div class="cover-page">
+            <div class="cover-background" style="background-image: url('[BACKGROUND_IMAGE]');"></div>
+            
+            <div class="cover-header">
+                <img src="../../../themes/[THEME]/[THEME]_text_logo.png" alt="[COMPANY_NAME]" class="cover-logo">
+            </div>
+            
+            <div class="cover-content">
+                <h1 class="cover-title">[REPORT_TITLE]</h1>
+                <h2 class="cover-subtitle">[REPORT_SUBTITLE]</h2>
+                <p class="cover-tagline">[TAGLINE]</p>
+            </div>
+            
+            <div class="cover-footer">
+                <div class="cover-date">[PUBLICATION_DATE]</div>
+                <div class="cover-authors">[AUTHORS]</div>
+                <div class="cover-department">[DEPARTMENT]</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

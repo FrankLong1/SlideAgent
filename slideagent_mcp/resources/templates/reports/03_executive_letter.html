@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Letter</title>
+    <link rel="stylesheet" href="../reports/report_base.css">
+    <link rel="stylesheet" href="../../../themes/[THEME]/[THEME]_theme.css">
+    <style>
+        .letter-page {
+            padding: 1in;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .letter-header {
+            margin-bottom: 0.5in;
+            padding-bottom: 0.2in;
+            border-bottom: 3px solid var(--primary-color);
+        }
+        
+        .letter-title {
+            font-size: 24pt;
+            font-weight: 300;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            letter-spacing: 1pt;
+        }
+        
+        .letter-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .letter-body {
+            flex: 1;
+        }
+        
+        .letter-opening {
+            font-size: 14pt;
+            font-weight: 500;
+            line-height: 1.5;
+            margin-bottom: 0.3in;
+            color: var(--text-primary);
+        }
+        
+        .letter-paragraph {
+            font-size: 11pt;
+            line-height: 1.7;
+            margin-bottom: 0.2in;
+            text-align: justify;
+            hyphens: auto;
+        }
+        
+        .letter-emphasis {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .letter-signature-section {
+            margin-top: 0.5in;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5in;
+        }
+        
+        .signature-content {
+            flex: 1;
+        }
+        
+        .signature-image {
+            width: 2in;
+            height: auto;
+        }
+        
+        .signature-handwritten {
+            height: 0.75in;
+            margin-bottom: 0.1in;
+        }
+        
+        .signature-name {
+            font-size: 14pt;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.05in;
+        }
+        
+        .signature-title {
+            font-size: 11pt;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        
+        .executive-photo {
+            width: 1.5in;
+            height: 1.8in;
+            object-fit: cover;
+            border-radius: 0.05in;
+        }
+        
+        /* Pull quote styling for key message */
+        .letter-pullquote {
+            margin: 0.3in 0;
+            padding: 0.2in 0;
+            border-left: 4px solid var(--primary-color);
+            padding-left: 0.3in;
+        }
+        
+        .letter-pullquote p {
+            font-size: 14pt;
+            font-style: italic;
+            color: var(--primary-color);
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="report-page">
+        <div class="letter-page">
+            <div class="letter-header">
+                <h2 class="letter-title">[LETTER_TITLE]</h2>
+            </div>
+            
+            <div class="letter-content">
+                <div class="letter-body">
+                    <p class="letter-opening">
+                        [OPENING_STATEMENT]
+                    </p>
+                    
+                    <p class="letter-paragraph">
+                        [PARAGRAPH_1]
+                    </p>
+                    
+                    <p class="letter-paragraph">
+                        [PARAGRAPH_2] <span class="letter-emphasis">[EMPHASIS_POINT]</span> [CONTINUE_PARAGRAPH_2]
+                    </p>
+                    
+                    <div class="letter-pullquote">
+                        <p>[KEY_MESSAGE]</p>
+                    </div>
+                    
+                    <p class="letter-paragraph">
+                        [PARAGRAPH_3]
+                    </p>
+                    
+                    <p class="letter-paragraph">
+                        [PARAGRAPH_4]
+                    </p>
+                    
+                    <p class="letter-paragraph">
+                        [CLOSING_PARAGRAPH]
+                    </p>
+                </div>
+                
+                <div class="letter-signature-section">
+                    <div class="signature-content">
+                        <img src="[SIGNATURE_IMAGE]" alt="Signature" class="signature-handwritten">
+                        <div class="signature-name">[EXECUTIVE_NAME]</div>
+                        <div class="signature-title">[EXECUTIVE_TITLE]</div>
+                    </div>
+                    <img src="[EXECUTIVE_PHOTO]" alt="[EXECUTIVE_NAME]" class="executive-photo">
+                </div>
+            </div>
+        </div>
+        
+        <div class="page-header">
+            <span>[REPORT_TITLE]</span>
+            <span>[COMPANY_NAME]</span>
+        </div>
+        
+        <div class="page-number">3</div>
+    </div>
+</body>
+</html>

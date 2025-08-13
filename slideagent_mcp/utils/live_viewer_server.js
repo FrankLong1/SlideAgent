@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/**
+ * Live Viewer Server - Real-time slide preview with hot reload
+ * 
+ * Serves SlideAgent project slides with automatic browser refresh
+ * when files change. Used for development and presentation preview.
+ */
 
 const http = require('http');
 const fs = require('fs');

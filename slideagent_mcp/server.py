@@ -185,11 +185,11 @@ def create_project(name: str, theme: str = "acme_corp", description: str = "") -
     # Create directory structure
     dirs = [
         project_dir,
-        project_dir / "slides",
+        project_dir / "slides",  # Can contain both slides (16:9) and report pages (8.5x11)
         project_dir / "validation",
         project_dir / "plots", 
         project_dir / "input",
-        project_dir / "theme"  # Add theme directory
+        project_dir / "theme"  # Contains both slide_base.css and report_base.css
     ]
     
     for dir_path in dirs:
@@ -217,6 +217,10 @@ def create_project(name: str, theme: str = "acme_corp", description: str = "") -
     # Also copy slide_base.css to project/theme/ for self-containment
     if SLIDE_BASE_CSS_SOURCE.exists():
         shutil.copy2(SLIDE_BASE_CSS_SOURCE, project_dir / "theme" / SLIDE_BASE_CSS_NAME)
+    
+    # Also copy report_base.css to project/theme/ for report support
+    if REPORT_BASE_CSS_SOURCE.exists():
+        shutil.copy2(REPORT_BASE_CSS_SOURCE, project_dir / "theme" / REPORT_BASE_CSS_NAME)
     
     # No longer creating config.yaml - theme is derived from theme folder files
     
@@ -415,6 +419,55 @@ def list_slide_templates() -> List[Dict[str, Any]]:
     return ordered
 
 @mcp.tool()
+def list_report_templates() -> List[Dict[str, Any]]:
+    """
+    List all available report page templates with metadata.
+    
+    Returns:
+        List of template information with paths and use cases
+    """
+    templates: List[Dict[str, Any]] = []
+    
+    # List templates from system report templates directory
+    if SYSTEM_REPORT_TEMPLATES_DIR.exists():
+        for template_file in sorted(SYSTEM_REPORT_TEMPLATES_DIR.glob("*.html")):
+            # Map template names to use cases
+            use_cases = {
+                "01_cover_page": "Cover page with title, subtitle, and branding",
+                "02_table_of_contents": "Table of contents with section navigation",
+                "03_executive_letter": "Executive letter or foreword",
+                "04_section_divider": "Section divider with visual impact",
+                "05_content_page": "Standard content page with text and images",
+                "06_data_visualization": "Full-page data visualization with metrics",
+                "07_pull_quote": "Pull quote or key insight page",
+                "08_conclusion": "Conclusion with key takeaways and next steps"
+            }
+            
+            use_case = use_cases.get(template_file.stem, "Report page template")
+            
+            templates.append({
+                "name": template_file.stem,
+                "path": str(template_file.relative_to(BASE_DIR)),
+                "file": template_file.name,
+                "use_case": use_case,
+                "source": "system",
+            })
+    
+    # Also check user templates
+    user_report_templates = USER_TEMPLATES_DIR / "reports"
+    if user_report_templates.exists():
+        for template_file in sorted(user_report_templates.glob("*.html")):
+            templates.append({
+                "name": template_file.stem,
+                "path": str(template_file.relative_to(BASE_DIR)),
+                "file": template_file.name,
+                "use_case": "User custom report template",
+                "source": "user",
+            })
+    
+    return templates
+
+@mcp.tool()
 def list_chart_templates() -> List[Dict[str, Any]]:
     """
     List all available chart templates with metadata.
@@ -540,6 +593,85 @@ def init_slide(project: str, number: str, template: str = None,
         f.write(content)
     
     return str(slide_path)
+
+@mcp.tool()
+def init_report_page(project: str, number: str, template: str = None, 
+                     title: str = "", subtitle: str = "", section: str = "") -> str:
+    """
+    Initialize a report page from a template for a specific project.
+    
+    Args:
+        project: Name of the project
+        number: Page number (e.g., '01' or 'page_01')
+        template: Filename of the template (e.g., '01_cover_page.html')
+        title: Main title for the page
+        subtitle: Subtitle for the page
+        section: Section label for the page
+    
+    Returns:
+        Path to the created report file
+    """
+    project_dir = resolve_projects_dir() / project
+    if not project_dir.exists():
+        return f"Error: Project '{project}' not found"
+    
+    # Use the slides directory for all HTML content (slides and reports)
+    slides_dir = project_dir / "slides"
+    if not slides_dir.exists():
+        slides_dir.mkdir(exist_ok=True)  # Create if missing
+    
+    # Handle template
+    if template:
+        # Try to find template in system reports templates
+        template_file = SYSTEM_REPORT_TEMPLATES_DIR / template
+        if not template_file.exists():
+            # Try with just the filename
+            template_file = SYSTEM_REPORT_TEMPLATES_DIR / Path(template).name
+            if not template_file.exists():
+                return f"Error: Template '{template}' not found"
+    else:
+        # Default to content page template
+        template_file = SYSTEM_REPORT_TEMPLATES_DIR / "05_content_page.html"
+        if not template_file.exists():
+            return f"Error: Default template not found"
+    
+    # Read template
+    with open(template_file, "r") as f:
+        content = f.read()
+    
+    # Get theme from theme folder
+    try:
+        theme = get_project_theme(project_dir)
+    except ValueError as e:
+        return f"Error: {e}"
+    
+    # Replace CSS path placeholders
+    # From reports/ to theme/ is ../theme/
+    base_css_path = f"{REL_PATH_TO_THEME_FROM_REPORTS}/{REPORT_BASE_CSS_NAME}"
+    theme_css_path = f"{REL_PATH_TO_THEME_FROM_REPORTS}/{theme}{THEME_CSS_SUFFIX}"
+    
+    # Replace placeholders
+    content = content.replace('[THEME]', theme)
+    content = content.replace('[REPORT_TITLE]', title)
+    content = content.replace('[CONTENT_TITLE]', title)
+    content = content.replace('[CONTENT_SUBTITLE]', subtitle)
+    content = content.replace('[SECTION_NAME]', section)
+    
+    # Normalize page number
+    if not number.startswith('page_'):
+        number = f"page_{number.zfill(2)}"
+    
+    page_num = number.replace('page_', '')
+    content = content.replace('[PAGE_NUMBER]', page_num)
+    
+    # Create report file (in slides directory with report_ prefix for clarity)
+    page_name = f"report_{number}.html"
+    page_path = slides_dir / page_name
+    
+    with open(page_path, "w") as f:
+        f.write(content)
+    
+    return str(page_path)
 
 @mcp.tool()
 def init_chart(project: str, name: str, template: str = None) -> str:
@@ -735,13 +867,14 @@ def swap_theme(project: str, theme: str) -> str:
 # =============================================================================
 
 @mcp.tool()
-def generate_pdf(project: str, output_path: str = None) -> Dict[str, Any]:
+def generate_pdf(project: str, output_path: str = None, format: str = "slides") -> Dict[str, Any]:
     """
-    Generate PDF from all slides in a project.
+    Generate PDF from slides or report pages in a project.
     
     Args:
         project: Name of the project
         output_path: Custom output path (optional)
+        format: "slides" for horizontal 16:9, "report" for vertical 8.5x11 (default: "slides")
     
     Returns:
         Result dictionary with path or error
@@ -751,19 +884,39 @@ def generate_pdf(project: str, output_path: str = None) -> Dict[str, Any]:
         return {"success": False, "error": f"Project '{project}' not found"}
     
     slides_dir = project_dir / "slides"
-    if not slides_dir.exists() or not list(slides_dir.glob("*.html")):
-        return {"success": False, "error": f"No slides found in project '{project}'"}
+    if not slides_dir.exists():
+        return {"success": False, "error": f"No slides directory found in project '{project}'"}
     
-    # Run pdf_generator.js from utils directory
+    # Determine which files to include based on format
+    if format == "report":
+        # For reports, include only report_*.html files
+        html_files = list(slides_dir.glob("report*.html"))
+        if not html_files:
+            return {"success": False, "error": f"No report pages found in project '{project}'"}
+        default_output = str(project_dir / f"{project}-report.pdf")
+    else:
+        # For slides, include slide_*.html files (or all if no specific pattern)
+        html_files = list(slides_dir.glob("slide_*.html"))
+        if not html_files:
+            # Fallback to all HTML files if no slide_ pattern
+            html_files = list(slides_dir.glob("*.html"))
+            # Exclude report files from slide generation
+            html_files = [f for f in html_files if not f.name.startswith("report")]
+        if not html_files:
+            return {"success": False, "error": f"No slides found in project '{project}'"}
+        default_output = str(project_dir / f"{project}.pdf")
+    
+    output = output_path or default_output
+    
+    # Run pdf_generator.js from utils directory with format parameter
     pdf_script = Path(__file__).parent / "utils" / "pdf_generator.js"
     if not pdf_script.exists():
         return {"success": False, "error": "PDF generator script not found"}
     
-    output = output_path or str(project_dir / f"{project}.pdf")
-    
     try:
+        # Pass format as third argument to the generator
         result = subprocess.run(
-            ["node", str(pdf_script), str(slides_dir), output],
+            ["node", str(pdf_script), str(slides_dir), output, format],
             capture_output=True,
             text=True,
             cwd=str(BASE_DIR)
@@ -773,7 +926,8 @@ def generate_pdf(project: str, output_path: str = None) -> Dict[str, Any]:
             return {
                 "success": True,
                 "path": output,
-                "message": "PDF generated successfully"
+                "message": f"PDF generated successfully ({format} format)",
+                "format": format
             }
         else:
             return {
@@ -877,57 +1031,105 @@ def stop_live_viewer(project: str = None) -> Dict[str, Any]:
         LIVE_VIEWER_PROCESSES.clear()
         return {"success": True, "message": "Stopped all live viewers"}
 
-@mcp.tool()
-def get_repo_structure() -> str:
-    """
-    Get the current SlideAgent repository structure and conventions.
+def _build_tree(path: Path, prefix: str = "", is_last: bool = True, max_depth: int = 3, current_depth: int = 0, stop_at_project_level: bool = False) -> List[str]:
+    """Helper to recursively build directory tree visualization."""
+    lines = []
     
-    Returns a formatted view of the directory layout, naming conventions,
-    and path relationships. Use this tool to understand the project structure
-    or when debugging path-related issues.
+    if current_depth >= max_depth:
+        return lines
+    
+    # Skip certain directories
+    skip_dirs = {'.git', '__pycache__', 'node_modules', '.venv', 'venv', '.pytest_cache', '.DS_Store'}
+    
+    try:
+        items = sorted(path.iterdir(), key=lambda x: (not x.is_dir(), x.name))
+        items = [item for item in items if item.name not in skip_dirs and not item.name.startswith('.')]
+        
+        for i, item in enumerate(items):
+            is_last_item = (i == len(items) - 1)
+            connector = "└── " if is_last_item else "├── "
+            extension = "    " if is_last_item else "│   "
+            
+            # Add docstring for Python files
+            doc_info = ""
+            if item.is_file() and item.suffix == '.py':
+                try:
+                    content = item.read_text()
+                    # Extract module-level docstring (handle shebang lines)
+                    file_lines = content.split('\n')
+                    for j, line in enumerate(file_lines[:5]):  # Check first 5 lines
+                        if line.strip().startswith('"""'):
+                            # Found start of docstring
+                            docstring_parts = content.split('"""')
+                            if len(docstring_parts) >= 2:
+                                docstring = docstring_parts[1].strip().split('\n')[0]
+                                if docstring and not docstring.startswith('TEMPLATE_META'):
+                                    # Show full docstring, not truncated
+                                    doc_info = f"  # {docstring}"
+                                elif docstring.startswith('TEMPLATE_META'):
+                                    # For template meta, get the title
+                                    meta_lines = docstring_parts[1].strip().split('\n')
+                                    for meta_line in meta_lines:
+                                        if 'title:' in meta_line:
+                                            title = meta_line.split('title:')[1].strip()
+                                            doc_info = f"  # {title}"
+                                            break
+                            break
+                except:
+                    pass
+            
+            lines.append(f"{prefix}{connector}{item.name}{doc_info}")
+            
+            # For user_projects, stop at project level (don't recurse into project folders)
+            if item.is_dir() and not (stop_at_project_level and current_depth == 0):
+                new_prefix = prefix + extension
+                lines.extend(_build_tree(item, new_prefix, is_last_item, max_depth, current_depth + 1, stop_at_project_level))
+    except PermissionError:
+        pass
+    
+    return lines
+
+@mcp.tool()
+def view_repo_structure() -> str:
+    """
+    View the complete SlideAgent repository structure with actual directory traversal.
+    
+    Provides a comprehensive view including:
+    - Actual directory tree visualization
+    - Template discovery for slides, reports, and charts
+    - Naming conventions and path relationships
+    - Python module docstrings where relevant
     
     Returns:
-        String: Formatted repository structure documentation
+        String: Formatted repository structure with live directory tree
     """
     structure = []
-    structure.append("=" * 70)
-    structure.append("SLIDEAGENT REPOSITORY STRUCTURE")
-    structure.append("=" * 70)
+    structure.append("=" * 80)
+    structure.append("SLIDEAGENT REPOSITORY STRUCTURE - LIVE VIEW")
+    structure.append("=" * 80)
     structure.append("")
     
-    # Directory structure
-    structure.append("📁 DIRECTORY STRUCTURE:")
+    # Actual directory tree
+    structure.append("📁 ACTUAL DIRECTORY TREE:")
     structure.append("-" * 40)
     structure.append("")
-    structure.append("slideagent_mcp/  (System - MCP server package)")
-    structure.append("  └── resources/")
-    structure.append("      └── templates/")
-    structure.append("          ├── slides/")
-    structure.append(f"          │   ├── {SLIDE_BASE_CSS_NAME}  ← Core 16:9 styling")
-    structure.append("          │   └── *.html  ← Slide templates")
-    structure.append("          ├── charts/  ← Chart templates")
-    structure.append("          └── reports/")
-    structure.append(f"              └── {REPORT_BASE_CSS_NAME}  ← 8.5x11 styling")
+    
+    # Show slideagent_mcp directory tree
+    mcp_dir = Path(__file__).parent
+    if mcp_dir.exists():
+        structure.append("slideagent_mcp/")
+        tree_lines = _build_tree(mcp_dir, "", max_depth=4)
+        structure.extend(tree_lines)
     structure.append("")
     
-    # User project structure
-    structure.append("user_projects/  (User space - your projects)")
-    structure.append("  └── {project-name}/  ← Self-contained project")
-    structure.append("      ├── theme/  ← Project-local CSS and assets")
-    structure.append(f"      │   ├── {SLIDE_BASE_CSS_NAME}  ← Required")
-    structure.append(f"      │   ├── {{theme-name}}{THEME_CSS_SUFFIX}")
-    structure.append(f"      │   ├── {{theme-name}}{THEME_ICON_LOGO_SUFFIX}")
-    structure.append(f"      │   └── {{theme-name}}{THEME_TEXT_LOGO_SUFFIX}")
-    structure.append("      ├── slides/")
-    structure.append("      │   └── slide_*.html  ← Generated slides")
-    structure.append("      ├── plots/")
-    structure.append("      │   ├── *.py  ← Chart scripts")
-    structure.append("      │   ├── *_branded.png  ← With titles")
-    structure.append("      │   └── *_clean.png  ← For slides (no titles)")
-    structure.append("      ├── input/  ← Source materials")
-    structure.append("      ├── validation/  ← Screenshots")
-    structure.append("      └── outline.md")
-    structure.append("")
+    # Show user_projects if it exists (stop at project level)
+    projects_dir = resolve_projects_dir()
+    if projects_dir.exists():
+        structure.append("user_projects/")
+        # Only show project names, not their internal structure
+        structure.extend(_build_tree(projects_dir, "", max_depth=1, stop_at_project_level=True))
+        structure.append("")
+    
     
     # Path relationships
     structure.append("🔗 PATH RELATIONSHIPS:")
@@ -937,48 +1139,43 @@ def get_repo_structure() -> str:
     structure.append(f"  • Theme CSS: {REL_PATH_TO_THEME_FROM_SLIDES}/{{theme-name}}{THEME_CSS_SUFFIX}")
     structure.append("  • Charts: ../plots/{chart-name}_clean.png")
     structure.append("")
-    structure.append("From theme CSS:")
-    structure.append(f"  • Logo: ./{{theme-name}}{THEME_ICON_LOGO_SUFFIX}")
+    structure.append("From reports/report_*.html:")
+    structure.append(f"  • Base CSS: {REL_PATH_TO_THEME_FROM_SLIDES}/{REPORT_BASE_CSS_NAME}")
+    structure.append(f"  • Theme CSS: {REL_PATH_TO_THEME_FROM_SLIDES}/{{theme-name}}{THEME_CSS_SUFFIX}")
     structure.append("")
     
     # Naming conventions
     structure.append("📝 NAMING CONVENTIONS:")
     structure.append("-" * 40)
     structure.append("Slides: slide_01.html, slide_02.html, ...")
-    structure.append("Charts: {name}_clean.png (for slides)")
+    structure.append("Reports: report_01.html, report_02.html, ...")
+    structure.append("Charts: {name}_clean.png (for slides/reports)")
     structure.append("        {name}_branded.png (standalone)")
-    structure.append("Theme files (replace {theme-name}):")
-    structure.append(f"  • {{theme-name}}{THEME_CSS_SUFFIX}")
-    structure.append(f"  • {{theme-name}}{THEME_ICON_LOGO_SUFFIX}")
-    structure.append(f"  • {{theme-name}}{THEME_TEXT_LOGO_SUFFIX}")
-    structure.append(f"  • {{theme-name}}{THEME_STYLE_SUFFIX}")
     structure.append("")
     
     # System constants
     structure.append("⚙️ SYSTEM CONSTANTS:")
     structure.append("-" * 40)
-    structure.append(f"Base CSS: {SLIDE_BASE_CSS_NAME}")
-    structure.append(f"Theme path: {REL_PATH_TO_THEME_FROM_SLIDES}")
+    structure.append(f"Slide Base CSS: {SLIDE_BASE_CSS_NAME}")
+    structure.append(f"Report Base CSS: {REPORT_BASE_CSS_NAME}")
+    structure.append(f"Theme path from content: {REL_PATH_TO_THEME_FROM_SLIDES}")
     structure.append("")
     
     # Quick tips
     structure.append("💡 QUICK TIPS:")
     structure.append("-" * 40)
-    structure.append("• Use _clean.png charts in slides (no titles)")
+    structure.append("• Slides use 16:9 aspect ratio (1920x1080)")
+    structure.append("• Reports use 8.5x11 vertical layout")
+    structure.append("• Use _clean.png charts in slides/reports (no titles)")
     structure.append("• Use _branded.png charts for standalone docs")
     structure.append("• Each project has its own theme/ folder")
-    structure.append("• CSS paths are relative to slide location")
+    structure.append("• CSS paths are relative to content location")
     structure.append("")
     
-    # Quick check for current projects
-    projects_dir = resolve_projects_dir()
-    if projects_dir.exists():
-        project_count = len(list(projects_dir.iterdir()))
-        structure.append(f"📊 Current Status: {project_count} projects in user_projects/")
-    
-    structure.append("=" * 70)
+    structure.append("=" * 80)
     
     return "\n".join(structure)
+
 
 # =============================================================================
 # RUN SERVER

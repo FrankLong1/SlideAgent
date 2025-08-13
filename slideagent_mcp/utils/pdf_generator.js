@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+/**
+ * PDF Generator - High-quality PDF export for SlideAgent presentations
+ * 
+ * Converts HTML slides to PDF using Chromium headless browser.
+ * Handles 16:9 aspect ratio for slides and 8.5x11 for reports.
+ */
 
 const puppeteer = require('puppeteer');
 const cliProgress = require('cli-progress');
@@ -9,7 +15,7 @@ const http = require('http');
 const express = require('express');
 
 // Common CSS to inject for consistent rendering
-const COMMON_CSS = `
+const SLIDE_CSS = `
     body {
         background: white !important;
         padding: 0 !important;
@@ -21,6 +27,25 @@ const COMMON_CSS = `
     .slide, section.slide, div.slide {
         width: 1920px !important;
         height: 1080px !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        overflow: hidden !important;
+    }
+`;
+
+const REPORT_CSS = `
+    body {
+        background: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        display: block !important;
+        min-height: auto !important;
+        transform: none !important;
+    }
+    .report-page {
+        width: 8.5in !important;
+        height: 11in !important;
         margin: 0 !important;
         box-shadow: none !important;
         border: none !important;
@@ -212,22 +237,38 @@ async function waitForSlideReady(page, slideUrl) {
 }
 
 // Main PDF generation function using HTTP server
-async function generatePDFWithServer(slidesDir, outputPath = null) {
-    // Find all slide HTML files
-    const slideFiles = fs.readdirSync(slidesDir)
-        .filter(file => file.match(/^slide_\d+\.html$/))
-        .sort((a, b) => {
-            const numA = parseInt(a.match(/\d+/)[0]);
-            const numB = parseInt(b.match(/\d+/)[0]);
-            return numA - numB;
-        });
+async function generatePDFWithServer(slidesDir, outputPath = null, format = 'slides') {
+    // Find HTML files based on format
+    let htmlFiles;
+    if (format === 'report') {
+        // For reports, find report_*.html files
+        htmlFiles = fs.readdirSync(slidesDir)
+            .filter(file => file.match(/^report.*\.html$/))
+            .sort((a, b) => {
+                // Try to extract numbers for sorting
+                const numA = a.match(/\d+/) ? parseInt(a.match(/\d+/)[0]) : 999;
+                const numB = b.match(/\d+/) ? parseInt(b.match(/\d+/)[0]) : 999;
+                return numA - numB;
+            });
+    } else {
+        // For slides, find slide_*.html files
+        htmlFiles = fs.readdirSync(slidesDir)
+            .filter(file => file.match(/^slide_\d+\.html$/))
+            .sort((a, b) => {
+                const numA = parseInt(a.match(/\d+/)[0]);
+                const numB = parseInt(b.match(/\d+/)[0]);
+                return numA - numB;
+            });
+    }
+    
+    const slideFiles = htmlFiles;
 
     if (slideFiles.length === 0) {
         console.error(`Error: No slide files found in ${slidesDir}`);
         process.exit(1);
     }
 
-    console.log(`📑 Found ${slideFiles.length} slides to process`);
+    console.log(`📑 Found ${slideFiles.length} ${format === 'report' ? 'report pages' : 'slides'} to process`);
 
     // Generate output path if not provided
     if (!outputPath) {
@@ -235,7 +276,7 @@ async function generatePDFWithServer(slidesDir, outputPath = null) {
         outputPath = path.join(path.dirname(slidesDir), `${projectName}.pdf`);
     }
 
-    console.log(`📝 Generating PDF from ${slideFiles.length} slides`);
+    console.log(`📝 Generating PDF from ${slideFiles.length} ${format === 'report' ? 'report pages' : 'slides'} (${format} format)`);
     console.log(`📁 Output will be saved to: ${outputPath}`);
 
     // Start local server for the project
@@ -245,6 +286,13 @@ async function generatePDFWithServer(slidesDir, outputPath = null) {
     const browser = await launchBrowser();
     const pagePool = new PagePool(browser, 8);
     await pagePool.init();
+    
+    // Adjust viewport for report format
+    if (format === 'report') {
+        for (const page of pagePool.pages) {
+            await page.setViewport({ width: 816, height: 1056 });  // 8.5x11 at 96 DPI
+        }
+    }
 
     // Create progress bar
     const progressBar = new cliProgress.SingleBar({
@@ -270,11 +318,23 @@ async function generatePDFWithServer(slidesDir, outputPath = null) {
                 const slideUrl = `http://localhost:${port}/slides/${slideFile}`;
                 await waitForSlideReady(page, slideUrl);
                 
-                // Inject override CSS for PDF
-                await page.addStyleTag({ content: COMMON_CSS });
+                // Inject override CSS for PDF based on format
+                await page.addStyleTag({ content: format === 'report' ? REPORT_CSS : SLIDE_CSS });
 
-                // Generate PDF for this slide
-                const pdfBuffer = await page.pdf({
+                // Generate PDF with appropriate dimensions
+                const pdfOptions = format === 'report' ? {
+                    format: 'Letter',  // 8.5x11 inches
+                    printBackground: true,
+                    preferCSSPageSize: true,
+                    margin: {
+                        top: 0,
+                        right: 0,
+                        bottom: 0,
+                        left: 0
+                    },
+                    displayHeaderFooter: false,
+                    scale: 1.0
+                } : {
                     width: '16in',
                     height: '9in',
                     printBackground: true,
@@ -287,7 +347,9 @@ async function generatePDFWithServer(slidesDir, outputPath = null) {
                     },
                     displayHeaderFooter: false,
                     scale: 1.0
-                });
+                };
+                
+                const pdfBuffer = await page.pdf(pdfOptions);
 
                 pdfBuffers[i] = pdfBuffer;
                 completed++;
@@ -300,7 +362,7 @@ async function generatePDFWithServer(slidesDir, outputPath = null) {
         progressBar.stop();
 
         // Merge all PDFs into one
-        console.log(`🔀 Merging ${pdfBuffers.length} slides into single PDF...`);
+        console.log(`🔀 Merging ${pdfBuffers.length} ${format === 'report' ? 'pages' : 'slides'} into single PDF...`);
         const mergedPdf = await PDFLib.create();
         
         for (const pdfBuffer of pdfBuffers) {
@@ -336,17 +398,23 @@ async function main() {
     if (args.length === 0) {
         console.log(`
 Usage: 
-  node pdf_generator_http.js <slides-directory> [output-path]
+  node pdf_generator.js <slides-directory> [output-path] [format]
 
 Examples:
-  node pdf_generator_http.js projects/myproject/slides/
-  node pdf_generator_http.js projects/myproject/slides/ output.pdf
+  node pdf_generator.js projects/myproject/slides/
+  node pdf_generator.js projects/myproject/slides/ output.pdf
+  node pdf_generator.js projects/myproject/slides/ output.pdf slides
+  node pdf_generator.js projects/myproject/slides/ report.pdf report
+
+Formats:
+  slides - 16:9 horizontal format (default)
+  report - 8.5x11 vertical format
 
 Features:
   ✅ Uses HTTP server for proper asset loading
   ✅ Ensures parity with live viewer
   ✅ Handles all relative paths correctly
-  ✅ Preserves 16:9 aspect ratio
+  ✅ Supports both slides (16:9) and reports (8.5x11)
   ✅ High-quality rendering with proper dimensions
         `);
         process.exit(0);
@@ -354,13 +422,14 @@ Features:
 
     const slidesDir = args[0];
     const outputFile = args[1];
+    const format = args[2] || 'slides';
 
     if (!fs.existsSync(slidesDir)) {
         console.error(`Error: Directory not found: ${slidesDir}`);
         process.exit(1);
     }
 
-    await generatePDFWithServer(slidesDir, outputFile);
+    await generatePDFWithServer(slidesDir, outputFile, format);
 }
 
 // Handle process termination

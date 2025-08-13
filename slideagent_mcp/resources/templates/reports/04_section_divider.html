@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Section Divider</title>
+    <link rel="stylesheet" href="../reports/report_base.css">
+    <link rel="stylesheet" href="../../../themes/[THEME]/[THEME]_theme.css">
+    <style>
+        .divider-page {
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .divider-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: 0.9;
+        }
+        
+        .divider-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, 
+                rgba(26, 77, 143, 0.95) 0%, 
+                rgba(74, 144, 226, 0.85) 100%);
+        }
+        
+        .divider-content {
+            position: relative;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 1.5in;
+            color: white;
+            z-index: 1;
+        }
+        
+        .section-label {
+            font-size: 14pt;
+            font-weight: 300;
+            text-transform: uppercase;
+            letter-spacing: 3pt;
+            margin-bottom: 0.3in;
+            opacity: 0.9;
+        }
+        
+        .section-number {
+            font-size: 72pt;
+            font-weight: 200;
+            line-height: 1;
+            margin-bottom: 0.2in;
+            opacity: 0.3;
+        }
+        
+        .section-title {
+            font-size: 42pt;
+            font-weight: 300;
+            line-height: 1.2;
+            margin-bottom: 0.3in;
+            max-width: 80%;
+        }
+        
+        .section-subtitle {
+            font-size: 18pt;
+            font-weight: 300;
+            line-height: 1.4;
+            opacity: 0.9;
+            max-width: 70%;
+        }
+        
+        .section-highlights {
+            position: absolute;
+            bottom: 1.5in;
+            left: 1.5in;
+            right: 1.5in;
+            display: flex;
+            gap: 0.5in;
+        }
+        
+        .highlight-box {
+            flex: 1;
+            padding: 0.2in;
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 3px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .highlight-value {
+            font-size: 24pt;
+            font-weight: 300;
+            margin-bottom: 0.05in;
+        }
+        
+        .highlight-label {
+            font-size: 9pt;
+            text-transform: uppercase;
+            letter-spacing: 1pt;
+            opacity: 0.8;
+        }
+        
+        /* Alternative minimal style */
+        .divider-minimal {
+            background: white;
+        }
+        
+        .divider-minimal .divider-content {
+            color: var(--primary-color);
+        }
+        
+        .divider-minimal .section-number {
+            color: var(--bg-light);
+        }
+        
+        .divider-minimal .highlight-box {
+            background: var(--bg-light);
+            border-left-color: var(--primary-color);
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="report-page">
+        <div class="divider-page">
+            <div class="divider-background" style="background-image: url('[SECTION_IMAGE]');"></div>
+            <div class="divider-overlay"></div>
+            
+            <div class="divider-content">
+                <div class="section-label">SECTION</div>
+                <div class="section-number">[SECTION_NUMBER]</div>
+                <h1 class="section-title">[SECTION_TITLE]</h1>
+                <p class="section-subtitle">[SECTION_SUBTITLE]</p>
+            </div>
+            
+            <div class="section-highlights">
+                <div class="highlight-box">
+                    <div class="highlight-value">[HIGHLIGHT_1_VALUE]</div>
+                    <div class="highlight-label">[HIGHLIGHT_1_LABEL]</div>
+                </div>
+                <div class="highlight-box">
+                    <div class="highlight-value">[HIGHLIGHT_2_VALUE]</div>
+                    <div class="highlight-label">[HIGHLIGHT_2_LABEL]</div>
+                </div>
+                <div class="highlight-box">
+                    <div class="highlight-value">[HIGHLIGHT_3_VALUE]</div>
+                    <div class="highlight-label">[HIGHLIGHT_3_LABEL]</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

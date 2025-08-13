@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pull Quote</title>
+    <link rel="stylesheet" href="../reports/report_base.css">
+    <link rel="stylesheet" href="../../../themes/[THEME]/[THEME]_theme.css">
+    <style>
+        .quote-page {
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Full-page background with image */
+        .quote-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: 0.2;
+        }
+        
+        /* Color overlay */
+        .quote-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.95) 0%, 
+                rgba(240, 244, 248, 0.9) 100%);
+        }
+        
+        /* Quote content */
+        .quote-content {
+            position: relative;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5in;
+            z-index: 1;
+        }
+        
+        /* Large decorative quote mark */
+        .quote-mark {
+            font-size: 120pt;
+            line-height: 1;
+            color: var(--primary-color);
+            opacity: 0.15;
+            font-family: Georgia, serif;
+            margin-bottom: -0.3in;
+        }
+        
+        /* Main quote text */
+        .quote-text {
+            font-size: 28pt;
+            font-weight: 300;
+            line-height: 1.4;
+            text-align: center;
+            color: var(--text-primary);
+            max-width: 6in;
+            margin-bottom: 0.5in;
+            font-style: italic;
+        }
+        
+        .quote-emphasis {
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+        
+        /* Attribution */
+        .quote-attribution {
+            text-align: center;
+        }
+        
+        .attribution-name {
+            font-size: 14pt;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.05in;
+        }
+        
+        .attribution-title {
+            font-size: 11pt;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        
+        .attribution-company {
+            font-size: 11pt;
+            color: var(--text-secondary);
+        }
+        
+        /* Optional headshot */
+        .attribution-photo {
+            width: 1in;
+            height: 1in;
+            border-radius: 50%;
+            margin-bottom: 0.2in;
+            object-fit: cover;
+            border: 3px solid var(--primary-color);
+        }
+        
+        /* Context box */
+        .quote-context {
+            position: absolute;
+            bottom: 1in;
+            left: 1in;
+            right: 1in;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 0.2in 0.3in;
+            border-top: 2px solid var(--primary-color);
+        }
+        
+        .context-title {
+            font-size: 10pt;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.05in;
+        }
+        
+        .context-text {
+            font-size: 9pt;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="report-page">
+        <div class="quote-page">
+            <div class="quote-background" style="background-image: url('[BACKGROUND_IMAGE]');"></div>
+            <div class="quote-overlay"></div>
+            
+            <div class="quote-content">
+                <div class="quote-mark">"</div>
+                
+                <blockquote class="quote-text">
+                    [QUOTE_START] <span class="quote-emphasis">[QUOTE_EMPHASIS]</span> [QUOTE_END]
+                </blockquote>
+                
+                <div class="quote-attribution">
+                    <img src="[ATTRIBUTION_PHOTO]" alt="[ATTRIBUTION_NAME]" class="attribution-photo">
+                    <div class="attribution-name">[ATTRIBUTION_NAME]</div>
+                    <div class="attribution-title">[ATTRIBUTION_TITLE]</div>
+                    <div class="attribution-company">[ATTRIBUTION_COMPANY]</div>
+                </div>
+            </div>
+            
+            <div class="quote-context">
+                <div class="context-title">[CONTEXT_TITLE]</div>
+                <div class="context-text">[CONTEXT_TEXT]</div>
+            </div>
+        </div>
+        
+        <div class="page-number">[PAGE_NUMBER]</div>
+    </div>
+</body>
+</html>

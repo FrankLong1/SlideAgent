@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Page</title>
+    <link rel="stylesheet" href="../reports/report_base.css">
+    <link rel="stylesheet" href="../../../themes/[THEME]/[THEME]_theme.css">
+    <style>
+        .content-page {
+            padding: 1in;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .content-header {
+            margin-bottom: 0.3in;
+        }
+        
+        .content-title {
+            font-size: 24pt;
+            font-weight: 400;
+            color: var(--primary-color);
+            margin-bottom: 0.15in;
+            line-height: 1.3;
+        }
+        
+        .content-subtitle {
+            font-size: 14pt;
+            color: var(--text-secondary);
+            font-weight: 300;
+        }
+        
+        .content-body {
+            flex: 1;
+        }
+        
+        .content-section {
+            margin-bottom: 0.3in;
+        }
+        
+        .content-section h3 {
+            font-size: 14pt;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.15in;
+        }
+        
+        .content-paragraph {
+            font-size: 11pt;
+            line-height: 1.7;
+            margin-bottom: 0.15in;
+            text-align: justify;
+            hyphens: auto;
+        }
+        
+        .content-list {
+            margin-left: 0.3in;
+            margin-bottom: 0.2in;
+        }
+        
+        .content-list li {
+            margin-bottom: 0.08in;
+            line-height: 1.6;
+        }
+        
+        /* Key Insight Box */
+        .key-insight {
+            background: var(--bg-light);
+            border-left: 4px solid var(--primary-color);
+            padding: 0.2in;
+            margin: 0.25in 0;
+        }
+        
+        .key-insight h4 {
+            font-size: 12pt;
+            color: var(--primary-color);
+            margin-bottom: 0.1in;
+        }
+        
+        .key-insight p {
+            font-size: 10pt;
+            line-height: 1.6;
+        }
+        
+        /* Data Table */
+        .data-table {
+            margin: 0.25in 0;
+        }
+        
+        .data-table table {
+            width: 100%;
+            font-size: 10pt;
+        }
+        
+        .data-table caption {
+            font-size: 11pt;
+            font-weight: 600;
+            margin-bottom: 0.1in;
+            text-align: left;
+            color: var(--text-primary);
+        }
+        
+        /* Inline Chart */
+        .inline-chart {
+            margin: 0.25in 0;
+            text-align: center;
+        }
+        
+        .inline-chart img {
+            max-width: 100%;
+            max-height: 3in;
+            height: auto;
+        }
+        
+        .chart-caption {
+            font-size: 9pt;
+            color: var(--text-secondary);
+            margin-top: 0.1in;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="report-page">
+        <div class="content-page">
+            <div class="content-header">
+                <h2 class="content-title">[CONTENT_TITLE]</h2>
+                <p class="content-subtitle">[CONTENT_SUBTITLE]</p>
+            </div>
+            
+            <div class="content-body">
+                <div class="content-section">
+                    <p class="content-paragraph">
+                        [OPENING_PARAGRAPH]
+                    </p>
+                </div>
+                
+                <div class="content-section">
+                    <h3>[SECTION_1_TITLE]</h3>
+                    <p class="content-paragraph">
+                        [SECTION_1_CONTENT]
+                    </p>
+                    <ul class="content-list">
+                        <li>[BULLET_POINT_1]</li>
+                        <li>[BULLET_POINT_2]</li>
+                        <li>[BULLET_POINT_3]</li>
+                    </ul>
+                </div>
+                
+                <div class="key-insight">
+                    <h4>Key Insight</h4>
+                    <p>[KEY_INSIGHT_TEXT]</p>
+                </div>
+                
+                <div class="content-section">
+                    <h3>[SECTION_2_TITLE]</h3>
+                    <p class="content-paragraph">
+                        [SECTION_2_CONTENT]
+                    </p>
+                </div>
+                
+                <div class="inline-chart">
+                    <img src="[CHART_IMAGE]" alt="[CHART_DESCRIPTION]">
+                    <p class="chart-caption">[CHART_CAPTION]</p>
+                </div>
+                
+                <div class="content-section">
+                    <p class="content-paragraph">
+                        [CLOSING_PARAGRAPH]
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="page-header">
+            <span>[SECTION_NAME]</span>
+            <span>[REPORT_TITLE]</span>
+        </div>
+        
+        <div class="page-number">[PAGE_NUMBER]</div>
+    </div>
+</body>
+</html>
