@@ -49,7 +49,7 @@ def test_create_project():
     assert not (test_dir / "config.yaml").exists()
     
     # Check theme files copied
-    assert (test_dir / "theme" / "base.css").exists()
+    assert (test_dir / "theme" / "slide_base.css").exists()
     assert (test_dir / "theme" / "acme_corp_theme.css").exists()
     assert (test_dir / "theme" / "acme_corp_style.mplstyle").exists()
     
@@ -190,7 +190,7 @@ def test_init_slide():
         content = f.read()
     
     # Check CSS imports are correct
-    assert '<link rel="stylesheet" href="../theme/base.css">' in content
+    assert '<link rel="stylesheet" href="../theme/slide_base.css">' in content
     assert '<link rel="stylesheet" href="../theme/acme_corp_theme.css">' in content
     
     # Check replacements worked
@@ -311,9 +311,9 @@ def test_swap_theme():
     assert (test_dir / "theme" / "barney_theme.css").exists()
     assert (test_dir / "theme" / "barney_style.mplstyle").exists()
     
-    # Check old theme files removed (except base.css)
+    # Check old theme files removed (except slide_base.css)
     assert not (test_dir / "theme" / "acme_corp_theme.css").exists()
-    assert (test_dir / "theme" / "base.css").exists()  # Should be preserved
+    assert (test_dir / "theme" / "slide_base.css").exists()  # Should be preserved
     
     # Check slide was updated
     with open(test_dir / "slides" / "slide_01.html", "r") as f:

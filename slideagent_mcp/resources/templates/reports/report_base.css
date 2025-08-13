@@ -1,0 +1,405 @@
+/* 
+ * Report Base CSS
+ * Professional vertical PDF reports (8.5" x 11" Letter or A4)
+ * Optimized for 150 DPI output based on GS report analysis
+ */
+
+/* Reset and Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Page Setup */
+@page {
+    size: letter;  /* 8.5in x 11in */
+    margin: 0;
+}
+
+/* Alternative A4 support */
+@media print and (orientation: portrait) {
+    @page {
+        size: A4;  /* 210mm x 297mm */
+    }
+}
+
+/* Core Page Container */
+.report-page {
+    width: 8.5in;
+    height: 11in;
+    margin: 0 auto;
+    background: white;
+    position: relative;
+    page-break-after: always;
+    overflow: hidden;
+}
+
+/* Last page shouldn't force break */
+.report-page:last-child {
+    page-break-after: auto;
+}
+
+/* Standard Content Area with Margins */
+.page-content {
+    padding: 1in;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Full-bleed container (for images, colored backgrounds) */
+.full-bleed {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Typography Scale (matches professional reports) */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: #333;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+h1 {
+    font-size: 36pt;
+    font-weight: 300;
+    line-height: 1.2;
+    margin-bottom: 0.5in;
+    color: #000;
+}
+
+h2 {
+    font-size: 24pt;
+    font-weight: 400;
+    line-height: 1.3;
+    margin-bottom: 0.3in;
+    color: #000;
+}
+
+h3 {
+    font-size: 18pt;
+    font-weight: 500;
+    line-height: 1.4;
+    margin-bottom: 0.25in;
+    color: #000;
+}
+
+h4 {
+    font-size: 14pt;
+    font-weight: 600;
+    line-height: 1.5;
+    margin-bottom: 0.2in;
+    color: #000;
+}
+
+p {
+    font-size: 11pt;
+    line-height: 1.6;
+    margin-bottom: 0.15in;
+    text-align: justify;
+    hyphens: auto;
+}
+
+/* Lists */
+ul, ol {
+    margin-left: 0.3in;
+    margin-bottom: 0.15in;
+}
+
+li {
+    margin-bottom: 0.05in;
+    line-height: 1.6;
+}
+
+/* Headers and Footers */
+.page-header {
+    position: absolute;
+    top: 0.5in;
+    left: 1in;
+    right: 1in;
+    height: 0.5in;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 9pt;
+    color: #666;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 0.1in;
+}
+
+.page-footer {
+    position: absolute;
+    bottom: 0.5in;
+    left: 1in;
+    right: 1in;
+    height: 0.5in;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 9pt;
+    color: #666;
+}
+
+.page-number {
+    position: absolute;
+    bottom: 0.5in;
+    right: 1in;
+    font-size: 10pt;
+    color: #666;
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 0.25in;
+    font-size: 10pt;
+}
+
+th {
+    background-color: #f8f8f8;
+    font-weight: 600;
+    padding: 0.1in 0.15in;
+    text-align: left;
+    border-bottom: 2px solid #333;
+}
+
+td {
+    padding: 0.08in 0.15in;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+/* Charts and Images */
+.chart-container {
+    width: 100%;
+    margin: 0.25in 0;
+    text-align: center;
+}
+
+.chart-container img {
+    max-width: 100%;
+    height: auto;
+    /* 150 DPI optimization - images will be rendered at this resolution */
+}
+
+.chart-caption {
+    font-size: 9pt;
+    color: #666;
+    margin-top: 0.1in;
+    font-style: italic;
+}
+
+/* Pull Quotes */
+.pull-quote {
+    margin: 0.5in 0;
+    padding: 0.25in 0;
+    border-top: 3px solid #333;
+    border-bottom: 3px solid #333;
+}
+
+.pull-quote blockquote {
+    font-size: 18pt;
+    font-weight: 300;
+    line-height: 1.4;
+    color: #000;
+    font-style: italic;
+    margin: 0.2in 0;
+}
+
+.pull-quote .attribution {
+    font-size: 11pt;
+    color: #666;
+    text-align: right;
+    margin-top: 0.15in;
+}
+
+/* Two-Column Layout */
+.two-column {
+    display: flex;
+    gap: 0.3in;
+    margin: 0.25in 0;
+}
+
+.two-column .column {
+    flex: 1;
+}
+
+/* Sidebar/Callout Boxes */
+.callout-box {
+    background-color: #f8f8f8;
+    border-left: 4px solid #333;
+    padding: 0.2in;
+    margin: 0.25in 0;
+}
+
+.callout-box h4 {
+    margin-bottom: 0.1in;
+    color: #000;
+}
+
+/* Executive Summary Box */
+.executive-summary {
+    background-color: #f0f4f8;
+    padding: 0.3in;
+    margin: 0.3in 0;
+    border-radius: 0.05in;
+}
+
+.executive-summary h3 {
+    color: #1a4d8f;
+    margin-bottom: 0.15in;
+}
+
+/* Key Metrics Grid */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(2in, 1fr));
+    gap: 0.25in;
+    margin: 0.25in 0;
+}
+
+.metric-card {
+    padding: 0.2in;
+    background: #f8f8f8;
+    text-align: center;
+}
+
+.metric-value {
+    font-size: 24pt;
+    font-weight: 300;
+    color: #000;
+}
+
+.metric-label {
+    font-size: 9pt;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5pt;
+}
+
+/* Team/Credits Grid */
+.team-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.2in;
+    margin: 0.25in 0;
+}
+
+.team-member {
+    text-align: center;
+    padding: 0.15in;
+}
+
+.team-member .name {
+    font-weight: 600;
+    font-size: 11pt;
+}
+
+.team-member .title {
+    font-size: 9pt;
+    color: #666;
+}
+
+/* Table of Contents */
+.toc-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.15in;
+    position: relative;
+}
+
+.toc-entry::after {
+    content: "";
+    position: absolute;
+    bottom: 0.05in;
+    left: 0;
+    right: 0;
+    border-bottom: 1px dotted #999;
+    z-index: -1;
+}
+
+.toc-title {
+    background: white;
+    padding-right: 0.1in;
+    z-index: 1;
+}
+
+.toc-page {
+    background: white;
+    padding-left: 0.1in;
+    z-index: 1;
+}
+
+/* Utility Classes */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+.text-justify { text-align: justify; }
+
+.mt-1 { margin-top: 0.25in; }
+.mt-2 { margin-top: 0.5in; }
+.mt-3 { margin-top: 0.75in; }
+.mb-1 { margin-bottom: 0.25in; }
+.mb-2 { margin-bottom: 0.5in; }
+.mb-3 { margin-bottom: 0.75in; }
+
+.pt-1 { padding-top: 0.25in; }
+.pt-2 { padding-top: 0.5in; }
+.pb-1 { padding-bottom: 0.25in; }
+.pb-2 { padding-bottom: 0.5in; }
+
+/* Page Break Controls */
+.page-break-before { page-break-before: always; }
+.page-break-after { page-break-after: always; }
+.avoid-break { page-break-inside: avoid; }
+
+/* Brand Colors (override in theme CSS) */
+:root {
+    --primary-color: #1a4d8f;
+    --secondary-color: #4a90e2;
+    --accent-color: #f39c12;
+    --text-primary: #333;
+    --text-secondary: #666;
+    --bg-light: #f8f8f8;
+    --border-color: #e0e0e0;
+}
+
+/* Print Optimization */
+@media print {
+    .report-page {
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+    }
+    
+    .no-print {
+        display: none !important;
+    }
+}
+
+/* Screen Preview Styling */
+@media screen {
+    body {
+        background: #e5e5e5;
+        padding: 20px 0;
+    }
+    
+    .report-page {
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+}

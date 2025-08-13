@@ -29,28 +29,64 @@ from mcp.server.fastmcp import FastMCP
 # Initialize FastMCP server
 mcp = FastMCP("slideagent")
 
-# Constants
-BASE_DIR = Path(__file__).parent.parent  # Go up one level from slideagent_mcp/
+# =============================================================================
+# DIRECTORY STRUCTURE CONSTANTS
+# =============================================================================
 
-# System resource locations (inside the MCP package)
-SYSTEM_RESOURCES_DIR = Path(__file__).parent / "resources"
+# Base directories
+BASE_DIR = Path(__file__).parent.parent  # SlideAgent project root
+MCP_PACKAGE_DIR = Path(__file__).parent  # slideagent_mcp package directory
+
+# System resources (inside MCP package - read-only)
+SYSTEM_RESOURCES_DIR = MCP_PACKAGE_DIR / "resources"
+SYSTEM_TEMPLATES_DIR = SYSTEM_RESOURCES_DIR / "templates"
+SYSTEM_SLIDE_TEMPLATES_DIR = SYSTEM_TEMPLATES_DIR / "slides"
+SYSTEM_CHART_TEMPLATES_DIR = SYSTEM_TEMPLATES_DIR / "charts"
+SYSTEM_REPORT_TEMPLATES_DIR = SYSTEM_TEMPLATES_DIR / "reports"
+SYSTEM_OUTLINE_TEMPLATES_DIR = SYSTEM_TEMPLATES_DIR / "outlines"
 SYSTEM_THEMES_DIR = SYSTEM_RESOURCES_DIR / "themes" / "core"
-SYSTEM_SLIDE_TEMPLATES_DIR = SYSTEM_RESOURCES_DIR / "templates" / "slides"
-SYSTEM_CHART_TEMPLATES_DIR = SYSTEM_RESOURCES_DIR / "templates" / "charts"
-SYSTEM_OUTLINE_TEMPLATES_DIR = SYSTEM_RESOURCES_DIR / "templates" / "outlines"
 
-# User space locations (outside the MCP package, in repo root by default)
-USER_PROJECTS_DIR = BASE_DIR / "user_projects"
-USER_RESOURCES_DIR = BASE_DIR / "user_resources"
-USER_THEMES_DIR = USER_RESOURCES_DIR / "themes"
-USER_TEMPLATES_DIR = USER_RESOURCES_DIR / "templates"
+# =============================================================================
+# FILE NAMING CONVENTIONS
+# =============================================================================
 
-# Legacy locations (for backward compatibility - all removed now)
-LEGACY_PROJECTS_DIR = BASE_DIR / "projects"  # Moved to user_projects
-LEGACY_THEMES_DIR = BASE_DIR / "themes"  # Removed
-LEGACY_SLIDE_TEMPLATES_DIR = BASE_DIR / "src/slides/slide_templates"  # Removed
-LEGACY_CHART_TEMPLATES_DIR = BASE_DIR / "src/charts/chart_templates"  # Removed
-LEGACY_MARKDOWN_TEMPLATES_DIR = BASE_DIR / "markdown_templates"  # Removed
+# CSS file names
+SLIDE_BASE_CSS_NAME = "slide_base.css"  # Core 16:9 slide styling
+REPORT_BASE_CSS_NAME = "report_base.css"  # Core 8.5x11 report styling
+
+# CSS source paths
+SLIDE_BASE_CSS_SOURCE = SYSTEM_SLIDE_TEMPLATES_DIR / SLIDE_BASE_CSS_NAME
+REPORT_BASE_CSS_SOURCE = SYSTEM_REPORT_TEMPLATES_DIR / REPORT_BASE_CSS_NAME
+
+# Relative paths for HTML to CSS references
+REL_PATH_TO_THEME_FROM_SLIDES = "../theme"  # From slides/*.html to theme/
+REL_PATH_TO_THEME_FROM_REPORTS = "../theme"  # From reports/*.html to theme/
+
+# Theme file naming patterns: {theme_name}{suffix}
+THEME_CSS_SUFFIX = "_theme.css"  # e.g., acme_corp_theme.css
+THEME_STYLE_SUFFIX = "_style.mplstyle"  # e.g., acme_corp_style.mplstyle
+THEME_ICON_LOGO_SUFFIX = "_icon_logo.png"  # e.g., acme_corp_icon_logo.png
+THEME_TEXT_LOGO_SUFFIX = "_text_logo.png"  # e.g., acme_corp_text_logo.png
+
+# =============================================================================
+# USER SPACE DIRECTORIES
+# =============================================================================
+
+# User directories (writable space for user content)
+USER_PROJECTS_DIR = BASE_DIR / "user_projects"  # User presentation projects
+USER_RESOURCES_DIR = BASE_DIR / "user_resources"  # User custom resources
+USER_THEMES_DIR = USER_RESOURCES_DIR / "themes"  # User custom themes
+USER_TEMPLATES_DIR = USER_RESOURCES_DIR / "templates"  # User custom templates
+
+# =============================================================================
+# LEGACY DIRECTORIES (for backward compatibility)
+# =============================================================================
+
+LEGACY_PROJECTS_DIR = BASE_DIR / "projects"  # Deprecated: use user_projects
+LEGACY_THEMES_DIR = BASE_DIR / "themes"  # Deprecated: being phased out
+LEGACY_SLIDE_TEMPLATES_DIR = BASE_DIR / "slide_templates"  # Deprecated
+LEGACY_CHART_TEMPLATES_DIR = BASE_DIR / "chart_templates"  # Deprecated
+LEGACY_MARKDOWN_TEMPLATES_DIR = BASE_DIR / "markdown_templates"  # Deprecated
 
 
 # Resolvers with precedence: user → legacy → system (for templates/themes),
@@ -62,7 +98,6 @@ def resolve_projects_dir() -> Path:
 def resolve_slide_template_dirs() -> List[Path]:
     candidates = [
         USER_TEMPLATES_DIR / "slides",
-        LEGACY_SLIDE_TEMPLATES_DIR,
         SYSTEM_SLIDE_TEMPLATES_DIR,
     ]
     return [p for p in candidates if p.exists()]
@@ -70,7 +105,6 @@ def resolve_slide_template_dirs() -> List[Path]:
 def resolve_chart_template_dirs() -> List[Path]:
     candidates = [
         USER_TEMPLATES_DIR / "charts",
-        LEGACY_CHART_TEMPLATES_DIR,
         SYSTEM_CHART_TEMPLATES_DIR,
     ]
     return [p for p in candidates if p.exists()]
@@ -180,10 +214,9 @@ def create_project(name: str, theme: str = "acme_corp", description: str = "") -
             if theme_file.is_file():
                 shutil.copy2(theme_file, project_dir / "theme" / theme_file.name)
     
-    # Also copy base.css to project/theme/ for self-containment
-    base_css_source = SYSTEM_RESOURCES_DIR / "base.css"
-    if base_css_source.exists():
-        shutil.copy2(base_css_source, project_dir / "theme" / "base.css")
+    # Also copy slide_base.css to project/theme/ for self-containment
+    if SLIDE_BASE_CSS_SOURCE.exists():
+        shutil.copy2(SLIDE_BASE_CSS_SOURCE, project_dir / "theme" / SLIDE_BASE_CSS_NAME)
     
     # No longer creating config.yaml - theme is derived from theme folder files
     
@@ -481,8 +514,8 @@ def init_slide(project: str, number: str, template: str = None,
     # Replace CSS path placeholders
     # Both CSS files are now local to the project (in project/theme/)
     # From slides/ to theme/ is ../theme/
-    base_css_path = "../theme/base.css"
-    theme_css_path = f"../theme/{theme}_theme.css"
+    base_css_path = f"{REL_PATH_TO_THEME_FROM_SLIDES}/{SLIDE_BASE_CSS_NAME}"
+    theme_css_path = f"{REL_PATH_TO_THEME_FROM_SLIDES}/{theme}{THEME_CSS_SUFFIX}"
     
     # Replace the placeholders
     content = content.replace('[BASE_CSS_PATH]', base_css_path)
@@ -666,7 +699,7 @@ def swap_theme(project: str, theme: str) -> str:
     theme_dir = project_dir / "theme"
     if theme_dir.exists():
         for file in theme_dir.glob("*"):
-            if file.name != "base.css":  # Keep base.css
+            if file.name not in [SLIDE_BASE_CSS_NAME, REPORT_BASE_CSS_NAME]:  # Keep base CSS files
                 file.unlink()
     
     # Copy new theme files to project/theme/
@@ -843,6 +876,109 @@ def stop_live_viewer(project: str = None) -> Dict[str, Any]:
         subprocess.run(["pkill", "-f", "node.*live_viewer_server"], capture_output=True)
         LIVE_VIEWER_PROCESSES.clear()
         return {"success": True, "message": "Stopped all live viewers"}
+
+@mcp.tool()
+def get_repo_structure() -> str:
+    """
+    Get the current SlideAgent repository structure and conventions.
+    
+    Returns a formatted view of the directory layout, naming conventions,
+    and path relationships. Use this tool to understand the project structure
+    or when debugging path-related issues.
+    
+    Returns:
+        String: Formatted repository structure documentation
+    """
+    structure = []
+    structure.append("=" * 70)
+    structure.append("SLIDEAGENT REPOSITORY STRUCTURE")
+    structure.append("=" * 70)
+    structure.append("")
+    
+    # Directory structure
+    structure.append("📁 DIRECTORY STRUCTURE:")
+    structure.append("-" * 40)
+    structure.append("")
+    structure.append("slideagent_mcp/  (System - MCP server package)")
+    structure.append("  └── resources/")
+    structure.append("      └── templates/")
+    structure.append("          ├── slides/")
+    structure.append(f"          │   ├── {SLIDE_BASE_CSS_NAME}  ← Core 16:9 styling")
+    structure.append("          │   └── *.html  ← Slide templates")
+    structure.append("          ├── charts/  ← Chart templates")
+    structure.append("          └── reports/")
+    structure.append(f"              └── {REPORT_BASE_CSS_NAME}  ← 8.5x11 styling")
+    structure.append("")
+    
+    # User project structure
+    structure.append("user_projects/  (User space - your projects)")
+    structure.append("  └── {project-name}/  ← Self-contained project")
+    structure.append("      ├── theme/  ← Project-local CSS and assets")
+    structure.append(f"      │   ├── {SLIDE_BASE_CSS_NAME}  ← Required")
+    structure.append(f"      │   ├── {{theme-name}}{THEME_CSS_SUFFIX}")
+    structure.append(f"      │   ├── {{theme-name}}{THEME_ICON_LOGO_SUFFIX}")
+    structure.append(f"      │   └── {{theme-name}}{THEME_TEXT_LOGO_SUFFIX}")
+    structure.append("      ├── slides/")
+    structure.append("      │   └── slide_*.html  ← Generated slides")
+    structure.append("      ├── plots/")
+    structure.append("      │   ├── *.py  ← Chart scripts")
+    structure.append("      │   ├── *_branded.png  ← With titles")
+    structure.append("      │   └── *_clean.png  ← For slides (no titles)")
+    structure.append("      ├── input/  ← Source materials")
+    structure.append("      ├── validation/  ← Screenshots")
+    structure.append("      └── outline.md")
+    structure.append("")
+    
+    # Path relationships
+    structure.append("🔗 PATH RELATIONSHIPS:")
+    structure.append("-" * 40)
+    structure.append("From slides/slide_*.html:")
+    structure.append(f"  • Base CSS: {REL_PATH_TO_THEME_FROM_SLIDES}/{SLIDE_BASE_CSS_NAME}")
+    structure.append(f"  • Theme CSS: {REL_PATH_TO_THEME_FROM_SLIDES}/{{theme-name}}{THEME_CSS_SUFFIX}")
+    structure.append("  • Charts: ../plots/{chart-name}_clean.png")
+    structure.append("")
+    structure.append("From theme CSS:")
+    structure.append(f"  • Logo: ./{{theme-name}}{THEME_ICON_LOGO_SUFFIX}")
+    structure.append("")
+    
+    # Naming conventions
+    structure.append("📝 NAMING CONVENTIONS:")
+    structure.append("-" * 40)
+    structure.append("Slides: slide_01.html, slide_02.html, ...")
+    structure.append("Charts: {name}_clean.png (for slides)")
+    structure.append("        {name}_branded.png (standalone)")
+    structure.append("Theme files (replace {theme-name}):")
+    structure.append(f"  • {{theme-name}}{THEME_CSS_SUFFIX}")
+    structure.append(f"  • {{theme-name}}{THEME_ICON_LOGO_SUFFIX}")
+    structure.append(f"  • {{theme-name}}{THEME_TEXT_LOGO_SUFFIX}")
+    structure.append(f"  • {{theme-name}}{THEME_STYLE_SUFFIX}")
+    structure.append("")
+    
+    # System constants
+    structure.append("⚙️ SYSTEM CONSTANTS:")
+    structure.append("-" * 40)
+    structure.append(f"Base CSS: {SLIDE_BASE_CSS_NAME}")
+    structure.append(f"Theme path: {REL_PATH_TO_THEME_FROM_SLIDES}")
+    structure.append("")
+    
+    # Quick tips
+    structure.append("💡 QUICK TIPS:")
+    structure.append("-" * 40)
+    structure.append("• Use _clean.png charts in slides (no titles)")
+    structure.append("• Use _branded.png charts for standalone docs")
+    structure.append("• Each project has its own theme/ folder")
+    structure.append("• CSS paths are relative to slide location")
+    structure.append("")
+    
+    # Quick check for current projects
+    projects_dir = resolve_projects_dir()
+    if projects_dir.exists():
+        project_count = len(list(projects_dir.iterdir()))
+        structure.append(f"📊 Current Status: {project_count} projects in user_projects/")
+    
+    structure.append("=" * 70)
+    
+    return "\n".join(structure)
 
 # =============================================================================
 # RUN SERVER

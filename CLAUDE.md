@@ -58,48 +58,26 @@ SlideAgent provides all project operations through MCP (Model Context Protocol) 
 - **slideagent**: Project management, templates, themes (local to this project)
 - **puppeteer**: Browser automation for validation (mcp__puppeteer_* tools)
 
-## Directory Structure
+## Directory Structure & Path Rules
 
+**Use the MCP tool to get current structure:**
+```python
+# Call this to see the actual repository structure:
+get_repo_structure()
 ```
-SlideAgent/
-├── slideagent_mcp/              # SlideAgent MCP helper server
-│   ├── server.py                # FastMCP server implementation
-│   ├── pdf_generator.js         # PDF generation utility
-│   ├── live_viewer_server.js    # Live preview server
-│   └── resources/
-│       └── templates/
-│           ├── slides/          # Self-documenting slide templates
-│           └── charts/          # Self-documenting chart templates
-├── src/
-│   ├── charts/
-│   │   ├── chart_templates/     # Self-documenting chart templates
-│   │   └── utils/
-│   │       └── plot_buddy.py    # Main chart generation class
-│   └── slides/
-│       └── base.css             # Core slide styling & PDF optimization
-├── themes/
-│   ├── examples/                # Example themes for reference
-│   │   └── acme_corp/           # Default professional theme
-│   └── private/                  # Custom/client-specific themes
-├── user_projects/               # All user projects
-│   └── [project-name]/
-│       ├── theme/               # Project-local theme files (self-contained)
-│       │   ├── base.css         # Copy of core CSS
-│       │   ├── [theme]_theme.css# Theme-specific CSS
-│       │   ├── [theme]_icon_logo.png  # Icon logo
-│       │   └── [theme]_text_logo.png  # Text logo
-│       ├── slides/              # Individual standalone HTML slide files
-│       ├── validation/          # Screenshots for quality control
-│       ├── plots/               # Chart files (_clean.png for slides)
-│       ├── input/               # Source materials
-│       ├── outline.md           # Section-based outline
-│       └── [project-name].pdf   # Generated PDF
-├── .mcp.json                    # MCP server configuration
-├── package.json                 # Node.js dependencies
-├── pyproject.toml               # Project config and dependencies (managed by uv)
-├── uv.lock                      # Exact, reproducible dependency lockfile (commit this)
-└── requirements.txt             # Optional legacy compatibility; not used by uv
-```
+
+This tool provides:
+- Directory layout and organization
+- File naming conventions
+- Path relationships between files
+- System constants and configuration
+
+### Common Path Issues to Avoid
+- Always use: `../theme/slide_base.css` from slides, we should ensure that a copy of this has been added to each project directory.
+- Use _clean.png for slides (no titles), since the slide itself should have titles
+- for the plots with the headers, we should have those for standalone use and also for the reports.
+-Each project is self-contained with its own theme/ folder
+
 
 ## Template Discovery
 
@@ -169,18 +147,20 @@ Each theme contains 4 files:
 - **DO NOT create custom SVG logos** - trademark violations
 - **USE PNG format** for logos
 - **RESPECT brand guidelines**
- - For private/corporate themes, store in `user_resources/themes/[theme]/`
+- For private/corporate themes, store in `user_resources/themes/{theme-name}/`
 
 ### CSS Path Management
-**IMPORTANT**: Projects are self-contained with their own theme folder.
 
-**CSS paths in all slides** (from `slides/` folder):
+**Projects are self-contained with their own theme folder.**
+
+**CSS paths in slides** (from `slides/` folder):
 ```html
-<link rel="stylesheet" href="../theme/base.css">
-<link rel="stylesheet" href="../theme/[theme]_theme.css">
+<link rel="stylesheet" href="../theme/slide_base.css">
+<link rel="stylesheet" href="../theme/{theme-name}_theme.css">
 ```
 
-When you use `init_slide` MCP tool, these paths are automatically set correctly. The theme files are copied to each project during `create_project`.
+The `init_slide` MCP tool automatically sets these paths correctly.
+Theme files are copied to each project's `theme/` folder during `create_project`.
 
 ## Critical Header Structure
 
@@ -216,7 +196,7 @@ When you use `init_slide` MCP tool, these paths are automatically set correctly.
 ## CSS Architecture
 
 **Two-Layer Structure:**
-1. **`src/slides/base.css`** - Foundation (layout, typography, dimensions)
+1. **`src/slides/slide_base.css`** - Foundation (layout, typography, dimensions)
 2. **`themes/`** - Brand Identity (colors, fonts, logos)
 
 **Design Philosophy:**
@@ -230,7 +210,7 @@ When you use `init_slide` MCP tool, these paths are automatically set correctly.
 ### 1. Project Setup
 Use the `create_project` MCP tool to create a new project. This automatically:
 - Creates directory structure (slides/, plots/, input/, validation/, theme/)
-- Copies base.css and all theme files to project's theme/ folder
+- Copies slide_base.css and all theme files to project's theme/ folder
 - Makes project self-contained with all necessary CSS and assets
 - Copies theme files to project-local theme/ folder
 - Creates outline.md template
@@ -408,7 +388,7 @@ Use the PDF tool from the SlideAgent MCP to generate the project PDF (saved to `
 
 ### CSS Not Loading in Slides
 - **Always use MCP tools** (`init_slide`) which set paths automatically
-- CSS paths should be: `../theme/base.css` and `../theme/[theme]_theme.css`
+- CSS paths should be: `../theme/slide_base.css` and `../theme/[theme]_theme.css`
 - Each project has its own `theme/` folder with all necessary files
 - Never use paths like `../../../src/slides/` or `../../../themes/`
 
