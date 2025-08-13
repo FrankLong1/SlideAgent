@@ -166,6 +166,7 @@ def get_project_theme(project_dir: Path) -> str:
 def create_project(name: str, theme: str = "acme_corp", description: str = "") -> str:
     """
     Create a new SlideAgent project with proper directory structure.
+    Creates separate folders for horizontal slides (16:9) and vertical reports (8.5x11).
     
     Args:
         name: Project name (will be sanitized for filesystem)
@@ -182,10 +183,11 @@ def create_project(name: str, theme: str = "acme_corp", description: str = "") -
     if project_dir.exists():
         return f"Error: Project '{safe_name}' already exists"
     
-    # Create directory structure
+    # Create directory structure with separate slides and report_pages folders
     dirs = [
         project_dir,
-        project_dir / "slides",  # Can contain both slides (16:9) and report pages (8.5x11)
+        project_dir / "slides",  # For horizontal presentations (16:9)
+        project_dir / "report_pages",  # For vertical reports (8.5x11)
         project_dir / "validation",
         project_dir / "plots", 
         project_dir / "input",
@@ -599,6 +601,7 @@ def init_report_page(project: str, number: str, template: str = None,
                      title: str = "", subtitle: str = "", section: str = "") -> str:
     """
     Initialize a report page from a template for a specific project.
+    Report pages are vertical format (8.5x11) and go in the report_pages/ folder.
     
     Args:
         project: Name of the project
@@ -615,10 +618,10 @@ def init_report_page(project: str, number: str, template: str = None,
     if not project_dir.exists():
         return f"Error: Project '{project}' not found"
     
-    # Use the slides directory for all HTML content (slides and reports)
-    slides_dir = project_dir / "slides"
-    if not slides_dir.exists():
-        slides_dir.mkdir(exist_ok=True)  # Create if missing
+    # Use the report_pages directory for vertical report content
+    report_pages_dir = project_dir / "report_pages"
+    if not report_pages_dir.exists():
+        report_pages_dir.mkdir(exist_ok=True)  # Create if missing
     
     # Handle template
     if template:
@@ -664,9 +667,9 @@ def init_report_page(project: str, number: str, template: str = None,
     page_num = number.replace('page_', '')
     content = content.replace('[PAGE_NUMBER]', page_num)
     
-    # Create report file (in slides directory with report_ prefix for clarity)
+    # Create report file in report_pages directory
     page_name = f"report_{number}.html"
-    page_path = slides_dir / page_name
+    page_path = report_pages_dir / page_name
     
     with open(page_path, "w") as f:
         f.write(content)
@@ -870,6 +873,7 @@ def swap_theme(project: str, theme: str) -> str:
 def generate_pdf(project: str, output_path: str = None, format: str = "slides") -> Dict[str, Any]:
     """
     Generate PDF from slides or report pages in a project.
+    Slides come from slides/ folder, report pages from report_pages/ folder.
     
     Args:
         project: Name of the project
@@ -883,19 +887,27 @@ def generate_pdf(project: str, output_path: str = None, format: str = "slides") 
     if not project_dir.exists():
         return {"success": False, "error": f"Project '{project}' not found"}
     
-    slides_dir = project_dir / "slides"
-    if not slides_dir.exists():
-        return {"success": False, "error": f"No slides directory found in project '{project}'"}
-    
-    # Determine which files to include based on format
+    # Determine source directory and files based on format
     if format == "report":
-        # For reports, include only report_*.html files
-        html_files = list(slides_dir.glob("report*.html"))
+        # For reports, use report_pages directory
+        source_dir = project_dir / "report_pages"
+        # Fallback to slides directory for backward compatibility
+        if not source_dir.exists() or not list(source_dir.glob("*.html")):
+            source_dir = project_dir / "slides"
+            html_files = list(source_dir.glob("report*.html")) if source_dir.exists() else []
+        else:
+            html_files = list(source_dir.glob("*.html"))
+        
         if not html_files:
             return {"success": False, "error": f"No report pages found in project '{project}'"}
         default_output = str(project_dir / f"{project}-report.pdf")
     else:
-        # For slides, include slide_*.html files (or all if no specific pattern)
+        # For slides, use slides directory
+        slides_dir = project_dir / "slides"
+        if not slides_dir.exists():
+            return {"success": False, "error": f"No slides directory found in project '{project}'"}
+        
+        source_dir = slides_dir
         html_files = list(slides_dir.glob("slide_*.html"))
         if not html_files:
             # Fallback to all HTML files if no slide_ pattern
@@ -916,7 +928,7 @@ def generate_pdf(project: str, output_path: str = None, format: str = "slides") 
     try:
         # Pass format as third argument to the generator
         result = subprocess.run(
-            ["node", str(pdf_script), str(slides_dir), output, format],
+            ["node", str(pdf_script), str(source_dir), output, format],
             capture_output=True,
             text=True,
             cwd=str(BASE_DIR)
