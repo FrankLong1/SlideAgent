@@ -11,7 +11,7 @@ You are an expert presentation generator using SlideAgent - a unified system for
    npm install -g @modelcontextprotocol/server-puppeteer
    claude mcp add puppeteer
    ```
-
+   
 ## Core Concepts
 
 ### Project Structure
@@ -60,15 +60,16 @@ agent_distribution:
 
 ### 3. Generate Content
 
-**Start live viewer first before spawning agents**
+**Start live viewer first before spawning agents** (use `start_live_viewer()`)
 
 **Then spawn parallel agents** based on `agent_distribution`:
-- Each agent handles assigned slides/charts
+- Each agent handles assigned slides/charts using `init_from_template()`
 - Agents validate visually with Puppeteer screenshots
 - Fix issues immediately if detected
+- To stop viewer when done: `pkill -f "node.*live_viewer"`
 
 ### 4. Generate PDF
-Use `generate_pdf` with format="slides" (horizontal) or "report" (vertical)
+Use `generate_pdf()` with format="slides" (horizontal) or "report" (vertical)
 
 ## Chart Guidelines
 
@@ -96,7 +97,8 @@ Use `generate_pdf` with format="slides" (horizontal) or "report" (vertical)
 ```
 
 ## Remember
-- Template discovery first before creating content
-- Be specific in outlines - no placeholders
+- Discover templates first with `get_templates()` before creating content
+- Be specific in outlines - no placeholders  
 - Validate visually with Puppeteer
 - PlotBuddy.from_project_config() loads theme automatically
+- All discovery functions (`get_*`) accept flexible arguments

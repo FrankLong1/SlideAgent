@@ -58,15 +58,16 @@ REPORT_BASE_CSS_NAME = "report_base.css"  # Core 8.5x11 report styling
 SLIDE_BASE_CSS_SOURCE = SYSTEM_SLIDE_TEMPLATES_DIR / SLIDE_BASE_CSS_NAME
 REPORT_BASE_CSS_SOURCE = SYSTEM_REPORT_TEMPLATES_DIR / REPORT_BASE_CSS_NAME
 
-# Relative paths for HTML to CSS references
-REL_PATH_TO_THEME_FROM_SLIDES = "../theme"  # From slides/*.html to theme/
-REL_PATH_TO_THEME_FROM_REPORTS = "../theme"  # From reports/*.html to theme/
+# Relative path from content folders to theme folder within a project
+REL_PATH_TO_THEME_IN_PROJECT = "../theme"  # From slides/ or report_pages/ to theme/
 
 # Theme file naming patterns: {theme_name}{suffix}
-THEME_CSS_SUFFIX = "_theme.css"  # e.g., acme_corp_theme.css
-THEME_STYLE_SUFFIX = "_style.mplstyle"  # e.g., acme_corp_style.mplstyle
-THEME_ICON_LOGO_SUFFIX = "_icon_logo.png"  # e.g., acme_corp_icon_logo.png
-THEME_TEXT_LOGO_SUFFIX = "_text_logo.png"  # e.g., acme_corp_text_logo.png
+THEME_FILES = {
+    "css": "_theme.css",  # e.g., acme_corp_theme.css
+    "style": "_style.mplstyle",  # e.g., acme_corp_style.mplstyle
+    "icon_logo": "_icon_logo.png",  # e.g., acme_corp_icon_logo.png
+    "text_logo": "_text_logo.png"  # e.g., acme_corp_text_logo.png
+}
 
 # =============================================================================
 # USER SPACE DIRECTORIES
@@ -78,85 +79,57 @@ USER_RESOURCES_DIR = BASE_DIR / "user_resources"  # User custom resources
 USER_THEMES_DIR = USER_RESOURCES_DIR / "themes"  # User custom themes
 USER_TEMPLATES_DIR = USER_RESOURCES_DIR / "templates"  # User custom templates
 
-# =============================================================================
-# LEGACY DIRECTORIES (for backward compatibility)
-# =============================================================================
-
-LEGACY_PROJECTS_DIR = BASE_DIR / "projects"  # Deprecated: use user_projects
-LEGACY_THEMES_DIR = BASE_DIR / "themes"  # Deprecated: being phased out
-LEGACY_SLIDE_TEMPLATES_DIR = BASE_DIR / "slide_templates"  # Deprecated
-LEGACY_CHART_TEMPLATES_DIR = BASE_DIR / "chart_templates"  # Deprecated
-LEGACY_MARKDOWN_TEMPLATES_DIR = BASE_DIR / "markdown_templates"  # Deprecated
 
 
-# Resolvers with precedence: user → legacy → system (for templates/themes),
-# and user → legacy for projects.
-def resolve_projects_dir() -> Path:
-    # Always use user_projects/ directory
-    return USER_PROJECTS_DIR
-
-def resolve_slide_template_dirs() -> List[Path]:
-    candidates = [
-        USER_TEMPLATES_DIR / "slides",
-        SYSTEM_SLIDE_TEMPLATES_DIR,
-    ]
-    return [p for p in candidates if p.exists()]
-
-def resolve_chart_template_dirs() -> List[Path]:
-    candidates = [
-        USER_TEMPLATES_DIR / "charts",
-        SYSTEM_CHART_TEMPLATES_DIR,
-    ]
-    return [p for p in candidates if p.exists()]
-
-def resolve_theme_dirs() -> List[Path]:
-    # User themes root, legacy examples/private, then system core
-    candidates = []
-    if USER_THEMES_DIR.exists():
-        candidates.append(USER_THEMES_DIR)
-    # Legacy: themes/examples and themes/private
-    examples_dir = LEGACY_THEMES_DIR / "examples"
-    private_dir = LEGACY_THEMES_DIR / "private"
-    if examples_dir.exists():
-        candidates.append(examples_dir)
-    if private_dir.exists():
-        candidates.append(private_dir)
-    if SYSTEM_THEMES_DIR.exists():
-        candidates.append(SYSTEM_THEMES_DIR)
-    return candidates
-
-def resolve_outline_template_paths() -> List[Path]:
-    candidates = [
-        USER_TEMPLATES_DIR / "outlines" / "outline_template.md",
-        LEGACY_MARKDOWN_TEMPLATES_DIR / "outline_template.md",
-        SYSTEM_OUTLINE_TEMPLATES_DIR / "outline_template.md",
-    ]
-    return [p for p in candidates if p.exists()]
-
-# Track live viewer processes
-LIVE_VIEWER_PROCESSES = {}
 
 # =============================================================================
 # HELPER FUNCTIONS
 # =============================================================================
 
 def get_project_theme(project_dir: Path) -> str:
-    """
-    Derive theme name from theme folder files.
-    Looks for *_theme.css file and extracts the theme name.
-    Raises error if no theme found.
-    """
-    theme_dir = project_dir / "theme"
-    if not theme_dir.exists():
-        raise ValueError(f"No theme folder found in project {project_dir.name}")
+    """Get theme name from project's .theme file."""
+    theme_file = project_dir / ".theme"
+    if theme_file.exists():
+        return theme_file.read_text().strip()
+    return "acme_corp"  # default fallback
+
+def sanitize_project_name(name: str) -> str:
+    """Convert project name to filesystem-safe format."""
+    return "".join(c if c.isalnum() or c in "-_" else "_" for c in name)
+
+def create_project_structure(project_dir: Path) -> None:
+    """Create the standard project directory structure."""
+    dirs = [
+        project_dir,
+        project_dir / "slides",  # For horizontal presentations (16:9)
+        project_dir / "report_pages",  # For vertical reports (8.5x11)
+        project_dir / "validation",
+        project_dir / "plots", 
+        project_dir / "input",
+        project_dir / "theme"
+    ]
+    for dir_path in dirs:
+        dir_path.mkdir(parents=True, exist_ok=True)
+
+
+def copy_theme_files(theme_source: Path, project_dir: Path, theme_name: str) -> None:
+    """Copy theme files to project and save theme name."""
+    theme_dest = project_dir / "theme"
     
-    # Look for *_theme.css file
-    for css_file in theme_dir.glob("*_theme.css"):
-        # Extract theme name from filename
-        theme_name = css_file.stem.replace("_theme", "")
-        return theme_name
+    # Copy all theme files
+    for theme_file in theme_source.glob("*"):
+        if theme_file.is_file():
+            shutil.copy2(theme_file, theme_dest / theme_file.name)
     
-    raise ValueError(f"No theme CSS file found in {theme_dir}")
+    # Copy base CSS files
+    if SLIDE_BASE_CSS_SOURCE.exists():
+        shutil.copy2(SLIDE_BASE_CSS_SOURCE, theme_dest / SLIDE_BASE_CSS_NAME)
+    if REPORT_BASE_CSS_SOURCE.exists():
+        shutil.copy2(REPORT_BASE_CSS_SOURCE, theme_dest / REPORT_BASE_CSS_NAME)
+    
+    # Save theme name in .theme file
+    (project_dir / ".theme").write_text(theme_name)
+
 
 # =============================================================================
 # PROJECT MANAGEMENT TOOLS
@@ -176,545 +149,402 @@ def create_project(name: str, theme: str = "acme_corp", description: str = "") -
     Returns:
         Success message with project path
     """
-    # Sanitize project name
-    safe_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in name)
-    project_dir = resolve_projects_dir() / safe_name
+    # Sanitize and validate
+    safe_name = sanitize_project_name(name)
+    project_dir = USER_PROJECTS_DIR / safe_name
     
     if project_dir.exists():
         return f"Error: Project '{safe_name}' already exists"
     
-    # Create directory structure with separate slides and report_pages folders
-    dirs = [
-        project_dir,
-        project_dir / "slides",  # For horizontal presentations (16:9)
-        project_dir / "report_pages",  # For vertical reports (8.5x11)
-        project_dir / "validation",
-        project_dir / "plots", 
-        project_dir / "input",
-        project_dir / "theme"  # Contains both slide_base.css and report_base.css
-    ]
+    # Create structure
+    create_project_structure(project_dir)
     
-    for dir_path in dirs:
-        dir_path.mkdir(parents=True, exist_ok=True)
-    
-    # Copy theme files to project
-    theme_source = None
-    # First check user themes
-    if (USER_THEMES_DIR / theme).exists():
-        theme_source = USER_THEMES_DIR / theme
-    # Then check system themes
-    elif (SYSTEM_THEMES_DIR / theme).exists():
-        theme_source = SYSTEM_THEMES_DIR / theme
+    # Find and copy theme
+    theme_info = get_themes(theme)
+    if theme_info:
+        theme_source = Path(theme_info[0]["path"])
     else:
-        # Default to system acme_corp theme
+        # Default to acme_corp if theme not found
         theme_source = SYSTEM_THEMES_DIR / "acme_corp"
         theme = "acme_corp"
     
-    if theme_source and theme_source.exists():
-        # Copy all theme files to project/theme/
-        for theme_file in theme_source.glob("*"):
-            if theme_file.is_file():
-                shutil.copy2(theme_file, project_dir / "theme" / theme_file.name)
+    copy_theme_files(theme_source, project_dir, theme)
     
-    # Also copy slide_base.css to project/theme/ for self-containment
-    if SLIDE_BASE_CSS_SOURCE.exists():
-        shutil.copy2(SLIDE_BASE_CSS_SOURCE, project_dir / "theme" / SLIDE_BASE_CSS_NAME)
-    
-    # Also copy report_base.css to project/theme/ for report support
-    if REPORT_BASE_CSS_SOURCE.exists():
-        shutil.copy2(REPORT_BASE_CSS_SOURCE, project_dir / "theme" / REPORT_BASE_CSS_NAME)
-    
-    # No longer creating config.yaml - theme is derived from theme folder files
-    
-    # Initialize outline from template
-    outline_paths = resolve_outline_template_paths()
-    if outline_paths:
-        with open(outline_paths[0], "r") as f:
-            outline_content = f.read()
-        
-        # Replace placeholders
-        outline_content = outline_content.replace("{title}", safe_name.replace("_", " ").title())
-        outline_content = outline_content.replace("{author}", "SlideAgent")
-        outline_content = outline_content.replace("{theme}", theme)
-        
-        with open(project_dir / "outline.md", "w") as f:
-            f.write(outline_content)
-    
+    # Create default outline (could be slides or report based on user preference)
+    # For now, create a slides outline by default
+    init_from_template(
+        project=safe_name, 
+        resource_type="outline",
+        name="outline",
+        template="outline_slides.md",
+        title=safe_name.replace("_", " ").title(),
+        author="SlideAgent",
+        theme=theme
+    )
     
     return f"Created project '{safe_name}' at {project_dir}"
 
 @mcp.tool()
-def list_projects() -> List[Dict[str, Any]]:
+def get_projects(names=None, fields=None):
     """
-    List all existing SlideAgent projects.
+    Get project(s) information.
+    
+    Args:
+        names: None for all projects, string for one, list for multiple
+        fields: Optional fields to include (name, theme, path, slides_count, 
+                charts_count, inputs_count, has_pdf, created_date)
     
     Returns:
-        List of project information dictionaries
+        List of project dictionaries (consistent return type)
     """
+    if not USER_PROJECTS_DIR.exists():
+        return []
+    
+    # Determine which projects to get
+    if names is None:
+        # Get all projects
+        project_names = [p.name for p in USER_PROJECTS_DIR.iterdir() if p.is_dir()]
+    elif isinstance(names, str):
+        project_names = [names]
+    else:
+        project_names = names
+    
+    # Collect project info
     projects = []
-    
-    projects_root = resolve_projects_dir()
-    if not projects_root.exists():
-        return projects
-    
-    for project_dir in projects_root.iterdir():
-        if not project_dir.is_dir():
+    for name in project_names:
+        project_dir = USER_PROJECTS_DIR / name
+        if not project_dir.exists():
             continue
         
-        # Get theme from theme folder
-        try:
-            theme = get_project_theme(project_dir)
-        except ValueError:
-            theme = "unknown"  # Handle projects without proper theme
-        
-        # Count slides
-        slides_dir = project_dir / "slides"
-        slide_count = len(list(slides_dir.glob("*.html"))) if slides_dir.exists() else 0
-        
-        # Count charts
-        plots_dir = project_dir / "plots"
-        chart_count = len(list(plots_dir.glob("*_clean.png"))) if plots_dir.exists() else 0
-        
-        projects.append({
-            "name": project_dir.name,
+        # Build info dict
+        info = {
+            "name": name,
             "path": str(project_dir),
-            "theme": theme,
-            "created_date": project_dir.stat().st_ctime,  # Use folder creation time
-            "slides_count": slide_count,
-            "charts_count": chart_count,
-            "has_pdf": (project_dir / f"{project_dir.name}.pdf").exists()
-        })
+            "theme": get_project_theme(project_dir),
+            "created_date": project_dir.stat().st_ctime,
+        }
+        
+        # Add counts if needed
+        if not fields or any(f in fields for f in ["slides_count", "charts_count", "inputs_count", "has_pdf"]):
+            slides_dir = project_dir / "slides"
+            info["slides_count"] = len(list(slides_dir.glob("*.html"))) if slides_dir.exists() else 0
+            
+            plots_dir = project_dir / "plots"
+            info["charts_count"] = len(list(plots_dir.glob("*_clean.png"))) if plots_dir.exists() else 0
+            
+            input_dir = project_dir / "input"
+            info["inputs_count"] = len(list(input_dir.glob("*"))) if input_dir.exists() else 0
+            
+            info["has_pdf"] = (project_dir / f"{name}.pdf").exists()
+        
+        # Filter fields if specified
+        if fields:
+            info = {k: v for k, v in info.items() if k in fields}
+        
+        projects.append(info)
     
     return projects
 
+# =============================================================================
+# GET TOOLS (unified getters for resources)
+# =============================================================================
+
 @mcp.tool()
-def get_project_info(project: str) -> Dict[str, Any]:
+def get_themes(names=None):
     """
-    Get detailed information about a specific project.
+    Get theme(s) information.
     
     Args:
-        project: Project name
+        names: None for all themes, string for one, list for multiple
     
     Returns:
-        Project details dictionary
+        List of theme dictionaries
     """
-    project_dir = resolve_projects_dir() / project
-    if not project_dir.exists():
-        raise ValueError(f"Project '{project}' not found")
+    # Determine which themes to get
+    if names is None:
+        # Get all themes from both locations
+        theme_names = set()
+        for location in [USER_THEMES_DIR, SYSTEM_THEMES_DIR]:
+            if location.exists():
+                theme_names.update(d.name for d in location.iterdir() if d.is_dir())
+        theme_names = list(theme_names)
+    elif isinstance(names, str):
+        theme_names = [names]
+    else:
+        theme_names = names
     
-    # Get theme from theme folder
-    try:
-        theme = get_project_theme(project_dir)
-    except ValueError:
-        theme = "unknown"
+    # Collect theme info
+    themes = []
+    for name in theme_names:
+        # Check user first, then system
+        for location in [USER_THEMES_DIR, SYSTEM_THEMES_DIR]:
+            theme_dir = location / name
+            if theme_dir.exists() and (theme_dir / f"{name}{THEME_FILES['css']}").exists():
+                themes.append({
+                    "name": name,
+                    "path": str(theme_dir),
+                    "source": "user" if location == USER_THEMES_DIR else "system",
+                    "files": [f.name for f in theme_dir.glob("*") if f.is_file()]
+                })
+                break  # Found it, don't check other locations
     
-    # Count files
-    slides = list((project_dir / "slides").glob("slide_*.html")) if (project_dir / "slides").exists() else []
-    charts = list((project_dir / "plots").glob("*_clean.png")) if (project_dir / "plots").exists() else []
-    inputs = list((project_dir / "input").glob("*")) if (project_dir / "input").exists() else []
-    
-    return {
-        "name": project,
-        "theme": theme,
-        "title": project,  # No config, so use project name
-        "slides_count": len(slides),
-        "charts_count": len(charts),
-        "inputs_count": len(inputs),
-        "has_pdf": (project_dir / f"{project}.pdf").exists(),
-        "path": str(project_dir)
-    }
-
-# =============================================================================
-# LIST TOOLS
-# =============================================================================
+    return themes
 
 @mcp.tool()
-def list_themes() -> List[Dict[str, str]]:
+def get_templates(type, names=None):
     """
-    List all available themes for SlideAgent projects.
+    Get template(s) of specified type.
+    
+    Args:
+        type: Template type - "slides", "reports", or "charts" (required)
+        names: None for all templates, string for one, list for multiple
     
     Returns:
-        List of theme information with paths
+        List of template dictionaries
     """
-    themes: List[Dict[str, str]] = []
-
-    def add_theme_entry(root: Path, theme_dir: Path, source_type: str):
-        theme_css = theme_dir / f"{theme_dir.name}_theme.css"
-        if theme_css.exists():
-            # Build a display path relative to BASE_DIR when possible
-            try:
-                rel = theme_dir.relative_to(BASE_DIR)
-                rel_path = str(rel)
-            except Exception:
-                rel_path = str(theme_dir)
-            themes.append({
-                "name": theme_dir.name,
-                "path": rel_path,
-                "type": source_type,
-            })
-
-    for root in resolve_theme_dirs():
-        source_type = (
-            "user" if root == USER_THEMES_DIR else
-            "example" if root.name == "examples" else
-            "private" if root.name == "private" else
-            "system"
-        )
-        for theme_dir in root.iterdir():
-            if theme_dir.is_dir():
-                add_theme_entry(root, theme_dir, source_type)
-
-    # De-duplicate by theme name preferring earlier (user > legacy > system)
-    unique: Dict[str, Dict[str, str]] = {}
-    ordered = []
-    for t in themes:
-        if t["name"] not in unique:
-            unique[t["name"]] = t
-            ordered.append(t)
-    return ordered
-
-@mcp.tool()
-def list_slide_templates() -> List[Dict[str, Any]]:
-    """
-    List all available slide templates with metadata.
+    if type not in ["slides", "reports", "charts"]:
+        raise ValueError(f"Invalid type '{type}'. Must be 'slides', 'reports', or 'charts'")
     
-    Returns:
-        List of template information with paths and use cases
-    """
-    templates: List[Dict[str, Any]] = []
-
-    for root in resolve_slide_template_dirs():
-        source = (
-            "user" if root == USER_TEMPLATES_DIR / "slides" else
-            "legacy" if root == LEGACY_SLIDE_TEMPLATES_DIR else
-            "system"
-        )
-        for template_file in sorted(root.glob("*.html")):
-            with open(template_file, "r") as f:
-                content = f.read()
-            use_case = "General purpose slide"
-            if "<!-- Use case:" in content:
-                start = content.find("<!-- Use case:") + len("<!-- Use case:")
-                end = content.find("-->", start)
-                if end > start:
-                    use_case = content[start:end].strip()
-            try:
-                rel = template_file.relative_to(BASE_DIR)
-                rel_path = str(rel)
-            except Exception:
-                rel_path = str(template_file)
-            templates.append({
-                "name": template_file.stem,
-                "path": rel_path,
-                "file": template_file.name,
-                "use_case": use_case,
-                "source": source,
-            })
-
-    # De-duplicate by name preferring earlier (user > legacy > system)
-    unique: Dict[str, Dict[str, Any]] = {}
-    ordered = []
-    for t in templates:
-        if t["name"] not in unique:
-            unique[t["name"]] = t
-            ordered.append(t)
-    return ordered
-
-@mcp.tool()
-def list_report_templates() -> List[Dict[str, Any]]:
-    """
-    List all available report page templates with metadata.
-    
-    Returns:
-        List of template information with paths and use cases
-    """
-    templates: List[Dict[str, Any]] = []
-    
-    # List templates from system report templates directory
-    if SYSTEM_REPORT_TEMPLATES_DIR.exists():
-        for template_file in sorted(SYSTEM_REPORT_TEMPLATES_DIR.glob("*.html")):
-            # Map template names to use cases
-            use_cases = {
+    # Configuration for each template type
+    configs = {
+        "slides": {
+            "dirs": [(USER_TEMPLATES_DIR / "slides", "user"), (SYSTEM_SLIDE_TEMPLATES_DIR, "system")],
+            "pattern": "*.html",
+            "metadata_key": "use_case",
+            "default_metadata": "General purpose slide"
+        },
+        "reports": {
+            "dirs": [(USER_TEMPLATES_DIR / "reports", "user"), (SYSTEM_REPORT_TEMPLATES_DIR, "system")],
+            "pattern": "*.html",
+            "metadata_key": "use_case",
+            "default_metadata": "Report page template",
+            "use_cases": {
+                "00_endnotes": "Endnotes and references",
                 "01_cover_page": "Cover page with title, subtitle, and branding",
                 "02_table_of_contents": "Table of contents with section navigation",
-                "03_executive_letter": "Executive letter or foreword",
                 "04_section_divider": "Section divider with visual impact",
-                "05_content_page": "Standard content page with text and images",
-                "06_data_visualization": "Full-page data visualization with metrics",
-                "07_pull_quote": "Pull quote or key insight page",
-                "08_conclusion": "Conclusion with key takeaways and next steps"
+                "05_quote_page": "Pull quote or key insight page",
+                "06_executive_summary": "Executive summary with key points"
             }
+        },
+        "charts": {
+            "dirs": [(USER_TEMPLATES_DIR / "charts", "user"), (SYSTEM_CHART_TEMPLATES_DIR, "system")],
+            "pattern": "*.py",
+            "metadata_key": "description",
+            "default_metadata": "Chart template"
+        }
+    }
+    
+    config = configs[type]
+    all_templates = []
+    
+    # Collect all templates
+    for dir_path, source in config["dirs"]:
+        if not dir_path.exists():
+            continue
+        for template_file in sorted(dir_path.glob(config["pattern"])):
+            # Extract metadata
+            metadata = config["default_metadata"]
+            if type == "reports" and "use_cases" in config:
+                metadata = config["use_cases"].get(template_file.stem, metadata)
+            elif type in ["slides", "charts"]:
+                # Try to extract from file content
+                with open(template_file, "r") as f:
+                    content = f.read()
+                if type == "slides" and "<!-- Use case:" in content:
+                    start = content.find("<!-- Use case:") + len("<!-- Use case:")
+                    end = content.find("-->", start)
+                    if end > start:
+                        metadata = content[start:end].strip()
+                elif type == "charts" and '"""' in content:
+                    start = content.find('"""') + 3
+                    end = content.find('"""', start)
+                    if end > start:
+                        metadata = content[start:end].strip().split('\n')[0]
             
-            use_case = use_cases.get(template_file.stem, "Report page template")
-            
-            templates.append({
+            all_templates.append({
                 "name": template_file.stem,
-                "path": str(template_file.relative_to(BASE_DIR)),
+                "path": str(template_file),
                 "file": template_file.name,
-                "use_case": use_case,
-                "source": "system",
-            })
-    
-    # Also check user templates
-    user_report_templates = USER_TEMPLATES_DIR / "reports"
-    if user_report_templates.exists():
-        for template_file in sorted(user_report_templates.glob("*.html")):
-            templates.append({
-                "name": template_file.stem,
-                "path": str(template_file.relative_to(BASE_DIR)),
-                "file": template_file.name,
-                "use_case": "User custom report template",
-                "source": "user",
-            })
-    
-    return templates
-
-@mcp.tool()
-def list_chart_templates() -> List[Dict[str, Any]]:
-    """
-    List all available chart templates with metadata.
-    
-    Returns:
-        List of template information with paths and descriptions
-    """
-    templates: List[Dict[str, Any]] = []
-
-    for root in resolve_chart_template_dirs():
-        source = (
-            "user" if root == USER_TEMPLATES_DIR / "charts" else
-            "legacy" if root == LEGACY_CHART_TEMPLATES_DIR else
-            "system"
-        )
-        for template_file in sorted(root.glob("*.py")):
-            with open(template_file, "r") as f:
-                content = f.read()
-            description = "Chart template"
-            if '"""' in content:
-                start = content.find('"""') + 3
-                end = content.find('"""', start)
-                if end > start:
-                    description = content[start:end].strip().split('\n')[0]
-            try:
-                rel = template_file.relative_to(BASE_DIR)
-                rel_path = str(rel)
-            except Exception:
-                rel_path = str(template_file)
-            templates.append({
-                "name": template_file.stem,
-                "path": rel_path,
-                "file": template_file.name,
-                "description": description,
+                config["metadata_key"]: metadata,
                 "source": source,
+                "type": type.rstrip('s')  # Remove plural
             })
-
-    # De-duplicate by name preferring earlier (user > legacy > system)
-    unique: Dict[str, Dict[str, Any]] = {}
-    ordered = []
-    for t in templates:
-        if t["name"] not in unique:
+    
+    # Filter by names if specified
+    if names is not None:
+        name_list = [names] if isinstance(names, str) else names
+        all_templates = [t for t in all_templates if t["name"] in name_list]
+    
+    # De-duplicate preferring user over system
+    unique = {}
+    for t in all_templates:
+        if t["name"] not in unique or t["source"] == "user":
             unique[t["name"]] = t
-            ordered.append(t)
-    return ordered
+    
+    return list(unique.values())
+
 
 # =============================================================================
 # INIT TOOLS
 # =============================================================================
 
-@mcp.tool()
-def init_slide(project: str, number: str, template: str = None, 
-              title: str = "", subtitle: str = "", section: str = "") -> str:
-    """
-    Initialize a slide from a template for a specific project.
-    
-    Args:
-        project: Name of the project
-        number: Slide number (e.g., '01' or 'slide_01')
-        template: Path to the template file
-        title: Main title for the slide
-        subtitle: Subtitle for the slide
-        section: Section label for the slide
-    
-    Returns:
-        Path to the created slide file
-    """
-    project_dir = resolve_projects_dir() / project
-    if not project_dir.exists():
-        return f"Error: Project '{project}' not found"
-    
-    # Handle template path - try to resolve from multiple locations
-    if template:
-        # First try as absolute path from BASE_DIR
-        template_file = BASE_DIR / template
-        if not template_file.exists():
-            # Try relative to system templates
-            template_file = SYSTEM_SLIDE_TEMPLATES_DIR / Path(template).name
-            if not template_file.exists():
-                return f"Error: Template not found at {template}"
-    else:
-        # Use default base_slide template from system
-        template_file = SYSTEM_SLIDE_TEMPLATES_DIR / "01_base_slide.html"
-        if not template_file.exists():
-            return f"Error: Default template not found"
-    
-    # Read template
-    with open(template_file, "r") as f:
+def process_template(template_path: Path, replacements: Dict[str, str]) -> str:
+    """Read template and replace all placeholders."""
+    with open(template_path, "r") as f:
         content = f.read()
     
-    # Get theme from theme folder
-    try:
-        theme = get_project_theme(project_dir)
-    except ValueError as e:
-        return f"Error: {e}"
+    for key, value in replacements.items():
+        content = content.replace(f'[{key}]', value)
     
-    # Replace CSS path placeholders
-    # Both CSS files are now local to the project (in project/theme/)
-    # From slides/ to theme/ is ../theme/
-    base_css_path = f"{REL_PATH_TO_THEME_FROM_SLIDES}/{SLIDE_BASE_CSS_NAME}"
-    theme_css_path = f"{REL_PATH_TO_THEME_FROM_SLIDES}/{theme}{THEME_CSS_SUFFIX}"
-    
-    # Replace the placeholders
-    content = content.replace('[BASE_CSS_PATH]', base_css_path)
-    content = content.replace('[THEME_CSS_PATH]', theme_css_path)
-    
-    # Replace placeholders
-    if not number.startswith('slide_'):
-        number = f"slide_{number.zfill(2)}"
-    
-    slide_num = number.replace('slide_', '')
-    content = content.replace('[TITLE]', title)
-    content = content.replace('[SUBTITLE]', subtitle)
-    content = content.replace('[SECTION]', section)
-    content = content.replace('[PAGE_NUMBER]', slide_num)
-    content = content.replace('XX', slide_num)  # Legacy support
-    
-    # Create slide file
-    slide_name = f"{number}.html"
-    slide_path = project_dir / "slides" / slide_name
-    
-    with open(slide_path, "w") as f:
-        f.write(content)
-    
-    return str(slide_path)
+    return content
 
 @mcp.tool()
-def init_report_page(project: str, number: str, template: str = None, 
-                     title: str = "", subtitle: str = "", section: str = "") -> str:
+def init_from_template(project: str, resource_type: str, name: str, 
+                      template: str = None, **kwargs) -> str:
     """
-    Initialize a report page from a template for a specific project.
-    Report pages are vertical format (8.5x11) and go in the report_pages/ folder.
+    Universal template initialization function.
     
     Args:
-        project: Name of the project
-        number: Page number (e.g., '01' or 'page_01')
-        template: Filename of the template (e.g., '01_cover_page.html')
-        title: Main title for the page
-        subtitle: Subtitle for the page
-        section: Section label for the page
+        project: Project name
+        resource_type: "slide", "report", or "chart"
+        name: Resource name/number
+        template: Template filename (optional)
+        **kwargs: Additional placeholders (title, subtitle, section, etc.)
     
     Returns:
-        Path to the created report file
+        Path to created file
     """
-    project_dir = resolve_projects_dir() / project
+    project_dir = USER_PROJECTS_DIR / project
     if not project_dir.exists():
         return f"Error: Project '{project}' not found"
     
-    # Use the report_pages directory for vertical report content
-    report_pages_dir = project_dir / "report_pages"
-    if not report_pages_dir.exists():
-        report_pages_dir.mkdir(exist_ok=True)  # Create if missing
+    theme = get_project_theme(project_dir)
     
-    # Handle template
+    # Configuration for each resource type
+    configs = {
+        "slide": {
+            "output_dir": project_dir / "slides",
+            "template_dir": SYSTEM_SLIDE_TEMPLATES_DIR,
+            "default_template": "01_base_slide.html",
+            "file_pattern": "{}.html",
+            "prefix": "slide_",
+            "extension": ".html"
+        },
+        "report": {
+            "output_dir": project_dir / "report_pages",
+            "template_dir": SYSTEM_REPORT_TEMPLATES_DIR, 
+            "default_template": "06_executive_summary.html",
+            "file_pattern": "report_{}.html",
+            "prefix": "page_",
+            "extension": ".html"
+        },
+        "chart": {
+            "output_dir": project_dir / "plots",
+            "template_dir": SYSTEM_CHART_TEMPLATES_DIR,
+            "default_template": None,  # Charts have no default
+            "file_pattern": "{}.py",
+            "prefix": "",
+            "extension": ".py"
+        },
+        "outline": {
+            "output_dir": project_dir,
+            "template_dir": SYSTEM_OUTLINE_TEMPLATES_DIR,
+            "default_template": "outline_slides.md",
+            "file_pattern": "{}.md",
+            "prefix": "",
+            "extension": ".md"
+        }
+    }
+    
+    config = configs.get(resource_type)
+    if not config:
+        return f"Error: Unknown resource type '{resource_type}'"
+    
+    # Ensure output directory exists
+    config["output_dir"].mkdir(exist_ok=True)
+    
+    # Normalize name
+    if config["prefix"] and not name.startswith(config["prefix"]):
+        name = f"{config['prefix']}{name.zfill(2)}"
+    if name.endswith(config["extension"]):
+        name = name[:-len(config["extension"])]
+    
+    # Find template file
     if template:
-        # Try to find template in system reports templates
-        template_file = SYSTEM_REPORT_TEMPLATES_DIR / template
+        template_file = config["template_dir"] / template
         if not template_file.exists():
-            # Try with just the filename
-            template_file = SYSTEM_REPORT_TEMPLATES_DIR / Path(template).name
+            template_file = config["template_dir"] / Path(template).name
             if not template_file.exists():
                 return f"Error: Template '{template}' not found"
-    else:
-        # Default to content page template
-        template_file = SYSTEM_REPORT_TEMPLATES_DIR / "05_content_page.html"
+    elif config["default_template"]:
+        template_file = config["template_dir"] / config["default_template"]
         if not template_file.exists():
             return f"Error: Default template not found"
+    else:
+        # For charts without template, create boilerplate
+        if resource_type == "chart":
+            content = create_chart_boilerplate(name, project)
+        else:
+            return f"Error: No template specified for {resource_type}"
     
-    # Read template
-    with open(template_file, "r") as f:
-        content = f.read()
+    # Process template if we have one
+    if template or config["default_template"]:
+        if resource_type == "chart":
+            # Charts don't use placeholders - just copy as-is
+            with open(template_file, "r") as f:
+                content = f.read()
+        elif resource_type == "outline":
+            # Outlines use curly brace placeholders
+            with open(template_file, "r") as f:
+                content = f.read()
+            # Replace curly brace placeholders
+            for key, value in kwargs.items():
+                content = content.replace(f"{{{key}}}", str(value))
+            content = content.replace("{theme}", theme)
+        else:
+            # HTML templates use bracket placeholders
+            replacements = {
+                "THEME": theme,
+                "PAGE_NUMBER": name.split('_')[1] if '_' in name else name,
+                **kwargs  # Add any extra kwargs as replacements
+            }
+            
+            # Add CSS paths for HTML templates
+            base_css = SLIDE_BASE_CSS_NAME if resource_type == "slide" else REPORT_BASE_CSS_NAME
+            replacements["BASE_CSS_PATH"] = f"{REL_PATH_TO_THEME_IN_PROJECT}/{base_css}"
+            replacements["THEME_CSS_PATH"] = f"{REL_PATH_TO_THEME_IN_PROJECT}/{theme}{THEME_FILES['css']}"
+            
+            # Map common aliases
+            for key in ["TITLE", "SUBTITLE", "SECTION"]:
+                if key.lower() in kwargs:
+                    replacements[key] = kwargs[key.lower()]
+            
+            # Report-specific aliases
+            if resource_type == "report":
+                replacements["REPORT_TITLE"] = replacements.get("TITLE", "")
+                replacements["CONTENT_TITLE"] = replacements.get("TITLE", "")
+                replacements["CONTENT_SUBTITLE"] = replacements.get("SUBTITLE", "")
+                replacements["SECTION_NAME"] = replacements.get("SECTION", "")
+            
+            content = process_template(template_file, replacements)
     
-    # Get theme from theme folder
-    try:
-        theme = get_project_theme(project_dir)
-    except ValueError as e:
-        return f"Error: {e}"
+    # Create output file
+    filename = config["file_pattern"].format(name)
+    output_path = config["output_dir"] / filename
     
-    # Replace CSS path placeholders
-    # From reports/ to theme/ is ../theme/
-    base_css_path = f"{REL_PATH_TO_THEME_FROM_REPORTS}/{REPORT_BASE_CSS_NAME}"
-    theme_css_path = f"{REL_PATH_TO_THEME_FROM_REPORTS}/{theme}{THEME_CSS_SUFFIX}"
-    
-    # Replace placeholders
-    content = content.replace('[THEME]', theme)
-    content = content.replace('[REPORT_TITLE]', title)
-    content = content.replace('[CONTENT_TITLE]', title)
-    content = content.replace('[CONTENT_SUBTITLE]', subtitle)
-    content = content.replace('[SECTION_NAME]', section)
-    
-    # Normalize page number
-    if not number.startswith('page_'):
-        number = f"page_{number.zfill(2)}"
-    
-    page_num = number.replace('page_', '')
-    content = content.replace('[PAGE_NUMBER]', page_num)
-    
-    # Create report file in report_pages directory
-    page_name = f"report_{number}.html"
-    page_path = report_pages_dir / page_name
-    
-    with open(page_path, "w") as f:
+    with open(output_path, "w") as f:
         f.write(content)
     
-    return str(page_path)
+    # Make charts executable
+    if resource_type == "chart":
+        output_path.chmod(0o755)
+    
+    return str(output_path)
 
-@mcp.tool()
-def init_chart(project: str, name: str, template: str = None) -> str:
-    """
-    Initialize a chart from a template for a specific project.
-    
-    Args:
-        project: Name of the project
-        name: Name for the chart file (without .py extension)
-        template: Path to the template file
-    
-    Returns:
-        Path to the created chart file
-    """
-    project_dir = resolve_projects_dir() / project
-    if not project_dir.exists():
-        return f"Error: Project '{project}' not found"
-    
-    # Clean chart name
-    if name.endswith('.py'):
-        name = name[:-3]
-    
-    # Handle template - try to resolve from multiple locations
-    if template:
-        # First try as absolute path from BASE_DIR
-        template_file = BASE_DIR / template
-        if not template_file.exists():
-            # Try relative to system templates
-            template_file = SYSTEM_CHART_TEMPLATES_DIR / Path(template).name
-            if not template_file.exists():
-                return f"Error: Template not found at {template}"
-        
-        with open(template_file, "r") as f:
-            content = f.read()
-        
-        # Update output filenames
-        content = content.replace('OUTPUT_NAME', name)
-    else:
-        # Create minimal boilerplate
-        content = f'''#!/usr/bin/env python3
+def create_chart_boilerplate(name: str, project: str) -> str:
+    """Create default chart boilerplate when no template is provided."""
+    return f'''#!/usr/bin/env python3
 """
 Chart: {name}
 Generated chart for {project} project
@@ -764,17 +594,7 @@ print("✅ Chart generated successfully!")
 print("   - Branded version: plots/{name}_branded.png")
 print("   - Clean version: plots/{name}_clean.png")
 '''
-    
-    # Create chart file
-    chart_path = project_dir / "plots" / f"{name}.py"
-    
-    with open(chart_path, "w") as f:
-        f.write(content)
-    
-    # Make executable
-    chart_path.chmod(0o755)
-    
-    return str(chart_path)
+
 
 # =============================================================================
 # UPDATE TOOLS
@@ -792,57 +612,28 @@ def swap_theme(project: str, theme: str) -> str:
     Returns:
         Success message
     """
-    project_dir = resolve_projects_dir() / project
+    project_dir = USER_PROJECTS_DIR / project
     if not project_dir.exists():
         return f"Error: Project '{project}' not found"
     
-    # Check if theme exists
-    theme_found = False
-    theme_path = None
-    
-    # Search in user themes first
-    if USER_THEMES_DIR.exists():
-        test_path = USER_THEMES_DIR / theme
-        if test_path.exists() and (test_path / f"{theme}_theme.css").exists():
-            theme_found = True
-            theme_path = str(test_path)
-    # Then legacy examples/private
-    if not theme_found:
-        for location in ["examples", "private"]:
-            test_path = LEGACY_THEMES_DIR / location / theme
-            if test_path.exists() and (test_path / f"{theme}_theme.css").exists():
-                theme_found = True
-                theme_path = f"themes/{location}/{theme}"
-                break
-    # Finally system core themes
-    if not theme_found and (SYSTEM_THEMES_DIR / theme).exists():
-        test_path = SYSTEM_THEMES_DIR / theme
-        if (test_path / f"{theme}_theme.css").exists():
-            theme_found = True
-            theme_path = str(test_path)
-    
-    if not theme_found:
+    # Find theme source
+    theme_info = get_themes(theme)
+    if not theme_info:
         return f"Error: Theme '{theme}' not found"
+    theme_source = Path(theme_info[0]["path"])
     
-    # Get current theme from theme folder
-    try:
-        old_theme = get_project_theme(project_dir)
-    except ValueError:
-        old_theme = "unknown"
+    # Get current theme
+    old_theme = get_project_theme(project_dir)
     
-    # Clear old theme files from project/theme/
+    # Clear old theme files from project/theme/ (keep base CSS)
     theme_dir = project_dir / "theme"
     if theme_dir.exists():
         for file in theme_dir.glob("*"):
-            if file.name not in [SLIDE_BASE_CSS_NAME, REPORT_BASE_CSS_NAME]:  # Keep base CSS files
+            if file.name not in [SLIDE_BASE_CSS_NAME, REPORT_BASE_CSS_NAME]:
                 file.unlink()
     
-    # Copy new theme files to project/theme/
-    theme_source = Path(theme_path) if Path(theme_path).is_absolute() else BASE_DIR / theme_path
-    if theme_source.exists():
-        for theme_file in theme_source.glob("*"):
-            if theme_file.is_file():
-                shutil.copy2(theme_file, theme_dir / theme_file.name)
+    # Copy new theme files
+    copy_theme_files(theme_source, project_dir, theme)
     
     # Update existing slides to use new theme
     slides_dir = project_dir / "slides"
@@ -883,7 +674,7 @@ def generate_pdf(project: str, output_path: str = None, format: str = "slides") 
     Returns:
         Result dictionary with path or error
     """
-    project_dir = resolve_projects_dir() / project
+    project_dir = USER_PROJECTS_DIR / project
     if not project_dir.exists():
         return {"success": False, "error": f"Project '{project}' not found"}
     
@@ -967,7 +758,7 @@ def start_live_viewer(project: str, port: int = 8080) -> Dict[str, Any]:
     """
     global LIVE_VIEWER_PROCESSES
     
-    project_dir = resolve_projects_dir() / project
+    project_dir = USER_PROJECTS_DIR / project
     if not project_dir.exists():
         return {"success": False, "error": f"Project '{project}' not found"}
     
@@ -1002,8 +793,6 @@ def start_live_viewer(project: str, port: int = 8080) -> Dict[str, Any]:
             env=env
         )
         
-        LIVE_VIEWER_PROCESSES[project] = process
-        
         return {
             "success": True,
             "url": f"http://localhost:{port}",
@@ -1013,35 +802,6 @@ def start_live_viewer(project: str, port: int = 8080) -> Dict[str, Any]:
     
     except Exception as e:
         return {"success": False, "error": str(e)}
-
-@mcp.tool()
-def stop_live_viewer(project: str = None) -> Dict[str, Any]:
-    """
-    Stop the live viewer server.
-    
-    Args:
-        project: Name of the project (optional, stops all if not specified)
-    
-    Returns:
-        Result dictionary
-    """
-    global LIVE_VIEWER_PROCESSES
-    
-    if project and project in LIVE_VIEWER_PROCESSES:
-        process = LIVE_VIEWER_PROCESSES[project]
-        process.terminate()
-        try:
-            process.wait(timeout=5)
-        except:
-            process.kill()
-        
-        del LIVE_VIEWER_PROCESSES[project]
-        return {"success": True, "message": f"Stopped live viewer for project '{project}'"}
-    else:
-        # Kill all live viewer processes
-        subprocess.run(["pkill", "-f", "node.*live_viewer_server"], capture_output=True)
-        LIVE_VIEWER_PROCESSES.clear()
-        return {"success": True, "message": "Stopped all live viewers"}
 
 
 
