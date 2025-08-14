@@ -252,12 +252,12 @@ async function waitForSlideReady(page, slideUrl) {
 }
 
 // Main PDF generation function using HTTP server
-async function generatePDFWithServer(slidesDir, outputPath = null, format = 'slides') {
+async function generatePDFWithServer(htmlDir, outputPath = null, format = 'slides') {
     // Find HTML files based on format
     let htmlFiles;
     if (format === 'report') {
         // For reports, find report_*.html files
-        htmlFiles = fs.readdirSync(slidesDir)
+        htmlFiles = fs.readdirSync(htmlDir)
             .filter(file => file.match(/^report.*\.html$/))
             .sort((a, b) => {
                 // Try to extract numbers for sorting
@@ -267,7 +267,7 @@ async function generatePDFWithServer(slidesDir, outputPath = null, format = 'sli
             });
     } else {
         // For slides, find slide_*.html files
-        htmlFiles = fs.readdirSync(slidesDir)
+        htmlFiles = fs.readdirSync(htmlDir)
             .filter(file => file.match(/^slide_\d+\.html$/))
             .sort((a, b) => {
                 const numA = parseInt(a.match(/\d+/)[0]);
@@ -276,26 +276,26 @@ async function generatePDFWithServer(slidesDir, outputPath = null, format = 'sli
             });
     }
     
-    const slideFiles = htmlFiles;
+    const htmlFilesList = htmlFiles;
 
-    if (slideFiles.length === 0) {
-        console.error(`Error: No slide files found in ${slidesDir}`);
+    if (htmlFilesList.length === 0) {
+        console.error(`Error: No HTML files found in ${htmlDir}`);
         process.exit(1);
     }
 
-    console.log(`📑 Found ${slideFiles.length} ${format === 'report' ? 'report pages' : 'slides'} to process`);
+    console.log(`📑 Found ${htmlFilesList.length} ${format === 'report' ? 'report pages' : 'slides'} to process`);
 
     // Generate output path if not provided
     if (!outputPath) {
-        const projectName = path.basename(path.dirname(slidesDir));
-        outputPath = path.join(path.dirname(slidesDir), `${projectName}.pdf`);
+        const projectName = path.basename(path.dirname(htmlDir));
+        outputPath = path.join(path.dirname(htmlDir), `${projectName}.pdf`);
     }
 
-    console.log(`📝 Generating PDF from ${slideFiles.length} ${format === 'report' ? 'report pages' : 'slides'} (${format} format)`);
+    console.log(`📝 Generating PDF from ${htmlFilesList.length} ${format === 'report' ? 'report pages' : 'slides'} (${format} format)`);
     console.log(`📁 Output will be saved to: ${outputPath}`);
 
     // Start local server for the project
-    const projectDir = path.dirname(slidesDir);
+    const projectDir = path.dirname(htmlDir);
     const { server, port } = await startLocalServer(projectDir);
 
     const browser = await launchBrowser();
@@ -310,21 +310,22 @@ async function generatePDFWithServer(slidesDir, outputPath = null, format = 'sli
         hideCursor: true
     });
     
-    progressBar.start(slideFiles.length, 0, { slide: 'Starting...' });
+    progressBar.start(htmlFilesList.length, 0, { slide: 'Starting...' });
 
     try {
-        const pdfBuffers = new Array(slideFiles.length);
+        const pdfBuffers = new Array(htmlFilesList.length);
         let completed = 0;
 
-        // Process slides concurrently
+        // Process HTML files concurrently
         const CONCURRENCY_LIMIT = 8;
-        await processWithConcurrency(slideFiles, CONCURRENCY_LIMIT, async (slideFile, i) => {
+        await processWithConcurrency(htmlFilesList, CONCURRENCY_LIMIT, async (htmlFile, i) => {
             const page = await pagePool.acquire();
             
             try {
-                // Navigate to slide via HTTP server
-                const slideUrl = `http://localhost:${port}/slides/${slideFile}`;
-                await waitForSlideReady(page, slideUrl);
+                // Navigate to HTML file via HTTP server
+                const dirName = path.basename(htmlDir);
+                const htmlUrl = `http://localhost:${port}/${dirName}/${htmlFile}`;
+                await waitForSlideReady(page, htmlUrl);
                 
                 // Inject override CSS for PDF based on format
                 await page.addStyleTag({ content: format === 'report' ? REPORT_CSS : SLIDE_CSS });
@@ -362,7 +363,7 @@ async function generatePDFWithServer(slidesDir, outputPath = null, format = 'sli
 
                 pdfBuffers[i] = pdfBuffer;
                 completed++;
-                progressBar.update(completed, { slide: slideFile });
+                progressBar.update(completed, { slide: htmlFile });
             } finally {
                 await pagePool.release(page);
             }
@@ -407,13 +408,14 @@ async function main() {
     if (args.length === 0) {
         console.log(`
 Usage: 
-  node pdf_generator.js <slides-directory> [output-path] [format]
+  node pdf_generator.js <html-directory> [output-path] [format]
 
 Examples:
   node pdf_generator.js projects/myproject/slides/
+  node pdf_generator.js projects/myproject/report_pages/
   node pdf_generator.js projects/myproject/slides/ output.pdf
   node pdf_generator.js projects/myproject/slides/ output.pdf slides
-  node pdf_generator.js projects/myproject/slides/ report.pdf report
+  node pdf_generator.js projects/myproject/report_pages/ report.pdf report
 
 Formats:
   slides - 16:9 horizontal format (default)
@@ -429,16 +431,16 @@ Features:
         process.exit(0);
     }
 
-    const slidesDir = args[0];
+    const htmlDir = args[0];
     const outputFile = args[1];
     const format = args[2] || 'slides';
 
-    if (!fs.existsSync(slidesDir)) {
-        console.error(`Error: Directory not found: ${slidesDir}`);
+    if (!fs.existsSync(htmlDir)) {
+        console.error(`Error: Directory not found: ${htmlDir}`);
         process.exit(1);
     }
 
-    await generatePDFWithServer(slidesDir, outputFile, format);
+    await generatePDFWithServer(htmlDir, outputFile, format);
 }
 
 // Handle process termination
