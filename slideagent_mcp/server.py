@@ -878,7 +878,7 @@ def start_live_viewer(project: str, port: int = 8080) -> Dict[str, Any]:
     subprocess.run(["pkill", "-f", "node.*live_viewer_server"], capture_output=True)
     
     # Start viewer from same slideagent_mcp directory
-    viewer_script = Path(__file__).parent / "utils" / "live_viewer_server.js"
+    viewer_script = Path(__file__).parent / "utils" / "live_viewer" / "live_viewer_server.js"
     if not viewer_script.exists():
         return {"success": False, "error": "Live viewer script not found"}
     

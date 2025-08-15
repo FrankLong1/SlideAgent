@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{PROJECT_NAME}} - Live Generation Viewer</title>
+    <link rel="stylesheet" href="/viewer_styles.css">
+</head>
+<body>
+    <header id="viewer-header">
+        <div class="header-content">
+            <h1>{{PROJECT_NAME}} - Live Generation</h1>
+            <div class="stats">
+                <div class="stat">
+                    <span>Progress:</span>
+                    <span class="stat-value" id="slide-count">0/0</span>
+                </div>
+                <div class="stat">
+                    <span>Agents:</span>
+                    <span class="stat-value" id="section-count">0</span>
+                </div>
+                <div class="stat">
+                    <span>Last Update:</span>
+                    <span class="stat-value" id="last-update">--</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div id="main-container">
+        <div class="progress-overview">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%">
+                    0%
+                </div>
+            </div>
+        </div>
+
+        <div class="sections-container" id="sections-container">
+            <div class="no-sections" id="no-sections">
+                <div style="font-size: 48px; margin-bottom: 20px;">⏳</div>
+                <div style="font-size: 20px; margin-bottom: 10px;">Waiting for agents to start...</div>
+                <div class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span>Viewer Active - Monitoring for slides</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/viewer_client.js"></script>
+</body>
+</html>
