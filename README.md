@@ -139,3 +139,28 @@ You can drive SlideAgent end-to-end from Goose if you'd like a GUI [`https://blo
 - If you installed the Puppeteer MCP globally, add it in Goose as well so you can navigate and screenshot slides during generation.
 
 Also make sure to copy CLAUDE.md to .goosehints which is their system prompt management system.
+
+
+#   Musings about AI Agents
+This project is my contribution to the world of open model benchmarks. It is a living qualitative benchmark of what today’s AI agents can and can’t do. Slide generation is an interesting stress test — it demands structured reasoning, precise layouts, and adaptation to tight visual constraints, all within long-horizon tasks that span multiple files, coordinate sub-agents, and require fine-grained visual and spatial reasoning.
+
+Right now, the weak spots are clear:
+Pixel-level multimodal understanding is still shaky. Models struggle to place and size elements with exactness, which leads to overlapping content or overflowing slides.
+
+Vertical report generation often fails because page length and spacing aren’t dynamically managed easily by the models.
+
+Complex slide layouts can break when multiple charts, text blocks, or images compete for limited real estate.
+
+The model is not very smart about checking its work and iterating, often losing track of the goal or ignoring obvious fixes.
+
+All of these will improve as base models improve. Yes, there are “engineering fixes” I could add today to paper over these issues. But the point of SlideAgent is not to make a quality product that addresses the weaknesses of the current generation of models. The point is to ride the curve of model improvement — to keep the system minimal so it reflects exactly what the raw model can do, without product-specific scaffolding that will turn into legacy baggage.
+
+If you believe in The Bitter Lesson, you expect that the most successful slide generators of the future won’t be the ones with the most elaborate domain-specific code; they’ll be the ones that let the model do the work. If you really believe the Bitter Lesson you will ponder whether this is true for every piece of application software in the world. Right now, there are highly capable, well-funded products that outperform this project because they’ve built a lot of specialized tooling around today’s limitations. But eventually, much of that tooling will be obsolete — just extra weight when the base models are strong enough to handle the task directly.
+
+So SlideAgent is a benchmark in two senses:
+
+Performance tracking — seeing how raw models measure up against highly engineered systems over time.
+
+Philosophical testing — measuring how close we are to the point where “pure model” approaches beat “great product work with guardrails.”
+
+The day a minimal agent like SlideAgent consistently beats a purpose-built, feature-rich slide generator… that will be a sign that the AI models have crossed a major threshold.
