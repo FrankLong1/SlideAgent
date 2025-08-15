@@ -21,7 +21,7 @@ import yaml
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Literal
 from datetime import datetime
 
 from mcp.server.fastmcp import FastMCP
@@ -53,6 +53,27 @@ SYSTEM_THEMES_DIR = SYSTEM_RESOURCES_DIR / "themes" / "core"
 # CSS file names
 SLIDE_BASE_CSS_NAME = "slide_base.css"  # Core 16:9 slide styling
 REPORT_BASE_CSS_NAME = "report_base.css"  # Core 8.5x11 report styling
+
+# =============================================================================
+# METADATA EXTRACTION MARKERS
+# =============================================================================
+
+# HTML template metadata markers
+HTML_META_START = "<!-- TEMPLATE_META"
+HTML_META_END = "-->"
+HTML_USE_CASES_FIELD = "use_cases:"
+HTML_DESCRIPTION_FIELD = "description:"
+HTML_OLD_USE_CASE = "<!-- Use case:"
+
+# Python docstring markers
+PY_DOCSTRING_START = '"""'
+PY_DOCSTRING_END = '"""'
+PY_CHART_PREFIX = "Chart:"
+
+# Markdown metadata markers
+MD_DESCRIPTION_MARKER = "## Description"
+MD_SUMMARY_MARKER = "## Summary"
+MD_OVERVIEW_MARKER = "## Overview"
 
 # CSS source paths
 SLIDE_BASE_CSS_SOURCE = SYSTEM_SLIDE_TEMPLATES_DIR / SLIDE_BASE_CSS_NAME
@@ -86,18 +107,18 @@ USER_TEMPLATES_DIR = USER_RESOURCES_DIR / "templates"  # User custom templates
 # HELPER FUNCTIONS
 # =============================================================================
 
-def get_project_theme(project_dir: Path) -> str:
+def _get_project_theme(project_dir: Path) -> str:
     """Get theme name from project's .theme file."""
     theme_file = project_dir / ".theme"
     if theme_file.exists():
         return theme_file.read_text().strip()
     return "acme_corp"  # default fallback
 
-def sanitize_project_name(name: str) -> str:
+def _sanitize_project_name(name: str) -> str:
     """Convert project name to filesystem-safe format."""
     return "".join(c if c.isalnum() or c in "-_" else "_" for c in name)
 
-def create_project_structure(project_dir: Path) -> None:
+def _create_project_structure(project_dir: Path) -> None:
     """Create the standard project directory structure."""
     dirs = [
         project_dir,
@@ -112,7 +133,7 @@ def create_project_structure(project_dir: Path) -> None:
         dir_path.mkdir(parents=True, exist_ok=True)
 
 
-def copy_theme_files(theme_source: Path, project_dir: Path, theme_name: str) -> None:
+def _copy_theme_files(theme_source: Path, project_dir: Path, theme_name: str) -> None:
     """Copy theme files to project and save theme name."""
     theme_dest = project_dir / "theme"
     
@@ -150,14 +171,14 @@ def create_project(name: str, theme: str = "acme_corp", description: str = "") -
         Success message with project path
     """
     # Sanitize and validate
-    safe_name = sanitize_project_name(name)
+    safe_name = _sanitize_project_name(name)
     project_dir = USER_PROJECTS_DIR / safe_name
     
     if project_dir.exists():
         return f"Error: Project '{safe_name}' already exists"
     
     # Create structure
-    create_project_structure(project_dir)
+    _create_project_structure(project_dir)
     
     # Find and copy theme
     theme_info = get_themes(theme)
@@ -168,34 +189,33 @@ def create_project(name: str, theme: str = "acme_corp", description: str = "") -
         theme_source = SYSTEM_THEMES_DIR / "acme_corp"
         theme = "acme_corp"
     
-    copy_theme_files(theme_source, project_dir, theme)
+    _copy_theme_files(theme_source, project_dir, theme)
     
-    # Create default outline (could be slides or report based on user preference)
-    # For now, create a slides outline by default
+    # Create default outline (slides by default)
     init_from_template(
-        project=safe_name, 
+        project=safe_name,
         resource_type="outline",
         name="outline",
         template="outline_slides.md",
-        title=safe_name.replace("_", " ").title(),
-        author="SlideAgent",
-        theme=theme
+        placeholders={
+            "title": safe_name.replace("_", " ").title(),
+            "author": "SlideAgent",
+            "theme": theme
+        }
     )
     
     return f"Created project '{safe_name}' at {project_dir}"
 
 @mcp.tool()
-def get_projects(names=None, fields=None):
+def get_projects(names=None):
     """
     Get project(s) information.
     
     Args:
         names: None for all projects, string for one, list for multiple
-        fields: Optional fields to include (name, theme, path, slides_count, 
-                charts_count, inputs_count, has_pdf, created_date)
     
     Returns:
-        List of project dictionaries (consistent return type)
+        List of project dictionaries
     """
     if not USER_PROJECTS_DIR.exists():
         return []
@@ -216,32 +236,12 @@ def get_projects(names=None, fields=None):
         if not project_dir.exists():
             continue
         
-        # Build info dict
-        info = {
+        projects.append({
             "name": name,
             "path": str(project_dir),
-            "theme": get_project_theme(project_dir),
-            "created_date": project_dir.stat().st_ctime,
-        }
-        
-        # Add counts if needed
-        if not fields or any(f in fields for f in ["slides_count", "charts_count", "inputs_count", "has_pdf"]):
-            slides_dir = project_dir / "slides"
-            info["slides_count"] = len(list(slides_dir.glob("*.html"))) if slides_dir.exists() else 0
-            
-            plots_dir = project_dir / "plots"
-            info["charts_count"] = len(list(plots_dir.glob("*_clean.png"))) if plots_dir.exists() else 0
-            
-            input_dir = project_dir / "input"
-            info["inputs_count"] = len(list(input_dir.glob("*"))) if input_dir.exists() else 0
-            
-            info["has_pdf"] = (project_dir / f"{name}.pdf").exists()
-        
-        # Filter fields if specified
-        if fields:
-            info = {k: v for k, v in info.items() if k in fields}
-        
-        projects.append(info)
+            "theme": _get_project_theme(project_dir),
+            "has_pdf": (project_dir / f"{name}.pdf").exists()
+        })
     
     return projects
 
@@ -296,145 +296,135 @@ def get_templates(type, names=None):
     Get template(s) of specified type.
     
     Args:
-        type: Template type - "slides", "reports", or "charts" (required)
+        type: Template type - "slides", "reports", "charts", or "outlines" (required)
         names: None for all templates, string for one, list for multiple
     
     Returns:
         List of template dictionaries
     """
-    if type not in ["slides", "reports", "charts"]:
-        raise ValueError(f"Invalid type '{type}'. Must be 'slides', 'reports', or 'charts'")
-    
-    # Configuration for each template type
-    configs = {
-        "slides": {
-            "dirs": [(USER_TEMPLATES_DIR / "slides", "user"), (SYSTEM_SLIDE_TEMPLATES_DIR, "system")],
-            "pattern": "*.html",
-            "metadata_key": "use_case",
-            "default_metadata": "General purpose slide"
-        },
-        "reports": {
-            "dirs": [(USER_TEMPLATES_DIR / "reports", "user"), (SYSTEM_REPORT_TEMPLATES_DIR, "system")],
-            "pattern": "*.html",
-            "metadata_key": "use_case",
-            "default_metadata": "Report page template",
-            "use_cases": {
-                "00_endnotes": "Endnotes and references",
-                "01_cover_page": "Cover page with title, subtitle, and branding",
-                "02_table_of_contents": "Table of contents with section navigation",
-                "04_section_divider": "Section divider with visual impact",
-                "05_quote_page": "Pull quote or key insight page",
-                "06_executive_summary": "Executive summary with key points"
-            }
-        },
-        "charts": {
-            "dirs": [(USER_TEMPLATES_DIR / "charts", "user"), (SYSTEM_CHART_TEMPLATES_DIR, "system")],
-            "pattern": "*.py",
-            "metadata_key": "description",
-            "default_metadata": "Chart template"
-        }
+    # Map plural types to singular resource types used by _get_resource_config
+    type_map = {
+        "slides": "slide",
+        "reports": "report", 
+        "charts": "chart",
+        "outlines": "outline"
     }
     
-    config = configs[type]
+    if type not in type_map:
+        raise ValueError(f"Invalid type '{type}'. Must be one of: {', '.join(type_map.keys())}")
+    
+    resource_type = type_map[type]
+    
+    # Use a dummy project dir since we just need the template config
+    dummy_project_dir = Path("/tmp")
+    config = _get_resource_config(resource_type, dummy_project_dir)
+    
+    # Map file extensions to types for metadata extraction
+    ext_to_type = {
+        ".html": "html",
+        ".py": "py",
+        ".md": "md"
+    }
+    
+    # Determine metadata key based on type
+    metadata_key = "use_case" if type in ["slides", "reports"] else "description"
+    
     all_templates = []
     
-    # Collect all templates
-    for dir_path, source in config["dirs"]:
+    # Collect templates from both user and system directories
+    for dir_path in config["template_dirs"]:
         if not dir_path.exists():
             continue
-        for template_file in sorted(dir_path.glob(config["pattern"])):
-            # Extract metadata
-            metadata = config["default_metadata"]
-            if type == "reports" and "use_cases" in config:
-                metadata = config["use_cases"].get(template_file.stem, metadata)
-            elif type in ["slides", "charts"]:
-                # Try to extract from file content
-                with open(template_file, "r") as f:
-                    content = f.read()
-                if type == "slides" and "<!-- Use case:" in content:
-                    start = content.find("<!-- Use case:") + len("<!-- Use case:")
-                    end = content.find("-->", start)
-                    if end > start:
-                        metadata = content[start:end].strip()
-                elif type == "charts" and '"""' in content:
-                    start = content.find('"""') + 3
-                    end = content.find('"""', start)
-                    if end > start:
-                        metadata = content[start:end].strip().split('\n')[0]
+        
+        # Determine source (user or system)
+        source = "user" if "user_resources" in str(dir_path) else "system"
+        
+        # Get file pattern from extension
+        pattern = f"*{config['extension']}" if config.get("extension") else "*"
+        
+        for template_file in sorted(dir_path.glob(pattern)):
+            # Extract metadata using helper
+            file_ext = template_file.suffix
+            file_type = ext_to_type.get(file_ext, "txt")
+            metadata = _extract_template_metadata(template_file, file_type)
+            
+            # Use default if no metadata found
+            if not metadata:
+                metadata = f"{type.rstrip('s').title()} template"
             
             all_templates.append({
                 "name": template_file.stem,
                 "path": str(template_file),
                 "file": template_file.name,
-                config["metadata_key"]: metadata,
+                metadata_key: metadata,
                 "source": source,
                 "type": type.rstrip('s')  # Remove plural
             })
     
-    # Filter by names if specified
-    if names is not None:
-        name_list = [names] if isinstance(names, str) else names
-        all_templates = [t for t in all_templates if t["name"] in name_list]
-    
-    # De-duplicate preferring user over system
-    unique = {}
-    for t in all_templates:
-        if t["name"] not in unique or t["source"] == "user":
-            unique[t["name"]] = t
-    
-    return list(unique.values())
+    # Filter by names using helper
+    return _filter_templates_by_names(all_templates, names)
 
 
 # =============================================================================
-# INIT TOOLS
+# HELPER FUNCTIONS (prefixed with _ to indicate internal use)
 # =============================================================================
 
-def process_template(template_path: Path, replacements: Dict[str, str]) -> str:
+def _get_project_dir(project: str) -> Path:
+    """Get and validate project directory."""
+    project_dir = USER_PROJECTS_DIR / project
+    if not project_dir.exists():
+        raise ValueError(f"Project '{project}' not found")
+    return project_dir
+
+def _normalize_resource_name(name: str, config: dict) -> str:
+    """Normalize resource name based on config prefix/extension rules."""
+    # Add prefix if needed
+    if config.get("prefix") and not name.startswith(config["prefix"]):
+        # Only add zfill for numeric names
+        if name.isdigit():
+            name = f"{config['prefix']}{name.zfill(2)}"
+        else:
+            name = f"{config['prefix']}{name}"
+    
+    # Remove extension if present
+    if config.get("extension") and name.endswith(config["extension"]):
+        name = name[:-len(config["extension"])]
+    
+    return name
+
+def _get_output_path(name: str, config: dict) -> Path:
+    """Get output path for a resource."""
+    config["output_dir"].mkdir(exist_ok=True)
+    filename = config["file_pattern"].format(name)
+    return config["output_dir"] / filename
+
+def _process_template(template_path: Path, replacements: Dict[str, str]) -> str:
     """Read template and replace all placeholders."""
     with open(template_path, "r") as f:
         content = f.read()
     
     for key, value in replacements.items():
-        content = content.replace(f'[{key}]', value)
+        # Ensure value is a string
+        str_value = str(value) if value is not None else ""
+        content = content.replace(f'[{key}]', str_value)
     
     return content
 
-@mcp.tool()
-def init_from_template(project: str, resource_type: str, name: str, 
-                      template: str = None, **kwargs) -> str:
-    """
-    Universal template initialization function.
-    
-    Args:
-        project: Project name
-        resource_type: "slide", "report", or "chart"
-        name: Resource name/number
-        template: Template filename (optional)
-        **kwargs: Additional placeholders (title, subtitle, section, etc.)
-    
-    Returns:
-        Path to created file
-    """
-    project_dir = USER_PROJECTS_DIR / project
-    if not project_dir.exists():
-        return f"Error: Project '{project}' not found"
-    
-    theme = get_project_theme(project_dir)
-    
-    # Configuration for each resource type
+def _get_resource_config(resource_type: str, project_dir: Path) -> dict:
+    """Get configuration for a resource type including paths."""
     configs = {
         "slide": {
             "output_dir": project_dir / "slides",
             "template_dir": SYSTEM_SLIDE_TEMPLATES_DIR,
-            "default_template": "01_base_slide.html",
+            "template_dirs": [(USER_TEMPLATES_DIR / "slides"), SYSTEM_SLIDE_TEMPLATES_DIR],
             "file_pattern": "{}.html",
             "prefix": "slide_",
             "extension": ".html"
         },
         "report": {
             "output_dir": project_dir / "report_pages",
-            "template_dir": SYSTEM_REPORT_TEMPLATES_DIR, 
-            "default_template": "06_executive_summary.html",
+            "template_dir": SYSTEM_REPORT_TEMPLATES_DIR,
+            "template_dirs": [(USER_TEMPLATES_DIR / "reports"), SYSTEM_REPORT_TEMPLATES_DIR],
             "file_pattern": "report_{}.html",
             "prefix": "page_",
             "extension": ".html"
@@ -442,7 +432,7 @@ def init_from_template(project: str, resource_type: str, name: str,
         "chart": {
             "output_dir": project_dir / "plots",
             "template_dir": SYSTEM_CHART_TEMPLATES_DIR,
-            "default_template": None,  # Charts have no default
+            "template_dirs": [(USER_TEMPLATES_DIR / "charts"), SYSTEM_CHART_TEMPLATES_DIR],
             "file_pattern": "{}.py",
             "prefix": "",
             "extension": ".py"
@@ -450,88 +440,248 @@ def init_from_template(project: str, resource_type: str, name: str,
         "outline": {
             "output_dir": project_dir,
             "template_dir": SYSTEM_OUTLINE_TEMPLATES_DIR,
-            "default_template": "outline_slides.md",
+            "template_dirs": [(USER_TEMPLATES_DIR / "outlines"), SYSTEM_OUTLINE_TEMPLATES_DIR],
             "file_pattern": "{}.md",
             "prefix": "",
             "extension": ".md"
         }
     }
+    return configs.get(resource_type)
+
+def _find_template(template_name: str, template_dirs: list) -> Path:
+    """Find a template file in a list of directories."""
+    for dir_path in template_dirs:
+        if dir_path.exists():
+            template_path = dir_path / template_name
+            if template_path.exists():
+                return template_path
+    return None
+
+def _extract_between_markers(content: str, start_marker: str, end_marker: str) -> str:
+    """Extract text between two markers."""
+    start = content.find(start_marker)
+    if start == -1:
+        return None
+    start += len(start_marker)
+    end = content.find(end_marker, start)
+    if end == -1:
+        return None
+    return content[start:end].strip()
+
+def _extract_field_value(text: str, field_name: str) -> str:
+    """Extract value after a field name up to the next newline."""
+    if field_name not in text:
+        return None
+    start = text.find(field_name) + len(field_name)
+    end = text.find("\n", start)
+    if end == -1:
+        end = len(text)
+    return text[start:end].strip()
+
+def _parse_json_array_first_item(text: str) -> str:
+    """Parse a JSON-like array and return the first item."""
+    if not text.startswith('['):
+        return text.strip(' "\'')
+    # Strip brackets and split by comma
+    text = text.strip('[]')
+    items = text.split(',')
+    if items:
+        return items[0].strip(' "\'')
+    return None
+
+def _extract_template_metadata(template_path: Path, file_type: str) -> str:
+    """Extract metadata/description from a template file based on its type."""
+    with open(template_path, "r") as f:
+        content = f.read()
     
-    config = configs.get(resource_type)
-    if not config:
-        return f"Error: Unknown resource type '{resource_type}'"
+    if file_type == "html":
+        # Try TEMPLATE_META block first
+        meta_block = _extract_between_markers(content, HTML_META_START, HTML_META_END)
+        if meta_block:
+            # Try description field first
+            desc = _extract_field_value(meta_block, HTML_DESCRIPTION_FIELD)
+            if desc:
+                return desc
+            
+            # Then try use_cases field
+            use_case = _extract_field_value(meta_block, HTML_USE_CASES_FIELD)
+            if use_case:
+                return _parse_json_array_first_item(use_case)
+        
+        # Fallback to old format
+        old_use_case = _extract_between_markers(content, HTML_OLD_USE_CASE, HTML_META_END)
+        if old_use_case:
+            return old_use_case
     
-    # Ensure output directory exists
-    config["output_dir"].mkdir(exist_ok=True)
+    elif file_type == "py":
+        # Extract Python docstring
+        docstring = _extract_between_markers(content, PY_DOCSTRING_START, PY_DOCSTRING_END)
+        if not docstring:
+            return None
+        
+        lines = docstring.split('\n')
+        
+        # Check for TEMPLATE_META format
+        if lines and lines[0].strip().startswith("TEMPLATE_META:"):
+            for line in lines[1:]:
+                if line.strip().startswith('---'):
+                    break
+                desc = _extract_field_value(line, HTML_DESCRIPTION_FIELD)
+                if desc:
+                    return desc
+        
+        # Fallback: first meaningful line
+        for line in lines:
+            cleaned = line.strip()
+            if (cleaned and 
+                not cleaned.startswith('TEMPLATE_META') and 
+                not cleaned.startswith('---') and 
+                not cleaned.startswith(PY_CHART_PREFIX)):
+                return cleaned
     
-    # Normalize name
-    if config["prefix"] and not name.startswith(config["prefix"]):
-        name = f"{config['prefix']}{name.zfill(2)}"
-    if name.endswith(config["extension"]):
-        name = name[:-len(config["extension"])]
+    elif file_type == "md":
+        lines = content.split('\n')
+        
+        # Look for Description, Summary, or Overview sections
+        for marker in [MD_DESCRIPTION_MARKER, MD_SUMMARY_MARKER, MD_OVERVIEW_MARKER]:
+            for i, line in enumerate(lines):
+                if line.strip() == marker:
+                    # Get next non-heading line
+                    for j in range(i + 1, min(i + 5, len(lines))):
+                        next_line = lines[j].strip()
+                        if next_line and not next_line.startswith('#'):
+                            return next_line.replace('[', '').replace(']', '').strip()
+                    break
+        
+        # Fallback: first content line after title
+        for line in lines:
+            if line.startswith('# '):
+                continue
+            cleaned = line.strip()
+            if cleaned and not cleaned.startswith('#') and not cleaned.startswith('**') and ':' not in cleaned:
+                return cleaned.replace('[', '').replace(']', '').strip()
     
-    # Find template file
-    if template:
-        template_file = config["template_dir"] / template
-        if not template_file.exists():
-            template_file = config["template_dir"] / Path(template).name
-            if not template_file.exists():
-                return f"Error: Template '{template}' not found"
-    elif config["default_template"]:
-        template_file = config["template_dir"] / config["default_template"]
-        if not template_file.exists():
-            return f"Error: Default template not found"
-    else:
-        # For charts without template, create boilerplate
-        if resource_type == "chart":
-            content = create_chart_boilerplate(name, project)
-        else:
-            return f"Error: No template specified for {resource_type}"
+    return None
+
+def _filter_templates_by_names(templates: list, names) -> list:
+    """Filter templates by names if specified."""
+    if names is None:
+        return templates
     
-    # Process template if we have one
-    if template or config["default_template"]:
-        if resource_type == "chart":
-            # Charts don't use placeholders - just copy as-is
-            with open(template_file, "r") as f:
-                content = f.read()
-        elif resource_type == "outline":
-            # Outlines use curly brace placeholders
-            with open(template_file, "r") as f:
-                content = f.read()
-            # Replace curly brace placeholders
-            for key, value in kwargs.items():
-                content = content.replace(f"{{{key}}}", str(value))
-            content = content.replace("{theme}", theme)
-        else:
-            # HTML templates use bracket placeholders
-            replacements = {
-                "THEME": theme,
-                "PAGE_NUMBER": name.split('_')[1] if '_' in name else name,
-                **kwargs  # Add any extra kwargs as replacements
+    name_list = [names] if isinstance(names, str) else names
+    return [t for t in templates if t["name"] in name_list]
+
+# =============================================================================
+# INIT TOOLS  
+# =============================================================================
+@mcp.tool()
+def init_from_template(project: str, 
+                      resource_type: Literal["slide", "report", "chart", "outline"], 
+                      name: str, 
+                      template: str = None, 
+                      placeholders: dict = None) -> str:
+    """
+    Universal template initialization function.
+    
+    Args:
+        project: Project name
+        resource_type: Must be one of: "slide", "report", "chart", or "outline"
+        name: Resource name/number (e.g., "1" for slide_1, "revenue" for chart)
+        template: Template filename (required for all types except charts without template)
+        placeholders: Dictionary mapping placeholder names to replacement values
+    
+    How it works:
+        - All templates use bracket placeholders like [TITLE] or [content]
+        - This function replaces each [PLACEHOLDER] with the value from the dict
+        - Placeholder names are case-sensitive - provide exact names
+        - All values will be converted to strings
+    
+    Examples:
+        For slides (ONLY these standard placeholders work):
+            placeholders={
+                "TITLE": "Q4 Financial Results",
+                "SUBTITLE": "Record Breaking Quarter",
+                "SECTION": "Executive Summary",
+                "PAGE_NUMBER": "1"
             }
-            
-            # Add CSS paths for HTML templates
-            base_css = SLIDE_BASE_CSS_NAME if resource_type == "slide" else REPORT_BASE_CSS_NAME
-            replacements["BASE_CSS_PATH"] = f"{REL_PATH_TO_THEME_IN_PROJECT}/{base_css}"
-            replacements["THEME_CSS_PATH"] = f"{REL_PATH_TO_THEME_IN_PROJECT}/{theme}{THEME_FILES['css']}"
-            
-            # Map common aliases
-            for key in ["TITLE", "SUBTITLE", "SECTION"]:
-                if key.lower() in kwargs:
-                    replacements[key] = kwargs[key.lower()]
-            
-            # Report-specific aliases
-            if resource_type == "report":
-                replacements["REPORT_TITLE"] = replacements.get("TITLE", "")
-                replacements["CONTENT_TITLE"] = replacements.get("TITLE", "")
-                replacements["CONTENT_SUBTITLE"] = replacements.get("SUBTITLE", "")
-                replacements["SECTION_NAME"] = replacements.get("SECTION", "")
-            
-            content = process_template(template_file, replacements)
+        
+        For an outline with [title] and [author]:
+            placeholders={
+                "title": "2025 Strategy Presentation",
+                "author": "John Smith"
+            }
     
-    # Create output file
-    filename = config["file_pattern"].format(name)
-    output_path = config["output_dir"] / filename
+    Note: This tool ONLY replaces the following standard placeholders:
+    - For slides/reports: TITLE, SUBTITLE, SECTION, PAGE_NUMBER
+    - For outlines: Any placeholders you provide (e.g., title, author, theme, date)
+    - For charts: No placeholders - charts are Python scripts that should be edited directly
+    - CSS paths are handled automatically for HTML templates
+    
+    Any template-specific content should be modified with Edit/MultiEdit tools after generation.
+    
+    Returns:
+        Path to created file
+    """
+    # Default to empty dict if no placeholders provided
+    if placeholders is None:
+        placeholders = {}
+    
+    # Get and validate project directory
+    try:
+        project_dir = _get_project_dir(project)
+    except ValueError as e:
+        return str(e)
+    
+    # Get configuration for the resource type
+    config = _get_resource_config(resource_type, project_dir)
+    
+    # Normalize the resource name
+    name = _normalize_resource_name(name, config)
+    
+    # Template is required for all resource types
+    if not template:
+        return f"Error: Template parameter is required for {resource_type}. Please specify a template filename."
+    
+    # Find template file using the helper
+    template_path = _find_template(template, config["template_dirs"])
+    if not template_path:
+        return f"Error: Template '{template}' not found in {resource_type} template directories"
+    
+    # Read template content (always needed)
+    with open(template_path, "r") as f:
+        content = f.read()
+    
+    # Process content based on resource type
+    if resource_type in ["slide", "report"]:
+        # Handle HTML templates (slides and reports)
+        theme_dir = project_dir / "theme"
+        
+        # Determine base CSS based on type
+        base_css = f"../theme/{'slide' if resource_type == 'slide' else 'report'}_base.css"
+        
+        # Find theme CSS (same for both)
+        theme_css_files = list(theme_dir.glob("*_theme.css"))
+        theme_css = f"../theme/{theme_css_files[0].name}" if theme_css_files else "../theme/acme_corp_theme.css"
+        
+        # Replace CSS placeholders
+        content = content.replace("[BASE_CSS_PATH]", base_css)
+        content = content.replace("[THEME_CSS_PATH]", theme_css)
+        
+        # Replace standard placeholders (same for both slides and reports)
+        standard_placeholders = ["TITLE", "SUBTITLE", "SECTION", "PAGE_NUMBER"]
+        for key in standard_placeholders:
+            if key in placeholders:
+                content = content.replace(f"[{key}]", str(placeholders[key]))
+    
+    elif resource_type == "outline":
+        # Outlines: flexible placeholders for metadata
+        for key, value in placeholders.items():
+            content = content.replace(f"[{key}]", str(value) if value is not None else "")
+    
+    # Charts don't need any processing - just use content as-is
+    
+    # Get output path
+    output_path = _get_output_path(name, config)
     
     with open(output_path, "w") as f:
         f.write(content)
@@ -542,58 +692,6 @@ def init_from_template(project: str, resource_type: str, name: str,
     
     return str(output_path)
 
-def create_chart_boilerplate(name: str, project: str) -> str:
-    """Create default chart boilerplate when no template is provided."""
-    return f'''#!/usr/bin/env python3
-"""
-Chart: {name}
-Generated chart for {project} project
-"""
-
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
-
-from slideagent_mcp.utils.plot_buddy import PlotBuddy
-import matplotlib.pyplot as plt
-import numpy as np
-
-# Initialize PlotBuddy with project config
-buddy = PlotBuddy.from_project_config()
-
-# === EDIT THIS SECTION ===
-# Configure your data and chart here
-data = [10, 20, 30, 40]
-labels = ['A', 'B', 'C', 'D']
-# === END EDIT SECTION ===
-
-# Create figure with theme styling
-fig, ax = buddy.setup_figure(figsize=(14, 7.875))  # Wide format for slides
-
-# Create your visualization
-ax.bar(labels, data)
-ax.set_xlabel('Categories')
-ax.set_ylabel('Values')
-
-# Save branded version (with titles)
-buddy.add_titles(ax, "Chart Title", "Chart Subtitle")
-buddy.add_logo(fig, buddy.icon_logo_path)
-buddy.save("plots/{name}_branded.png", branded=False)
-
-# Create clean version for slides
-fig, ax = buddy.setup_figure(figsize=(14, 7.875))
-ax.bar(labels, data)
-ax.set_xlabel('Categories')
-ax.set_ylabel('Values')
-ax.text(0.5, 1.02, 'Chart Subtitle', transform=ax.transAxes, 
-        ha='center', fontsize=12, color='#666')
-plt.tight_layout()
-plt.savefig("plots/{name}_clean.png", dpi=150, bbox_inches='tight')
-
-print("✅ Chart generated successfully!")
-print("   - Branded version: plots/{name}_branded.png")
-print("   - Clean version: plots/{name}_clean.png")
-'''
 
 
 # =============================================================================
@@ -623,7 +721,7 @@ def swap_theme(project: str, theme: str) -> str:
     theme_source = Path(theme_info[0]["path"])
     
     # Get current theme
-    old_theme = get_project_theme(project_dir)
+    old_theme = _get_project_theme(project_dir)
     
     # Clear old theme files from project/theme/ (keep base CSS)
     theme_dir = project_dir / "theme"
@@ -633,7 +731,7 @@ def swap_theme(project: str, theme: str) -> str:
                 file.unlink()
     
     # Copy new theme files
-    copy_theme_files(theme_source, project_dir, theme)
+    _copy_theme_files(theme_source, project_dir, theme)
     
     # Update existing slides to use new theme
     slides_dir = project_dir / "slides"
@@ -756,7 +854,6 @@ def start_live_viewer(project: str, port: int = 8080) -> Dict[str, Any]:
     Returns:
         Result dictionary with viewer URL or error
     """
-    global LIVE_VIEWER_PROCESSES
     
     project_dir = USER_PROJECTS_DIR / project
     if not project_dir.exists():
@@ -770,8 +867,12 @@ def start_live_viewer(project: str, port: int = 8080) -> Dict[str, Any]:
             pids = result.stdout.strip().split('\n')
             for pid in pids:
                 subprocess.run(["kill", "-9", pid], capture_output=True)
-    except:
-        pass  # If lsof fails, continue anyway
+    except FileNotFoundError:
+        # lsof might not be available on all systems, continue anyway
+        pass
+    except Exception as e:
+        # Log the error but continue - port cleanup is not critical
+        print(f"Warning: Could not clean up port {port}: {e}")
     
     # Also kill any existing live_viewer_server processes
     subprocess.run(["pkill", "-f", "node.*live_viewer_server"], capture_output=True)

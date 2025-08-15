@@ -1,8 +1,11 @@
-# {title}
+# [title]
 
-**Author**: {author}  
-**Theme**: {theme}  
-**Date**: {date}
+**Author**: [author]  
+**Theme**: [theme]  
+**Date**: [date]
+
+## Description
+Template for creating report outlines with page structure and agent distribution
 
 ## Executive Summary
 [Brief overview of the report]

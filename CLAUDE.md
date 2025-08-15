@@ -31,7 +31,7 @@ Each theme needs 4 files:
 - `{theme}_icon_logo.png` - Header logo
 - `{theme}_text_logo.png` - Title slide logo
 
-**Important**: Use PNG logos only (no custom SVGs - trademark issues)
+**Important**: Use PNG logos only (no custom SVGs)
 
 ## Workflow
 
@@ -63,8 +63,9 @@ agent_distribution:
 **Start live viewer first before spawning agents** (use `start_live_viewer()`)
 
 **Then spawn parallel agents** based on `agent_distribution`:
+- Several agents should be working simultaneously to speed up slide generation
 - Each agent handles assigned slides/charts using `init_from_template()`
-- Agents validate visually with Puppeteer screenshots
+- Agents validate visually with Puppeteer screenshots (if pupeteer is unavailable just skip this)
 - Fix issues immediately if detected
 - To stop viewer when done: `pkill -f "node.*live_viewer"`
 
@@ -95,10 +96,3 @@ Use `generate_pdf()` with format="slides" (horizontal) or "report" (vertical)
     </div>
 </div>
 ```
-
-## Remember
-- Discover templates first with `get_templates()` before creating content
-- Be specific in outlines - no placeholders  
-- Validate visually with Puppeteer
-- PlotBuddy.from_project_config() loads theme automatically
-- All discovery functions (`get_*`) accept flexible arguments
