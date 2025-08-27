@@ -1,23 +1,30 @@
 # SlideAgent
 
-Minimal presentation framework for AI agents. This README is intentionally short: two sections (System Prompt, MCP) and a Quick Start you can copy-paste into Claude Code. 
+Minimal, purposefully thin presentation framework for AI agents. SlideAgent focuses on great defaults, a clean template/theme system, and a tiny MCP surface so models can do the work without heavy app logic.
 
-## Quick Start
+## TL;DR Quick Start
 
-Honestly Claude Code should be able to do just about all of the environment setup, just ask it to 
+```bash
+# 1) Install deps (Python managed by uv, Node for PDF/live viewer)
+curl -LsSf https://astral.sh/uv/install.sh | sh   # if uv not installed
+uv sync
+npm install
 
-```text
-"get my environment setup and make sure the mcp is working". and check out the README for the initial setup stuff.
+# 2) Run the MCP server
+uv run python ./slideagent_mcp/server.py
+
+# 3) In Claude Code (or Goose), connect to the MCP and issue prompts like:
+#    - create a project, start the live viewer, list templates, etc.
 ```
 
-After that is taken care everything should work. You can submit prompts like..
+Example prompts you can paste into Claude Code:
 
 ```text
-Create a new project called "demo" using the "acme_corp" theme. Start the live viewer. Then scan everything in projects/demo/input/ and draft a crisp, section-based outline that maps each section to a specific slide template. Call out which template you plan to use per section and why.
+Create a new project called "demo" using the "acme_corp" theme. Start the live viewer. Then scan everything in user_projects/demo/input/ and draft a crisp, section-based outline that maps each section to a specific slide template. Call out which template you plan to use per section and why.
 ```
 
 ```text
-Read these links and build a slide deck with the acme_corp theme. 
+Read these links and build a slide deck with the acme_corp theme.
 - https://www.example.com/industry-trends-2025
 - https://news.example.org/company-q2-results
 - https://analyst.example.net/sector-outlook
@@ -35,113 +42,92 @@ Make me a presentation based on the content I paste here, use the pokemon theme
 Make a pie chart based on <INSERT CSV> using <INSERT THEME>
 ```
 
-
 ```text
-Create a new theme called xyz_corp based on this input and color palette <INSERT SOME DIRECTION ON COLORS AND VIBE>
+Create a new theme called xyz_corp based on this input and color palette <INSERT COLORS + VIBE>
 ```
 
-## All the Logic: CLAUDE.md + slideagent_mcp folder
+## How SlideAgent Works
 
- `CLAUDE.md` is the system prompt and authoritative source of process and is written to maximally depend on the decision making of the model, keeping actual programming logic minimal in alignment with [The Bitter Lesson](http://www.incompleteideas.net/IncIdeas/BitterLesson.html). Read `CLAUDE.md` for detailed guidance when you need more than the quick start, as the system prompt gives much more detail about how all this works.
-
-The MCP layer exposes a small set of tools that let models operate SlideAgent safely and consistently. Think of it as a context management and orchestration layer, not an application: it lists templates and themes, initializes slides/charts, swaps themes, starts the live preview, and exports PDFs. It contains almost no business logic—the model provides the content; MCP ensures correct file structure, paths, and repeatable operations.
+`CLAUDE.md` is the system prompt and the authoritative process guide. The MCP layer exposes a small, safe toolset: list templates/themes, initialize slides/charts from templates with correct CSS/paths, start the live preview, and export PDFs. The model provides the content; MCP keeps structure, paths, and repeatability.
 
 Typical capabilities provided by the MCP server(s):
-- Discover and read context: list projects, themes, slide/chart templates
-- Initialize from templates: create slides and charts with correct paths and CSS
-- Manage preview/export: start live viewer, generate PDF (simple utility logic only)
-- Optional browsing/validation: navigate and screenshot via a Puppeteer MCP
+- Discover context: list projects, themes, slide/chart templates
+- Initialize from templates: slides and charts with correct paths/CSS
+- Manage preview/export: start live viewer, generate PDF
+- Optional validation: navigate and screenshot via a Puppeteer MCP
 
-## What does the system struggle with?
+## Install and Run
 
-### Dynamic Layout Adaptation
-The system faces challenges with responsive content placement, particularly:
-
-- **Chart aspect ratios**: Charts need different dimensions depending on context:
-  - Single-chart slides: 16:9 aspect ratio (14x7.875 figsize)
-  - 4-chart dashboards: 2:1 aspect ratio (7x3.5 figsize) 
-  - 6-chart grids: Even more square ratios needed
-  - The same chart can't work well in both contexts without regeneration
-
-- **Overflow management**: Content frequently overflows slide boundaries because:
-  - Fixed 1920x1080px dimensions don't account for headers/footers
-  - Chart images don't automatically resize to fit containers
-  - CSS `object-fit: contain` helps but isn't perfect
-  - Multi-chart layouts compound the spacing challenges
-- **Container sizing**: The interplay between padding, margins, and actual content area
-
-There are things that could be implemented that would improve these things, but if you believe the bitter lesson you would do none of these things and ride the curve of model improvement, rather than building point-in-time optimizations that will become legacy.
-
-## Dependency Management with uv
-
-SlideAgent uses [uv](https://github.com/astral-sh/uv) for fast, reliable Python dependency management. Here's everything you (or Claude) need to get started:
-
-### Initial Setup (One-time)
+### Using uv (recommended)
 ```bash
-# Install uv if not already installed
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Clone the repo
-git clone https://github.com/yourusername/SlideAgent.git
-cd SlideAgent
-
-# Install all dependencies (creates .venv automatically)
+# One-time setup
+curl -LsSf https://astral.sh/uv/install.sh | sh   # if uv not installed
 uv sync
-
-# Install Node dependencies for PDF generation
 npm install
-```
 
-This repo uses uv for Python dependency management. Use `uv sync` and `uv run`; avoid pip/`requirements.txt` unless explicitly required. 
-
-```bash
+# Run MCP server
 uv run python ./slideagent_mcp/server.py
-```
-
-### Daily Usage
-```bash
-# Run any Python command in the virtual environment
-uv run python slideagent_mcp/server.py
 
 # Run tests
 uv run pytest tests/
 
-# Add a new dependency
-uv add package-name
-
-# Add a dev dependency
-uv add --dev package-name
-
-# Update all dependencies
-uv sync --upgrade
+# Add a dependency
+uv add <package>
 ```
 
-### For Claude Code
-When working with this project:
-1. First run: `uv sync` to ensure all dependencies are installed
-2. Then run: `npm install` for Node.js dependencies  
-3. Use `uv run` prefix for any Python commands
-4. The virtual environment is managed automatically in `.venv/`
+Notes:
+- Use `uv sync` and `uv run`; no manual venv activation is needed.
+- The virtual environment is managed automatically in `.venv/`.
 
-### Why uv?
-- **Fast**: 10-100x faster than pip
-- **Reliable**: Lock file ensures reproducible installs
-- **Simple**: No manual venv activation needed
-- **Modern**: Replaces pip, pip-tools, pipenv, poetry, virtualenv
+### Alternative: plain venv + pip (if you really need it)
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -U pip
+uv pip sync pyproject.toml  # or: pip install -e .
+npm install
+python ./slideagent_mcp/server.py
+```
+
+## Core Workflows (via MCP prompts)
+
+- **Create a project**: ask to "create a project named X with theme Y". This creates `user_projects/X/` with `slides/`, `plots/`, `input/`, `validation/`, and a project-local `theme/` folder containing the CSS and logos.
+- **Discover templates**: ask to "list slide templates" and "list chart templates". Use exact paths returned when initializing.
+- **Charts first**: ask to initialize a chart from a chosen template, then run the generated script inside the project (it outputs `_branded.png` and `_clean.png`).
+- **Slides next**: initialize slides from templates and insert content and chart image paths (prefer `_clean.png` for slides).
+- **Preview while building**: start the live viewer and navigate to the slide paths (the live viewer uses Chromium; what you see matches the PDF exporter).
+- **Export PDF**: ask to generate the PDF for the project; it will save to `user_projects/<project>/<project>.pdf`.
+
+## Troubleshooting
+
+- **CSS not loading**: Always initialize slides via MCP. Slides should reference `../theme/base.css` and `../theme/<theme>_theme.css` relative to the `slides/` folder.
+- **Live viewer issues**: Restart the live viewer; ensure the server is running. Preview URLs follow the per-project paths (e.g., `http://localhost:8080/slide_01.html`).
+- **PDF generation**: If slides look correct in the live viewer, PDFs should match (Chromium-based exporter).
+- **Puppeteer MCP**: Install globally if you want browsing/screenshot validation:
+  - `npm install -g @modelcontextprotocol/server-puppeteer`
+  - Add it to your client (Claude/Goose) if not auto-detected.
+- **uv basics**: `uv sync` (install/update), `uv run <cmd>`, `uv add <pkg>`, `uv run pytest tests/`.
 
 ## Use with Goose
 
-You can drive SlideAgent end-to-end from Goose if you'd like a GUI [`https://block.github.io/goose/`](https://block.github.io/goose/).
+You can also drive SlideAgent from Goose: [`https://block.github.io/goose/`](https://block.github.io/goose/).
 
-### Connect Goose to SlideAgent MCP
-- If Goose does not auto-detect it, add an MCP server in Goose "Extensions" settings pointing to the command:
+Connect Goose to SlideAgent MCP:
+- If not auto-detected, add an MCP server in Goose "Extensions" with:
   - `uv run python ./slideagent_mcp/server.py`
-- If you installed the Puppeteer MCP globally, add it in Goose as well so you can navigate and screenshot slides during generation.
+- If you installed the Puppeteer MCP globally, add it too for browsing/screenshots.
+- Optionally copy `CLAUDE.md` to `.goosehints` (Goose's system prompt management).
 
-Also make sure to copy CLAUDE.md to .goosehints which is their system prompt management system.
+## Why uv?
 
+- **Fast**: significantly faster than pip
+- **Reliable**: lock file for reproducible installs
+- **Simple**: no manual venv activation
+- **Modern**: a cleaner replacement for pip/pip-tools/pipenv/poetry/virtualenv
 
-#   Musings about AI Agents
+---
+
+# Musings about AI Agents
 This project is my contribution to the world of open model benchmarks. It is a living qualitative benchmark of what today’s AI agents can and can’t do. Slide generation is an interesting stress test — it demands structured reasoning, precise layouts, and adaptation to tight visual constraints, all within long-horizon tasks that span multiple files, coordinate sub-agents, and require fine-grained visual and spatial reasoning.
 
 Right now, the weak spots are clear:
