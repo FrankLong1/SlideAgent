@@ -5,6 +5,31 @@ A lightweight plotting library that provides a clean class-based interface for c
 Works with local mplstyle files and handles all plotting context and styling.
 
 Design principle: "All my context is handled by the buddy"
+
+IMPORTANT: Chart Save Pattern
+==============================
+PlotBuddy automatically handles clean/branded chart separation. Follow this pattern:
+
+    # 1. Create your chart (without titles/branding)
+    fig, ax = buddy.setup_figure()
+    # ... create your visualization ...
+    
+    # 2. Save clean version first (before adding any branding)
+    branded_path, clean_path = buddy.save(f"plots/my_chart.png", branded=True)
+    
+    # 3. Add branding elements
+    buddy.add_titles(ax, "Chart Title", "Subtitle")
+    buddy.add_footnote(fig, "Source: Data source")
+    buddy.add_logo(fig, buddy.text_logo_path, position='bottom-right')
+    
+    # 4. Save branded version
+    buddy.save_branded(branded_path)
+
+This ensures:
+- Clean versions have NO titles/logos (for slides where the slide provides context)
+- Branded versions have full titles/logos/sources (for standalone reports)
+
+WARNING: Do not use plt.savefig() directly! PlotBuddy will warn if you do.
 """
 
 import os
@@ -49,6 +74,9 @@ class PlotBuddy:
         Args:
             theme_folder (str): Path to theme folder. If None, looks for 'theme' or '../theme'
         """
+        # Add warning wrapper for direct plt.savefig usage
+        self._install_savefig_wrapper()
+        
         # Find theme folder
         if theme_folder:
             self.theme_folder = Path(theme_folder)
@@ -96,6 +124,51 @@ class PlotBuddy:
         self.standard_font_size = self.DEFAULT_STANDARD_FONT_SIZE
         self.title_y_position = self.DEFAULT_TITLE_Y_POSITION
         self.subtitle_y_position = self.DEFAULT_SUBTITLE_Y_POSITION
+    
+    def _install_savefig_wrapper(self):
+        """
+        Install a wrapper around plt.savefig to warn users to use buddy.save() instead.
+        This helps enforce the correct pattern for clean/branded chart separation.
+        """
+        import warnings
+        import traceback
+        
+        # Store the original savefig function
+        if not hasattr(plt, '_original_savefig'):
+            plt._original_savefig = plt.savefig
+        
+        def savefig_wrapper(*args, **kwargs):
+            # Get the call stack to see if this is being called from PlotBuddy itself
+            stack = traceback.extract_stack()
+            
+            # Check if the call is from PlotBuddy's own methods
+            for frame in stack:
+                if 'plot_buddy.py' in frame.filename and ('save' in frame.name or '_save_clean_version' in frame.name):
+                    # This is an internal PlotBuddy call, allow it
+                    return plt._original_savefig(*args, **kwargs)
+            
+            # External call - issue a warning
+            warnings.warn(
+                "\n⚠️ WARNING: Direct plt.savefig() detected!\n"
+                "Use buddy.save() for proper clean/branded chart separation:\n\n"
+                "  # Save clean version first\n"
+                "  branded_path, clean_path = buddy.save(f'plots/{output_name}.png', branded=True)\n"
+                "  \n"
+                "  # Add branding\n"
+                "  buddy.add_titles(ax, title, subtitle)\n"
+                "  buddy.add_footnote(fig, footnote_text)\n"
+                "  buddy.add_logo(fig, buddy.text_logo_path)\n"
+                "  \n"
+                "  # Save branded version\n"
+                "  buddy.save_branded(branded_path)\n",
+                stacklevel=2
+            )
+            
+            # Still allow the save to proceed
+            return plt._original_savefig(*args, **kwargs)
+        
+        # Replace plt.savefig with our wrapper
+        plt.savefig = savefig_wrapper
     
     @classmethod
     def from_theme(cls, theme_name, themes_dir=None):

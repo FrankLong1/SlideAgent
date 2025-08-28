@@ -184,23 +184,27 @@ ax.grid(True, axis='y', alpha=0.3, linestyle='--')
 
 
 
-# Apply PlotBuddy branding for branded version
+# Save clean version first (before adding any branding)
+
+branded_path, clean_path = buddy.save(f"plots/{output_name}.png", branded=True)
+
+
+
+# Now add branding elements
 
 buddy.add_titles(ax, chart_title, chart_subtitle)
 
 
 
-# Add source/footnote at bottom left
+# Add source/footnote if specified
 
 if footnote_text:
 
-    fig.text(0.12, 0.02, footnote_text, fontsize=8, style='italic', 
-
-             transform=fig.transFigure, ha='left')
+    buddy.add_footnote(fig, footnote_text, position='bottom-left')
 
 
 
-# Add logo at bottom right (text logo preferred for branded charts)
+# Add logo
 
 if buddy.text_logo_path:
 
@@ -216,9 +220,9 @@ elif buddy.icon_logo_path:
 
 
 
-# Save both versions using buddy.save()
+# Save branded version
 
-branded_path, clean_path = buddy.save(f"plots/{output_name}.png", branded=True)
+buddy.save_branded(branded_path)
 
 
 
