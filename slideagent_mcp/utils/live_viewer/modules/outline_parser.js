@@ -2,9 +2,12 @@ const fs = require('fs');
 const path = require('path');
 
 class OutlineParser {
-    constructor(projectPath) {
+    constructor(projectPath, markdownFilePath) {
         this.projectPath = projectPath;
-        this.outlinePath = path.join(projectPath, 'outline.md');
+        if (!markdownFilePath) {
+            throw new Error('markdownFilePath is required - no default outline.md behavior');
+        }
+        this.outlinePath = markdownFilePath;
     }
 
     parse() {

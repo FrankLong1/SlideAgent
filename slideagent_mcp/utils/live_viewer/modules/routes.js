@@ -5,11 +5,14 @@ const OutlineParser = require('./outline_parser');
 const FileMonitor = require('./file_monitor');
 
 class RouteHandler {
-    constructor(projectName) {
+    constructor(projectName, markdownFilePath) {
         this.projectName = projectName;
         this.projectPath = config.paths.getProjectPath(projectName);
         this.slidesPath = config.paths.getSlidesPath(projectName);
-        this.outlineParser = new OutlineParser(this.projectPath);
+        if (!markdownFilePath) {
+            throw new Error('markdownFilePath is required for RouteHandler');
+        }
+        this.outlineParser = new OutlineParser(this.projectPath, markdownFilePath);
         this.fileMonitor = new FileMonitor(this.slidesPath);
     }
 

@@ -843,12 +843,13 @@ def generate_pdf(project: str, output_path: str = None, format: str = "slides") 
 # Use mcp__puppeteer__puppeteer_navigate and mcp__puppeteer__puppeteer_screenshot
 
 @mcp.tool()
-def start_live_viewer(project: str, port: int = 8080) -> Dict[str, Any]:
+def start_live_viewer(project: str, markdown_file_path: str, port: int = 8080) -> Dict[str, Any]:
     """
     Start the live viewer server for a project.
     
     Args:
         project: Name of the project
+        markdown_file_path: Full path to the markdown file to parse (required)
         port: Port to run the server on (default 8080)
     
     Returns:
@@ -886,8 +887,14 @@ def start_live_viewer(project: str, port: int = 8080) -> Dict[str, Any]:
         env = os.environ.copy()
         env["PORT"] = str(port)
         
+        # markdown_file_path is now required
+        if not markdown_file_path:
+            return {"success": False, "error": "markdown_file_path is required"}
+        
+        cmd_args = ["node", str(viewer_script), project, markdown_file_path, str(port)]
+        
         process = subprocess.Popen(
-            ["node", str(viewer_script), project],
+            cmd_args,
             cwd=str(BASE_DIR),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

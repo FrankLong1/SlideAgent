@@ -15,15 +15,17 @@ const logger = new Logger('LiveViewer');
 
 // Parse command line arguments
 const projectName = process.argv[2];
-const port = process.argv[3] || config.server.defaultPort;
+const markdownFilePath = process.argv[3];
+const port = process.argv[4] || config.server.defaultPort;
 
-if (!projectName) {
-    logger.error('Usage: node live_viewer_server.js <project-name> [port]');
+if (!projectName || !markdownFilePath) {
+    logger.error('Usage: node live_viewer_server.js <project-name> <markdown-file-path> [port]');
+    logger.error('Both project name and markdown file path are required');
     process.exit(1);
 }
 
 // Initialize route handler
-const routeHandler = new RouteHandler(projectName);
+const routeHandler = new RouteHandler(projectName, markdownFilePath);
 
 /**
  * Main HTTP server

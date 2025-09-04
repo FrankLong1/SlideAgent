@@ -514,7 +514,7 @@ class PlotBuddy:
         """
         fig.tight_layout(rect=self.tight_layout_rect)
     
-    def save(self, filepath, branded=True, **kwargs):
+    def save(self, filepath, branded=False, **kwargs):
         """
         Save chart with option for branded or clean output.
         

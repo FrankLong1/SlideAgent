@@ -1,9 +1,13 @@
 {
   "mcpServers": {
     "slideagent": {
+      "type": "stdio",
       "command": "uv",
-      "args": ["run", "python", "./slideagent_mcp/server.py"],
-      "cwd": ".",
+      "args": [
+        "run",
+        "python",
+        "slideagent_mcp/server.py"
+      ],
       "env": {}
     }
   }
