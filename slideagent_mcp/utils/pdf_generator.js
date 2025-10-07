@@ -14,6 +14,12 @@ const { PDFDocument: PDFLib } = require('pdf-lib');
 const http = require('http');
 const express = require('express');
 
+function ensureDirSync(dirPath) {
+    if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+    }
+}
+
 // Common CSS to inject for consistent rendering
 const SLIDE_CSS = `
     body {
@@ -298,6 +304,22 @@ async function generatePDFWithServer(htmlDir, outputPath = null, format = 'slide
     const projectDir = path.dirname(htmlDir);
     const { server, port } = await startLocalServer(projectDir);
 
+    // Prepare preview directories inside validation folder
+    const validationDir = path.join(projectDir, 'validation');
+    const previewFolderName = format === 'report' ? 'report_previews' : 'slide_previews';
+    const previewDir = path.join(validationDir, previewFolderName);
+    try {
+        ensureDirSync(validationDir);
+        if (fs.existsSync(previewDir)) {
+            fs.rmSync(previewDir, { recursive: true, force: true });
+        }
+        ensureDirSync(previewDir);
+    } catch (error) {
+        console.warn(`Warning: Could not prepare preview directory (${previewDir}): ${error.message}`);
+    }
+
+    const previewPaths = new Array(htmlFilesList.length);
+
     const browser = await launchBrowser();
     const pagePool = new PagePool(browser, 8, format);
     await pagePool.init();
@@ -361,6 +383,22 @@ async function generatePDFWithServer(htmlDir, outputPath = null, format = 'slide
                 
                 const pdfBuffer = await page.pdf(pdfOptions);
 
+                // Capture visual preview alongside PDF generation
+                try {
+                    const screenshotBuffer = await page.screenshot({
+                        type: 'png',
+                        fullPage: true,
+                        omitBackground: false
+                    });
+                    const previewFile = htmlFile.replace(/\.html$/, '.png');
+                    const previewPath = path.join(previewDir, previewFile);
+                    fs.writeFileSync(previewPath, screenshotBuffer);
+                    previewPaths[i] = previewPath;
+                    console.log(`🖼️  Preview saved: ${path.relative(projectDir, previewPath)}`);
+                } catch (screenshotError) {
+                    console.warn(`Warning: Failed to capture preview for ${htmlFile}: ${screenshotError.message}`);
+                }
+
                 pdfBuffers[i] = pdfBuffer;
                 completed++;
                 progressBar.update(completed, { slide: htmlFile });
@@ -389,6 +427,16 @@ async function generatePDFWithServer(htmlDir, outputPath = null, format = 'slide
         const stats = fs.statSync(outputPath);
         const fileSizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
         console.log(`📄 File size: ${fileSizeInMB} MB`);
+
+        const relativePreviewPaths = previewPaths
+            .filter(Boolean)
+            .map(previewPath => path.relative(projectDir, previewPath));
+
+        if (relativePreviewPaths.length) {
+            console.log(`🖼️  Saved ${relativePreviewPaths.length} preview image${relativePreviewPaths.length > 1 ? 's' : ''} in validation/${previewFolderName}`);
+        }
+
+        console.log(`JSON_RESULT:${JSON.stringify({ previewPaths: relativePreviewPaths })}`);
 
     } catch (error) {
         console.error('❌ Error generating PDF:', error.message);

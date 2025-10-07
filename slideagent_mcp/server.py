@@ -822,14 +822,31 @@ def generate_pdf(project: str, output_path: str = None, format: str = "slides") 
             text=True,
             cwd=str(BASE_DIR)
         )
-        
+
+        preview_paths: List[str] = []
+        stdout_text = result.stdout or ""
+        for line in stdout_text.splitlines():
+            if line.startswith("JSON_RESULT:"):
+                payload = line[len("JSON_RESULT:"):]
+                try:
+                    data = json.loads(payload)
+                    preview_paths = data.get("previewPaths", []) or []
+                except json.JSONDecodeError:
+                    preview_paths = []
+
         if result.returncode == 0:
-            return {
+            response: Dict[str, Any] = {
                 "success": True,
                 "path": output,
                 "message": f"PDF generated successfully ({format} format)",
                 "format": format
             }
+
+            if preview_paths:
+                response["preview_images_relative"] = preview_paths
+                response["preview_images"] = [str(project_dir / Path(path_fragment)) for path_fragment in preview_paths]
+
+            return response
         else:
             return {
                 "success": False,
